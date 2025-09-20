@@ -212,6 +212,7 @@ Each phase should be:
 - All consultation feedback incorporated directly
 - Include phase status tracking within this document
 - Version control captures evolution through commits
+- **DO NOT include time estimates** - Focus on deliverables and dependencies, not hours/days
 **Template**: `templates/plan.md`
 **Review Required**: Yes - Technical lead approval AFTER consultations
 

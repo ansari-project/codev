@@ -33,6 +33,7 @@ Our flagship protocol for structured development:
 - **S**pecify - Define what to build in clear, unambiguous language
 - **P**lan - Break specifications into executable phases
 - **I**mplement → **D**efend → **E**valuate - Iterative development loop
+<!-- This needs more detail, especially the defend part. Incorporate the "Why defend section into this. Start this with "For each phase ...--> 
 - **R**eview - Capture lessons and improve the methodology
 
 ### Why "Defend"?
@@ -59,6 +60,7 @@ your-project/
 ## Key Features
 
 ### 📄 Document-Driven Development
+<!-- Let's call this something else, like: documents are first class citizens -->
 - Three documents per feature: spec, plan, lessons
 - All decisions captured in version control
 - Clear traceability from idea to implementation
@@ -74,6 +76,12 @@ your-project/
 - Templates evolve based on real experience
 
 ## Installation
+
+<!-- this section is bullcrap. This should say: 
+Ask your agent to follow the instructions at http://github.com/ansari-project/codev/INSTALL.md Something like 
+
+Get rid of everything below up to Examples. 
+-->
 
 ### For New Projects
 
@@ -157,7 +165,7 @@ See `examples/todo-manager/` for a complete walkthrough showing:
 - How lessons improve future development
 
 ### Quick Example
-
+<!-- get rid of this section all together -->
 ```markdown
 # Specification: User Authentication
 
@@ -182,6 +190,7 @@ Users need secure authentication with email/password
 
 ## Best Practices
 
+<!-- get rid of this section -->
 ### For Specifications
 - Start with clarifying questions
 - Include at least 3 solution approaches
@@ -210,6 +219,7 @@ Templates in `codev/protocols/spider/templates/` can be modified to fit your tea
 - `plan.md` - Planning format
 - `lessons.md` - Retrospective template
 - `review.md` - Review checklist
+<!-- No review .md -->
 
 ### Protocol Configuration
 
@@ -219,6 +229,8 @@ Edit `manifest.yaml` to customize:
 - Validation rules
 - Expert consultation settings
 
+<!-- get rid of this section. It is no longer relevant. -->
+
 ## Contributing
 
 We welcome contributions:
@@ -227,12 +239,13 @@ We welcome contributions:
 - Integration tools
 - Case studies
 
+<!-- get rid of the section below -->
 ## Philosophy
 
 > "Software is not just code—it's understanding problems, designing solutions, and building systems that serve human needs. Codev makes this process explicit, traceable, and collaborative."
 
 ## Resources
-
+<!-- get rid of this -->
 - [Full Protocol Documentation](codev/protocols/spider/protocol.md)
 - [Example Specifications](codev/specs/)
 - [Todo Manager Tutorial](examples/todo-manager/)
@@ -242,6 +255,7 @@ We welcome contributions:
 MIT - See LICENSE file for details
 
 ## Support
+<!-- get rid of this -->
 
 - Issues: [GitHub Issues](https://github.com/ansari-project/codev/issues)
 - Discussions: [GitHub Discussions](https://github.com/ansari-project/codev/discussions)

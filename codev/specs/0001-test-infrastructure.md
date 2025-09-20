@@ -127,6 +127,7 @@ Currently, there is no automated way to verify that the Codev installation proce
 ### Critical (Blocks Progress)
 - [x] How do we test the AI agent instruction portions of installation?
   - **Answer**: Create safe temporary directories and test file outcomes
+  - **Update**: Can run Claude in isolation with `--strict-mcp-config` and `--settings` flags
 - [x] Should we test the actual GitHub download or always mock it?
   - **Answer**: Use the local codev-skeleton directory
 
@@ -167,6 +168,10 @@ Currently, there is no automated way to verify that the Codev installation proce
 6. Verify protocol files are copied correctly
 7. Verify llms.txt is created in resources/
 8. Test cleanup of temporary installation directory
+9. **Claude execution test** (optional):
+   - Run `claude --strict-mcp-config --mcp-config '[]'` in test directory
+   - Provide INSTALL.md instructions as input
+   - Verify Claude can execute installation without user settings interference
 
 ### Edge Cases (Deferred to V2)
 Edge case testing deferred per user feedback - focusing on happy path for v1.
@@ -204,8 +209,8 @@ Edge case testing deferred per user feedback - focusing on happy path for v1.
    - Fresh installation with SPIDER-SOLO (Zen absent)
    - Basic file structure validation
    - CLAUDE.md creation verification
-
    - **Existing CLAUDE.md updates** (common case, per user feedback)
+   - **Optional: Claude execution test** - Run actual claude command with isolation flags
 
 3. **Test infrastructure**:
    - Shell-based test framework
@@ -291,6 +296,10 @@ tests/
 3. Use mktemp -d for test isolation
 4. Focus on outcome assertions (files exist, content present)
 5. Avoid interactive prompts in tests
+6. Run Claude in isolation using:
+   - `--strict-mcp-config --mcp-config '[]'` for no MCP servers
+   - `--settings '{}'` for minimal settings
+   - Custom test settings JSON for controlled environment
 
 ## Notes
 This test infrastructure will be critical for maintaining Codev's reliability as it grows. Starting simple with file system validation and expanding to more complex scenarios over time is the recommended approach.

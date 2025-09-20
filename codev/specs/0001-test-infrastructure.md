@@ -80,20 +80,22 @@ Currently, there is no automated way to verify that the Codev installation proce
 **Estimated Complexity**: Medium
 **Risk Level**: Low
 
-### Approach 2: Python-Based Test Framework
-**Description**: Build a Python test suite using pytest that simulates installations and verifies outcomes
+### Approach 2: Python + Canonical install.sh (RECOMMENDED)
+**Description**: Create a canonical `install.sh` script as the single source of truth, then use pytest to test it
 
 **Pros**:
+- Single authoritative installer script
+- Tests the actual shell script (catches quoting, PATH issues)
 - Rich testing ecosystem (pytest, mocking, fixtures)
-- Easy to mock external dependencies (curl, tar, etc.)
+- Easy to mock external dependencies (mcp command, network)
 - Structured test reports and coverage metrics
 - Can simulate different installation scenarios cleanly
 - Easy to integrate with CI/CD
+- Offline mode for fast, reliable tests
 
 **Cons**:
-- Adds Python as a test dependency
-- Requires translating shell commands to Python operations
-- May not catch shell-specific issues
+- Adds Python as a test dependency (acceptable for testing)
+- Need to maintain both install.sh and INSTALL.md in sync
 
 **Estimated Complexity**: Medium
 **Risk Level**: Low
@@ -115,7 +117,7 @@ Currently, there is no automated way to verify that the Codev installation proce
 - Overkill for basic validation
 
 **Estimated Complexity**: High
-**Risk Level**: Medium
+**Risk Level**: Medium (defer to v2)
 
 ## Open Questions
 
@@ -181,15 +183,61 @@ Currently, there is no automated way to verify that the Codev installation proce
 | Platform-specific issues | Medium | Medium | Focus on Unix-like systems initially |
 | Mocking adds complexity | Low | Medium | Start with simple file-based tests |
 
+## V1 Scope Definition (Based on Multi-Agent Feedback)
+
+### In Scope for V1
+1. **Create canonical `install.sh` script** with:
+   - `--non-interactive` flag to bypass prompts
+   - `--protocol` flag to specify spider or spider-solo
+   - Offline mode support via `CODEV_OFFLINE=1` or local archive path
+   - Fix tar flag bug (`--strip-components=1`)
+
+2. **Core "happy path" tests**:
+   - Fresh installation with SPIDER protocol (Zen present)
+   - Fresh installation with SPIDER-SOLO (Zen absent)
+   - Basic file structure validation
+   - CLAUDE.md creation verification
+
+3. **Test infrastructure**:
+   - pytest harness using tmp_path fixtures
+   - Mock mcp command for Zen detection
+   - Local skeleton archive for offline testing
+   - "Sync linter" test to ensure install.sh and INSTALL.md stay aligned
+
+### Out of Scope for V1 (Defer to V2)
+- Idempotence and re-run safety
+- Existing CLAUDE.md updates
+- Existing codev/ directory handling
+- Complex edge cases (read-only dirs, network failures)
+- Windows support
+- Docker-based testing
+- Upgrade/migration scenarios
+
 ## Expert Consultation
-**Date**: [Pending]
+**Date**: 2025-01-20
 **Models**: GPT-5 and Gemini Pro
-**Key Feedback**:
-- [To be added after consultation]
+
+### GPT-5 Key Feedback:
+- Create canonical install.sh as single source of truth
+- Fix tar flag bug (`--strip=1` should be `--strip-components=1`)
+- Add non-interactive mode for automation
+- Implement offline/local skeleton support
+- Use pytest calling install.sh via subprocess (not reimplementing)
+- Add markers to CLAUDE.md for safe updates
+- Remove tree dependency (not standard on macOS)
+- Standardize Zen MCP detection approach
+
+### Gemini Pro Key Feedback:
+- Start with "golden path" testing for v1
+- Focus on fresh installations only initially
+- Create "sync linter" test to prevent drift between install.sh and INSTALL.md
+- Mock mcp by adding fake executable to PATH
+- Defer idempotence to v2 (complex to get right)
+- Keep v1 simple: two scenarios, one command to run tests
 
 ## Approval
 - [ ] Technical Lead Review
-- [ ] Multi-Agent Consultation Complete
+- [x] Multi-Agent Consultation Complete
 - [ ] Stakeholder Sign-off
 
 ## Notes

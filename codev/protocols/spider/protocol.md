@@ -220,12 +220,14 @@ Each phase should be:
 
 Execute for each phase in the plan. This is a strict cycle that must be completed in order.
 
+**CRITICAL PRECONDITION**: Before starting any phase, verify the previous phase was committed to git. No phase can begin without the prior phase's commit.
+
 **Phase Completion Process**:
 1. **Implement** - Build the code for this phase
 2. **Defend** - Write comprehensive tests that guard functionality
 3. **Evaluate** - Assess and discuss with user
-4. **Commit** - Single atomic commit for the phase
-5. **Proceed** - Move to next phase or address issues
+4. **Commit** - Single atomic commit for the phase (MANDATORY before next phase)
+5. **Proceed** - Move to next phase only after commit
 
 **Handling Failures**:
 - If **Defend** phase reveals gaps → return to **Implement** to fix
@@ -233,12 +235,21 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - If user requests changes → return to **Implement**
 - If fundamental plan flaws found → mark phase as `blocked` and revise plan
 
+**Commit Requirements**:
+- Each phase MUST end with a git commit before proceeding
+- Commit message format: `[Spec ####][Phase: name] type: Description`
+- No work on the next phase until current phase is committed
+- If changes are needed after commit, create a new commit with fixes
+
 #### I - Implement (Build with Discipline)
 
 **Purpose**: Transform the plan into working code with high quality standards.
 
+**Precondition**: Previous phase must be committed (verify with `git log`)
+
 **Requirements**:
 1. **Pre-Implementation**
+   - Verify previous phase is committed to git
    - Review the phase plan and success criteria
    - Set up the development environment
    - Create feature branch following naming convention
@@ -361,12 +372,14 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Incorporate user feedback if requested
    - Get explicit approval to proceed
 
-5. **Phase Commit**
+5. **Phase Commit** (MANDATORY - NO EXCEPTIONS)
    - Create single atomic commit for the entire phase
    - Commit message: `[Spec ####][Phase: name] type: Description`
    - Update the plan document marking this phase as complete
    - Push all changes to version control
    - Document any deviations or decisions in the plan
+   - **CRITICAL**: Next phase CANNOT begin until this commit is complete
+   - Verify commit with `git log` before proceeding
 
 6. **Expert Validation (DEFAULT - MANDATORY)**
    - MUST consult BOTH GPT-5 AND Gemini Pro for validation
@@ -390,8 +403,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 
 **Purpose**: Ensure overall coherence, capture learnings, and improve the methodology.
 
+**Precondition**: All implementation phases must be committed (verify with `git log --oneline | grep "\[Phase"`)
+
 **Process**:
 1. **Comprehensive Review**
+   - Verify all phases have been committed to git
    - Compare final implementation to original specification
    - Assess overall architecture impact
    - Review code quality across all changes

@@ -3,24 +3,25 @@
 ## Metadata
 - **ID**: 0001-test-infrastructure
 - **Specification**: [codev/specs/0001-test-infrastructure.md](/codev/specs/0001-test-infrastructure.md)
-- **Status**: draft
+- **Status**: completed
 - **Author**: Claude (with Waleed)
 - **Created**: 2025-01-20
+- **Completed**: 2025-01-20
 
 ## Overview
 This plan implements a shell-based test suite for validating the Codev installation process. Based on the approved specification, we'll use the bats-core framework to create structured tests that verify installation outcomes without requiring network access or complex dependencies.
 
 ## Success Metrics
-- [ ] All three core test scenarios pass
-- [ ] Fast tests (non-Claude) run in under 30 seconds via `run-tests.sh`
-- [ ] Integration tests (Claude) run separately via `run-integration-tests.sh`
-- [ ] No network access required for core tests
-- [ ] Tests can run on macOS and Linux
-- [ ] Clear pass/fail reporting with bats TAP output
+- [x] All three core test scenarios pass
+- [x] Fast tests (non-Claude) run in under 30 seconds via `run-tests.sh`
+- [x] Integration tests (Claude) run separately via `run-all-tests.sh`
+- [x] No network access required for core tests
+- [x] Tests can run on macOS and Linux
+- [x] Clear pass/fail reporting with bats TAP output
 
 ## Phase Breakdown
 
-### Phase 1: Set Up Test Framework and Structure
+### Phase 1: Set Up Test Framework and Structure [COMPLETED]
 **Objective**: Establish the test infrastructure foundation with bats-core
 
 **Dependencies**: None
@@ -48,7 +49,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 2: Implement Core Test Helpers
+### Phase 2: [COMPLETED] Implement Core Test Helpers
 **Objective**: Create reusable test utilities for mocking and setup
 
 **Dependencies**: Phase 1 (Test framework set up)
@@ -73,7 +74,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 3: Implement SPIDER Test (Zen Present)
+### Phase 3: [COMPLETED] Implement SPIDER Test (Zen Present)
 **Objective**: Test fresh installation when Zen MCP is available
 
 **Dependencies**: Phase 2 (Helpers ready)
@@ -97,7 +98,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 4: Implement SPIDER-SOLO Test (Zen Absent)
+### Phase 4: [COMPLETED] Implement SPIDER-SOLO Test (Zen Absent)
 **Objective**: Test fresh installation when Zen MCP is not available
 
 **Dependencies**: Phase 2 (Helpers ready)
@@ -121,7 +122,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 5: Implement Existing CLAUDE.md Update Test
+### Phase 5: [COMPLETED] Implement Existing CLAUDE.md Update Test
 **Objective**: Test updating an existing CLAUDE.md file
 
 **Dependencies**: Phase 2 (Helpers ready)
@@ -145,7 +146,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 6: Claude Execution Tests
+### Phase 6: [COMPLETED] Claude Execution Tests
 **Objective**: Test actual Claude command execution with isolation flags
 
 **Dependencies**: Phases 3-5 complete
@@ -174,7 +175,7 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 7: Documentation
+### Phase 7: [COMPLETED] Documentation
 **Objective**: Document test usage for local development
 
 **Dependencies**: All tests implemented

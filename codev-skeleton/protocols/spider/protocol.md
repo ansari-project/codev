@@ -364,15 +364,22 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
      - Confirm mocks are only used for external dependencies
      - Tests should survive refactoring that preserves behavior
 
-4. **Evaluation Discussion** (CRITICAL STEP)
+4. **Expert Consultation Before User Evaluation** (MANDATORY - NO EXCEPTIONS)
+   - Get initial feedback from experts
+   - Make ALL necessary fixes based on feedback
+   - **CRITICAL**: Get FINAL approval from ALL consulted experts on the FIXED version
+   - Only proceed to user evaluation after ALL experts approve
+   - If any expert says "not quite" or has concerns, fix them FIRST
+
+5. **Evaluation Discussion with User** (ONLY AFTER EXPERT APPROVAL)
    - Present to user: "Phase X complete. Here's what was built: [summary]"
    - Share test results and coverage metrics
-   - Share multi-agent feedback received
+   - Share that ALL experts have given final approval
    - Ask: "Any changes needed before I commit this phase?"
    - Incorporate user feedback if requested
    - Get explicit approval to proceed
 
-5. **Phase Commit** (MANDATORY - NO EXCEPTIONS)
+6. **Phase Commit** (MANDATORY - NO EXCEPTIONS)
    - Create single atomic commit for the entire phase
    - Commit message: `[Spec ####][Phase: name] type: Description`
    - Update the plan document marking this phase as complete
@@ -381,11 +388,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - **CRITICAL**: Next phase CANNOT begin until this commit is complete
    - Verify commit with `git log` before proceeding
 
-6. **Expert Validation (DEFAULT - MANDATORY)**
-   - MUST consult BOTH GPT-5 AND Gemini Pro for validation
-   - Focus: Quality, architecture compliance, best practices, security
-   - Incorporate feedback from both models before proceeding
-   - Only skip if user explicitly disabled multi-agent consultation
+7. **Final Verification**
+   - Confirm all expert feedback was addressed
+   - Verify all tests pass
+   - Check that documentation is updated
+   - Ensure no outstanding concerns from experts or user
 
 **Evidence Required**:
 - Evaluation checklist completed

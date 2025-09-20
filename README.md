@@ -4,12 +4,9 @@ A methodology framework for building software where context drives development, 
 
 ## Quick Start
 
-```bash
-# Clone the repository
-git clone https://github.com/ansari-project/codev.git
-
-# Tell your AI agent
-"Install Codev following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md"
+Tell your AI agent:
+```
+Install Codev following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
 ```
 
 ## What is Codev?

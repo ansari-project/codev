@@ -140,51 +140,52 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ---
 
-### Phase 6: Add Claude Execution Test (Optional)
-**Objective**: Test actual Claude command execution with isolation
+### Phase 6: Claude Execution Tests
+**Objective**: Test actual Claude command execution with isolation flags
 
 **Dependencies**: Phases 3-5 complete
 
 **Tasks**:
-1. Create 04_claude_execution.bats (marked as optional)
-2. Use Claude isolation flags (--strict-mcp-config)
-3. Provide installation instructions as input
-4. Verify Claude can execute without user settings
-5. Add skip condition if Claude not available
+1. Create 04_claude_execution.bats for real Claude testing
+2. Use Claude isolation flags (--strict-mcp-config --mcp-config '[]')
+3. Test Claude executing actual installation instructions
+4. Verify Claude can run without user settings interference
+5. Tests skip gracefully if Claude not available (for contributors without Claude)
 
 **Deliverables**:
-- Optional integration test with real Claude
-- Demonstrates isolation capability
-- Can be skipped in CI if needed
+- Integration tests with real Claude
+- Validates actual AI execution of instructions
+- Local testing only (not for CI/CD due to API keys)
 
 **Success Criteria**:
-- Claude runs in isolation when available
-- Test skips gracefully if Claude not installed
-- No user settings affect test execution
+- Claude executes installation in isolated environment
+- Tests work locally for developers with Claude installed
+- Graceful skip for environments without Claude
 
 ---
 
-### Phase 7: Documentation and CI Integration
-**Objective**: Document usage and prepare for CI/CD
+### Phase 7: Documentation
+**Objective**: Document test usage for local development
 
 **Dependencies**: All tests implemented
 
 **Tasks**:
 1. Create tests/README.md with usage instructions
-2. Document how to run tests locally
-3. Add GitHub Actions workflow (optional)
+2. Document how to run tests locally with Claude
+3. Document test behavior without Claude (graceful skip)
 4. Document how to add new tests
 5. Create troubleshooting guide
 
 **Deliverables**:
 - Complete test documentation
-- CI/CD configuration (if applicable)
-- Developer guide for extending tests
+- Local development testing guide
+- Instructions for extending test suite
 
 **Success Criteria**:
-- Clear documentation for running tests
+- Clear documentation for running tests locally
 - Instructions for debugging failures
 - Guide for adding new test cases
+- Note: CI/CD deferred due to Claude API key requirements
 
 ---
 
@@ -210,20 +211,11 @@ If any phase fails:
 - Basic Unix utilities (cp, mkdir, grep, etc.)
 - Optional: Claude CLI for execution tests
 
-## Phase Status Tracking
-
-| Phase | Status | Start Date | End Date | Notes |
-|-------|--------|------------|----------|-------|
-| Phase 1: Test Framework | pending | - | - | |
-| Phase 2: Core Helpers | pending | - | - | |
-| Phase 3: SPIDER Test | pending | - | - | |
-| Phase 4: SPIDER-SOLO Test | pending | - | - | |
-| Phase 5: Existing CLAUDE.md | pending | - | - | |
-| Phase 6: Claude Execution | pending | - | - | Optional |
-| Phase 7: Documentation | pending | - | - | |
 
 ## Notes
 - Phases 3, 4, and 5 can be developed in parallel once Phase 2 is complete
-- Phase 6 is optional and can be deferred if time constraints
+- Phase 6 tests with real Claude using isolation flags (local only, not CI/CD)
+- Claude API keys prevent CI/CD integration - tests are for local development
+- Tests should work WITH Claude (full testing) or WITHOUT (graceful skip)
 - Focus on outcome testing rather than testing every shell command
 - Keep tests simple and maintainable for v1

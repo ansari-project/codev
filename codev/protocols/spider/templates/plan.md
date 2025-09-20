@@ -4,9 +4,7 @@
 - **ID**: plan-[YYYY-MM-DD]-[short-name]
 - **Status**: draft
 - **Specification**: [Link to codev/specs/spec-file.md]
-- **Author**: [name]
 - **Created**: [YYYY-MM-DD]
-- **Estimated Duration**: [X days/weeks]
 
 ## Executive Summary
 [Brief overview of the implementation approach chosen and why. Reference the specification's selected approach.]
@@ -22,7 +20,6 @@
 ## Phase Breakdown
 
 ### Phase 1: [Descriptive Name]
-**Duration**: [X days]
 **Dependencies**: None
 
 #### Objectives
@@ -63,7 +60,6 @@
 ---
 
 ### Phase 2: [Descriptive Name]
-**Duration**: [X days]
 **Dependencies**: Phase 1
 
 [Repeat structure for each phase]
@@ -71,7 +67,6 @@
 ---
 
 ### Phase 3: [Descriptive Name]
-**Duration**: [X days]
 **Dependencies**: Phase 2
 
 [Continue for all phases]
@@ -85,8 +80,7 @@ Phase 1 ──→ Phase 2 ──→ Phase 3
 
 ## Resource Requirements
 ### Development Resources
-- **Engineers**: [Number and expertise needed]
-- **Time Allocation**: [% dedication expected]
+- **Engineers**: [Expertise needed]
 - **Environment**: [Dev/staging requirements]
 
 ### Infrastructure

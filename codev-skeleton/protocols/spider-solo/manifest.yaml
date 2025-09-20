@@ -1,0 +1,141 @@
+name: SP(IDE)R
+version: 1.0.0
+description: Specification-driven development with iterative implementation and continuous review
+author: Codev Team
+created: 2025-01-19
+
+# Protocol phases in order
+phases:
+  - specify
+  - plan
+  - implement
+  - defend
+  - evaluate
+  - review
+
+# Templates provided
+templates:
+  specification: templates/spec.md
+  plan: templates/plan.md
+  review: templates/review.md
+
+# Optional features that can be enabled
+features:
+  multi_agent:
+    description: Enable AI consultation at key decision points
+    default: false
+    consultation_points:
+      - after_specification
+      - after_planning
+      - after_evaluation
+
+  strict_mode:
+    description: Enforce all protocol requirements strictly
+    default: false
+    requirements:
+      - expert_consultation_mandatory
+      - test_coverage_minimum: 90
+      - all_phases_required
+
+  parallel_phases:
+    description: Allow multiple phases to run in parallel when no dependencies exist
+    default: false
+
+# File naming conventions
+conventions:
+  specs:
+    pattern: "YYYY-MM-DD-{name}.md"
+    example: "2024-01-15-user-authentication.md"
+
+  plans:
+    pattern: "plan-for-{spec-name}.md"
+    example: "plan-for-user-authentication.md"
+
+  reviews:
+    pattern: "review-{date}-{feature}.md"
+    example: "review-2024-01-20-user-authentication.md"
+
+# Git integration
+git:
+  branch_pattern: "spider/{spec-name}/{phase-name}"
+  commit_prefix: "[Phase: {phase-name}]"
+  pr_template: |
+    ## SP(IDE)R Phase Completion
+
+    **Specification**: [Link to spec]
+    **Plan**: [Link to plan]
+    **Phase**: [Phase name]
+
+    ### Changes
+    -
+
+    ### Testing
+    - [ ] Unit tests pass
+    - [ ] Integration tests pass
+    - [ ] Performance benchmarks met
+
+    ### Checklist
+    - [ ] Code follows project conventions
+    - [ ] Documentation updated
+    - [ ] No security vulnerabilities introduced
+
+# Expert consultation configuration
+consultation:
+  models:
+    - gpt-5
+    - gemini-2.5-pro
+    - o3
+
+  prompts:
+    specification_review: |
+      Review this specification for completeness, feasibility, and potential issues.
+      Consider architecture, scalability, security, and maintainability.
+
+    plan_validation: |
+      Validate this implementation plan for realistic timelines, proper phase breakdown,
+      and identification of risks and dependencies.
+
+    code_review: |
+      Review this implementation for code quality, security, performance, and
+      adherence to best practices.
+
+# Validation rules
+validation:
+  specification:
+    required_fields:
+      - problem_statement
+      - success_criteria
+      - constraints
+      - solution_approaches
+      - open_questions
+    minimum_approaches: 3
+
+  plan:
+    required_fields:
+      - phases
+      - dependencies
+      - risks
+      - success_metrics
+    max_phase_duration_days: 5
+
+  review:
+    required_fields:
+      - specification_compliance
+      - lessons_learned
+      - methodology_feedback
+
+# Hooks for automation (optional)
+hooks:
+  pre_phase:
+    - validate_prerequisites
+    - create_branch
+
+  post_phase:
+    - run_tests
+    - update_documentation
+    - notify_stakeholders
+
+  on_completion:
+    - generate_metrics
+    - archive_artifacts
+    - trigger_deployment

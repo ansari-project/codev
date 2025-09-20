@@ -1,6 +1,6 @@
 # Codev: Context-First Development
 
-A methodology framework for building software where documentation drives development, not the other way around.
+A methodology framework for building software where context drives development, not the other way around.
 
 ## Quick Start
 
@@ -18,11 +18,11 @@ cd your-project
 
 ## What is Codev?
 
-Codev is a development methodology that treats **natural language documentation as code**. Instead of writing code first and documenting later, you start with clear specifications that both humans and AI agents can understand and execute.
+Codev is a development methodology that treats **natural language context as code**. Instead of writing code first and documenting later, you start with clear specifications that both humans and AI agents can understand and execute.
 
 ### Core Philosophy
 
-1. **Context is King** - Documentation isn't an afterthought, it's the blueprint
+1. **Context Drives Code** - Context definitions flow from high-level specifications down to implementation details
 2. **Human-AI Collaboration** - Designed for seamless cooperation between developers and AI agents
 3. **Evolving Methodology** - The process itself evolves and improves with each project
 

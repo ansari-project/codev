@@ -2,7 +2,12 @@
 
 ## Overview
 
-This document provides instructions for AI agents to install the Codev methodology framework into a user's project. Codev is a documentation-driven development methodology that uses structured protocols to guide collaborative software development.
+This document provides instructions for AI agents to install the Codev methodology framework into a user's project. Codev is a context-driven development methodology that uses structured protocols to guide collaborative software development.
+
+### Core Principles
+1. **Context Drives Code** - Context definitions flow from high-level specifications down to implementation details
+2. **Human-AI Collaboration** - Designed for seamless cooperation between developers and AI agents
+3. **Evolving Methodology** - The process itself evolves and improves with each project
 
 ## Installation Process
 
@@ -24,54 +29,78 @@ mcp__zen__version
     1. "Install Zen MCP server for multi-agent consultation features"
     2. "Use SPIDER-SOLO protocol (single-agent variant)"
 
-### Step 2: Copy the Codev Skeleton
+### Step 2: Create and Populate the Codev Directory
 
-The skeleton provides the basic directory structure and protocol files:
+**IMPORTANT**: All Codev files go INSIDE a `codev/` directory, not in the project root!
 
 ```bash
-# Option A: If you have access to the codev repository
-cp -r [codev-repo]/codev-skeleton/* ./
+# Clone the Codev repository to a temporary location
+git clone --depth 1 https://github.com/ansari-project/codev.git /tmp/codev-install
 
-# Option B: Create the structure manually
-mkdir -p codev/{protocols,ref,specs,plans}
-mkdir -p codev/ref/lessons
+# Create the codev directory in your project
+mkdir -p codev
+
+# Copy the skeleton structure
+cp -r /tmp/codev-install/codev-skeleton/* codev/
+
+# Clean up
+rm -rf /tmp/codev-install
 ```
 
-### Step 3: Select and Install Protocol
-
-Based on Step 1 decision:
-
-#### For SPIDER (with multi-agent):
-```bash
-# Ensure the spider protocol is in place
-ls codev/protocols/spider/protocol.md
-# Should include:
-# - protocol.md (with multi-agent consultation)
-# - manifest.yaml
-# - templates/spec.md
-# - templates/plan.md
-# - templates/lessons.md
+**Directory Structure Should Be**:
+```
+project-root/
+├── codev/              # All Codev files go here!
+│   ├── protocols/      # Protocol definitions
+│   ├── specs/          # Specifications
+│   ├── plans/          # Implementation plans
+│   └── ref/
+│       └── lessons/    # Lessons learned
+├── CLAUDE.md           # In project root
+└── [project files]     # Your actual code
 ```
 
-#### For SPIDER-SOLO (single-agent):
-```bash
-# Use the spider-solo variant
-mv codev/protocols/spider-solo codev/protocols/spider
-rm -rf codev/protocols/spider-solo
-# Or rename references in CLAUDE.md to spider-solo
-```
+### Step 3: Protocol Selection
+
+The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the CLAUDE.md file to reference the appropriate protocol path.
+
+Available protocols:
+- `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
+- `codev/protocols/spider-solo/` - Single-agent variant
 
 ### Step 4: Create or Update CLAUDE.md
 
-Create the main agent instructions file in the project root:
+**IMPORTANT**: Check if CLAUDE.md already exists before modifying!
 
 ```bash
-# Copy from skeleton
-cp codev-skeleton/CLAUDE.md ./CLAUDE.md
+# Check if CLAUDE.md exists
+if [ -f "CLAUDE.md" ]; then
+    echo "CLAUDE.md exists. Updating to include Codev references..."
+    # APPEND Codev-specific instructions to existing file
+else
+    # Ask user for permission
+    echo "No CLAUDE.md found. May I create one? [y/n]"
+    # If yes, copy from skeleton
+    cp /tmp/codev-install/codev-skeleton/CLAUDE.md ./CLAUDE.md
+fi
+```
 
-# Update the active protocol reference
-# For SPIDER: codev/protocols/spider/protocol.md
-# For SPIDER-SOLO: codev/protocols/spider-solo/protocol.md
+**When updating existing CLAUDE.md**, add these sections:
+```markdown
+## Codev Methodology
+
+This project uses the Codev context-driven development methodology.
+
+### Active Protocol
+- Protocol: SPIDER (or SPIDER-SOLO)
+- Location: codev/protocols/spider/protocol.md
+
+### Directory Structure
+- Specifications: codev/specs/
+- Plans: codev/plans/
+- Lessons: codev/ref/lessons/
+
+See codev/protocols/spider/protocol.md for full protocol details.
 ```
 
 Key sections to verify in CLAUDE.md:
@@ -96,17 +125,27 @@ echo "Use the template at codev/protocols/spider/templates/spec.md"
 Run these checks:
 
 ```bash
+# Verify codev is a directory, not spread across root
+ls -la codev/
+
 # Check directory structure
 tree codev -L 2
 
 # Expected output:
-# codev/
+# codev/                    # <-- Everything inside here!
 # ├── protocols/
-# │   └── spider/  (or spider-solo/)
+# │   ├── spider/
+# │   └── spider-solo/
 # ├── ref/
 # │   └── lessons/
 # ├── specs/
 # └── plans/
+
+# WRONG structure (files in root):
+# project-root/
+# ├── protocols/           # ❌ Wrong!
+# ├── specs/               # ❌ Wrong!
+# └── codev/               # Should all be inside here
 
 # Check protocol is accessible
 cat codev/protocols/spider/protocol.md | head -20
@@ -115,63 +154,25 @@ cat codev/protocols/spider/protocol.md | head -20
 grep "protocols/spider" CLAUDE.md
 ```
 
-## Quick Installation Script
-
-For automated installation, use this bash script:
-
-```bash
-#!/bin/bash
-# codev-install.sh
-
-# Check for Zen MCP
-if command -v mcp &> /dev/null; then
-    PROTOCOL="spider"
-    echo "✓ Zen MCP detected - installing SPIDER protocol"
-else
-    echo "✗ Zen MCP not found"
-    read -p "Install SPIDER-SOLO (single-agent)? [y/n]: " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        PROTOCOL="spider-solo"
-    else
-        echo "Installation cancelled"
-        exit 1
-    fi
-fi
-
-# Create directory structure
-mkdir -p codev/{protocols,ref/lessons,specs,plans}
-
-# Copy protocol files (assumes access to codev-skeleton)
-cp -r /path/to/codev-skeleton/protocols/$PROTOCOL codev/protocols/
-
-# Copy CLAUDE.md
-cp /path/to/codev-skeleton/CLAUDE.md ./CLAUDE.md
-
-# Update CLAUDE.md with correct protocol
-if [[ "$PROTOCOL" == "spider-solo" ]]; then
-    sed -i '' 's/spider\/protocol.md/spider-solo\/protocol.md/g' CLAUDE.md
-fi
-
-echo "✓ Codev installed with $PROTOCOL protocol"
-echo "Start with: Create a specification in codev/specs/0001-your-feature.md"
-```
-
 ## Post-Installation Guidance
 
 After installation, guide the user:
 
-1. **First Specification**: "What would you like to build first? I'll create a specification using the SPIDER protocol."
+1. **First Specification**: "What would you like to build first? I can help create a specification. Which protocol would you prefer - SPIDER (with multi-agent consultation) or SPIDER-SOLO?"
 
 2. **Explain the Flow**:
-   - Specification (with clarifying questions)
-   - Plan (with phases)
-   - Implementation (IDE loop per phase)
-   - Review (lessons learned)
+   - **Build in phases using the IDE loop**:
+     - **I**mplement: Build the code
+     - **D**efend: Write comprehensive tests
+     - **E**valuate: Verify requirements are met
+   - Each phase follows: Specification → Plan → IDE Loop → Review
 
 3. **Document Naming**: Always use ####-descriptive-name.md format
 
-4. **Git Integration**: Encourage commits at each document milestone
+4. **Git Integration**:
+   - Each stage gets one pull request
+   - Phases can have multiple commits
+   - User approval required before PRs
 
 ## Troubleshooting
 
@@ -207,6 +208,7 @@ After installation, guide the user:
 ## Remember
 
 - The goal is THREE documents per feature (spec, plan, lessons)
-- Each phase gets ONE atomic commit
-- User approval required before phase commits
-- Documentation drives development, not vice versa
+- Each stage gets one pull request
+- Phases can have multiple commits within the PR
+- User approval required before creating PRs
+- Context drives development

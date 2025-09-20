@@ -113,4 +113,4 @@ This contains:
 
 ---
 
-*Remember: Context is king. When in doubt, write more documentation rather than less.*
+*Remember: Context drives code. When in doubt, write more documentation rather than less.*

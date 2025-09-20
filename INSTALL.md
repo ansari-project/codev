@@ -39,7 +39,7 @@ mkdir -p /tmp/codev-install
 cd /tmp/codev-install
 
 # Download and extract just the codev-skeleton
-curl -L https://github.com/ansari-project/codev/archive/main.tar.gz | tar xz --strip=1 codev-main/codev-skeleton
+curl -L https://github.com/ansari-project/codev/archive/main.tar.gz | tar xz --strip-components=1 codev-main/codev-skeleton
 
 # Go back to your project directory
 cd -

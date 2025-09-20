@@ -225,7 +225,8 @@ Edge case testing deferred per user feedback - focusing on happy path for v1.
 **Date**: 2025-01-20
 **Models**: GPT-5 and Gemini Pro
 
-### GPT-5 Key Feedback:
+### Initial Consultation (Pre-User Feedback)
+#### GPT-5 Key Feedback:
 - Create canonical install.sh as single source of truth
 - Fix tar flag bug (`--strip=1` should be `--strip-components=1`)
 - Add non-interactive mode for automation
@@ -235,7 +236,7 @@ Edge case testing deferred per user feedback - focusing on happy path for v1.
 - Remove tree dependency (not standard on macOS)
 - Standardize Zen MCP detection approach
 
-### Gemini Pro Key Feedback:
+#### Gemini Pro Key Feedback:
 - Start with "golden path" testing for v1
 - Focus on fresh installations only initially
 - Create "sync linter" test to prevent drift between install.sh and INSTALL.md
@@ -243,10 +244,53 @@ Edge case testing deferred per user feedback - focusing on happy path for v1.
 - Defer idempotence to v2 (complex to get right)
 - Keep v1 simple: two scenarios, one command to run tests
 
+### Second Consultation (Post-User Feedback)
+#### GPT-5 Key Feedback on Shell Approach:
+- **Recommended framework**: bats-core with bats-support, bats-assert, bats-file
+- **Critical fixes needed**:
+  - Use `cp -a` instead of `cp -r` to copy dotfiles
+  - Fix tar flag to `--strip-components=1`
+  - Remove tree dependency (use find instead)
+- **Test structure**:
+  - Vendor bats libraries under tests/lib/
+  - Create helper scripts for mocking mcp
+  - Use mktemp for isolated test directories
+- **Viable approach**: Shell-based testing is appropriate for v1 goals
+- **Key insight**: Focus on outcome assertions rather than scripting every command
+
 ## Approval
 - [x] Technical Lead Review (User feedback incorporated)
 - [x] Multi-Agent Consultation Complete
 - [x] Stakeholder Sign-off (User has provided direction)
+
+## Implementation Recommendations (From Consultations)
+
+### Test Framework: bats-core
+- Vendor bats-core and helper libraries under `tests/lib/`
+- Provides TAP output, clean assertions, file helpers
+- Works on macOS and Linux without system installation
+
+### Test Structure
+```
+tests/
+├── lib/              # Vendored bats libraries
+│   ├── bats-support/
+│   ├── bats-assert/
+│   └── bats-file/
+├── helpers/          # Test utilities
+│   ├── common.bash   # mktemp, cleanup, paths
+│   └── mock_mcp.bash # Fake mcp for Zen detection
+├── 01_fresh_spider.bats
+├── 02_fresh_spider_solo.bats
+└── 03_existing_claude.bats
+```
+
+### Critical Implementation Details
+1. Use `cp -a codev-skeleton/. codev/` to copy dotfiles
+2. Mock mcp by adding fake executable to PATH
+3. Use mktemp -d for test isolation
+4. Focus on outcome assertions (files exist, content present)
+5. Avoid interactive prompts in tests
 
 ## Notes
 This test infrastructure will be critical for maintaining Codev's reliability as it grows. Starting simple with file system validation and expanding to more complex scenarios over time is the recommended approach.

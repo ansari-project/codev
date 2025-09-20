@@ -6,7 +6,7 @@ A methodology framework for building software where context drives development, 
 
 Tell your AI agent:
 ```
-Install Codev following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
+Apply Codev to this repo following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
 ```
 
 ## What is Codev?

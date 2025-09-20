@@ -34,8 +34,15 @@ mcp__zen__version
 **IMPORTANT**: All Codev files go INSIDE a `codev/` directory, not in the project root!
 
 ```bash
-# Clone the Codev repository to a temporary location
-git clone --depth 1 https://github.com/ansari-project/codev.git /tmp/codev-install
+# Create a temporary directory for installation
+mkdir -p /tmp/codev-install
+cd /tmp/codev-install
+
+# Download and extract just the codev-skeleton
+curl -L https://github.com/ansari-project/codev/archive/main.tar.gz | tar xz --strip=1 codev-main/codev-skeleton
+
+# Go back to your project directory
+cd -
 
 # Create the codev directory in your project
 mkdir -p codev
@@ -81,7 +88,7 @@ else
     # Ask user for permission
     echo "No CLAUDE.md found. May I create one? [y/n]"
     # If yes, copy from skeleton
-    cp /tmp/codev-install/codev-skeleton/CLAUDE.md ./CLAUDE.md
+    cp codev/CLAUDE.md.template ./CLAUDE.md
 fi
 ```
 

@@ -1,0 +1,18 @@
+# LLMs Configuration
+
+This file documents the AI models used in this project and their specific roles.
+
+## Primary Development
+- Claude (Anthropic): Main development agent
+- Configuration: Standard Claude Code setup
+
+## Multi-Agent Consultation (SPIDER Protocol)
+- GPT-5: Architecture and feasibility review
+- Gemini Pro: Completeness and edge case analysis
+
+## Alternative Models
+Add any project-specific model configurations here.
+
+## Notes
+- Update this file as you add or change AI agent configurations
+- Document any special prompts or settings used

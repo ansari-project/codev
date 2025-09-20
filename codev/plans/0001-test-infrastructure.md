@@ -6,7 +6,6 @@
 - **Status**: draft
 - **Author**: Claude (with Waleed)
 - **Created**: 2025-01-20
-- **Estimated Duration**: 2-3 days
 
 ## Overview
 This plan implements a shell-based test suite for validating the Codev installation process. Based on the approved specification, we'll use the bats-core framework to create structured tests that verify installation outcomes without requiring network access or complex dependencies.
@@ -43,8 +42,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Bats framework loads and reports version
 - Test directory structure matches specification
 
-**Estimated Time**: 2-3 hours
-
 ---
 
 ### Phase 2: Implement Core Test Helpers
@@ -68,8 +65,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Helpers can create isolated test directories
 - Mock mcp can simulate present/absent states
 - Local skeleton copy works with dotfiles
-
-**Estimated Time**: 3-4 hours
 
 ---
 
@@ -95,8 +90,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Correctly detects SPIDER protocol in CLAUDE.md
 - All required directories exist
 
-**Estimated Time**: 2 hours
-
 ---
 
 ### Phase 4: Implement SPIDER-SOLO Test (Zen Absent)
@@ -120,8 +113,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Test passes consistently
 - Correctly selects SPIDER-SOLO when Zen absent
 - All required directories exist
-
-**Estimated Time**: 2 hours
 
 ---
 
@@ -147,8 +138,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Codev section properly appended
 - No duplicate sections added
 
-**Estimated Time**: 2-3 hours
-
 ---
 
 ### Phase 6: Add Claude Execution Test (Optional)
@@ -173,8 +162,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Test skips gracefully if Claude not installed
 - No user settings affect test execution
 
-**Estimated Time**: 2 hours
-
 ---
 
 ### Phase 7: Documentation and CI Integration
@@ -198,8 +185,6 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Clear documentation for running tests
 - Instructions for debugging failures
 - Guide for adding new test cases
-
-**Estimated Time**: 2 hours
 
 ---
 

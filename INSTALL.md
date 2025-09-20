@@ -54,8 +54,8 @@ project-root/
 │   ├── protocols/      # Protocol definitions
 │   ├── specs/          # Specifications
 │   ├── plans/          # Implementation plans
-│   └── ref/
-│       └── lessons/    # Lessons learned
+│   ├── lessons/        # Lessons learned
+│   └── resources/      # Reference materials (llms.txt, guides, etc.)
 ├── CLAUDE.md           # In project root
 └── [project files]     # Your actual code
 ```
@@ -98,7 +98,8 @@ This project uses the Codev context-driven development methodology.
 ### Directory Structure
 - Specifications: codev/specs/
 - Plans: codev/plans/
-- Lessons: codev/ref/lessons/
+- Lessons: codev/lessons/
+- Resources: codev/resources/
 
 See codev/protocols/spider/protocol.md for full protocol details.
 ```
@@ -136,10 +137,10 @@ tree codev -L 2
 # ├── protocols/
 # │   ├── spider/
 # │   └── spider-solo/
-# ├── ref/
-# │   └── lessons/
 # ├── specs/
-# └── plans/
+# ├── plans/
+# ├── lessons/
+# └── resources/
 
 # WRONG structure (files in root):
 # project-root/

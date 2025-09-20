@@ -46,8 +46,8 @@ your-project/
 │   │       └── templates/   # Document templates
 │   ├── specs/              # Feature specifications
 │   ├── plans/              # Implementation plans
-│   └── ref/
-│       └── lessons/        # Lessons learned
+│   ├── lessons/            # Lessons learned
+│   └── resources/          # Reference materials (llms.txt, etc.)
 ├── CLAUDE.md               # AI agent instructions
 └── [your code]
 ```

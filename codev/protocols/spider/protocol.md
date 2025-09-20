@@ -85,7 +85,7 @@ SPIDER is a structured development protocol that emphasizes specification-driven
 **Important**: Keep documentation minimal - use only THREE core files with the same name:
 - `specs/####-descriptive-name.md` - The specification
 - `plans/####-descriptive-name.md` - The implementation plan
-- `ref/lessons/####-descriptive-name.md` - Lessons learned (created during Review phase)
+- `lessons/####-descriptive-name.md` - Lessons learned (created during Review phase)
 
 **Process**:
 1. **Clarifying Questions** (ALWAYS START HERE)
@@ -410,11 +410,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Propose process improvements
    - Update templates if needed
    - Share learnings with team
-   - Document in `codev/ref/lessons/`
+   - Document in `codev/lessons/`
    - **Important**: Update the protocol document in `codev/protocols/` to improve the process based on learnings
 
 **Output**:
-- Single lessons learned document in `codev/ref/lessons/####-descriptive-name.md`
+- Single lessons learned document in `codev/lessons/####-descriptive-name.md`
 - Same filename as spec/plan, captures all learnings from this feature
 - Methodology improvement proposals (update protocol if needed)
 

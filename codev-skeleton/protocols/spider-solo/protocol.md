@@ -2,32 +2,51 @@
 
 ## Prerequisites
 
-**No External Dependencies**:
-- This is the single-agent variant of SPIDER
-- Does not require Zen MCP server
-- All review and validation done by the primary agent
+**Required for Multi-Agent Consultation**:
+- Zen MCP server must be installed and running
+- Check with: `mcp list` or test with `mcp__zen__version`
+- If not available:
+  - Option 1: "Would you like help installing Zen MCP server?"
+  - Option 2: "Use spider-solo protocol instead (no multi-agent consultation)"
 
 ## Protocol Configuration
 
-### Single-Agent Workflow
+### Multi-Agent Consultation (ENABLED BY DEFAULT)
 
 **DEFAULT BEHAVIOR:**
-This protocol operates with a single agent only. All review and validation is performed by the primary agent without external consultation.
+Multi-agent consultation is **ENABLED BY DEFAULT** when using SPIDER protocol.
 
-**WHY USE SPIDER-SOLO:**
-- Faster iteration when single-agent review not needed
-- When Zen MCP server is not available
-- For smaller, less critical projects
-- When you want full control over the review process
+**DEFAULT AGENTS:**
+- **GPT-5**: Primary reviewer for architecture, feasibility, and code quality
+- **Gemini Pro**: Secondary reviewer for completeness, edge cases, and alternative approaches
+
+**DISABLING CONSULTATION:**
+For single-agent workflow, use the spider-solo protocol instead.
+
+**CUSTOM AGENTS:**
+The user can specify different agents by saying: "use SPIDER with consultation from [agent1] and [agent2]"
+
+**CONSULTATION BEHAVIOR:**
+- DEFAULT: MANDATORY consultation with GPT-5 and Gemini Pro at EVERY checkpoint
+- When explicitly disabled: Skip all consultation steps
+- The protocol is BLOCKED until all required consultations are complete
+
+**Consultation Checkpoints**:
+- **Specification**: After initial draft, after human comments
+- **Planning**: After initial plan, after human review
+- **Implementation**: After code implementation
+- **Defending**: After test creation
+- **Evaluation**: Before marking phase complete
+- **Review**: After review document
 
 ## Overview
-SPIDER-SOLO is a streamlined variant of the SPIDER protocol for single-agent development. It maintains the same document-driven approach and phase structure but relies solely on the primary agent's analysis.
+SPIDER is a structured development protocol that emphasizes specification-driven development with iterative implementation and continuous review. It builds upon the DAPPER methodology with a focus on context-first development and multi-agent collaboration.
 
 **Core Principle**: Each feature is tracked through exactly THREE documents - a specification, a plan, and a lessons-learned summary - all sharing the same filename and sequential identifier.
 
-## When to Use SPIDER-SOLO
+## When to Use SPIDER
 
-### Use SPIDER-SOLO for:
+### Use SPIDER for:
 - New feature development
 - Architecture changes
 - Complex refactoring
@@ -35,7 +54,7 @@ SPIDER-SOLO is a streamlined variant of the SPIDER protocol for single-agent dev
 - API design and implementation
 - Performance optimization initiatives
 
-### Skip SPIDER-SOLO for:
+### Skip SPIDER for:
 - Simple bug fixes (< 10 lines)
 - Documentation updates
 - Configuration changes
@@ -52,16 +71,21 @@ SPIDER-SOLO is a streamlined variant of the SPIDER protocol for single-agent dev
 1. User provides a prompt describing what they want built
 2. Agent generates initial specification document
 3. **COMMIT**: "Initial specification draft"
-4. Human reviews and provides comments for changes
-5. Agent makes changes and lists what was modified
-6. **COMMIT**: "Specification with user feedback"
-7. **COMMIT**: "Final approved specification"
-8. Iterate steps 4-7 until user approves and says to proceed to planning
+4. Multi-agent review (GPT-5 and Gemini Pro)
+5. Agent updates spec with multi-agent feedback
+6. **COMMIT**: "Specification with multi-agent review"
+7. Human reviews and provides comments for changes
+8. Agent makes changes and lists what was modified
+9. **COMMIT**: "Specification with user feedback"
+10. Multi-agent review of updated document
+11. Final updates based on second review
+12. **COMMIT**: "Final approved specification"
+13. Iterate steps 7-12 until user approves and says to proceed to planning
 
 **Important**: Keep documentation minimal - use only THREE core files with the same name:
 - `specs/####-descriptive-name.md` - The specification
 - `plans/####-descriptive-name.md` - The implementation plan
-- `ref/lessons/####-descriptive-name.md` - Lessons learned (created during Review phase)
+- `lessons/####-descriptive-name.md` - Lessons learned (created during Review phase)
 
 **Process**:
 1. **Clarifying Questions** (ALWAYS START HERE)
@@ -98,14 +122,25 @@ SPIDER-SOLO is a streamlined variant of the SPIDER protocol for single-agent dev
    - Specify quality metrics
    - Document test scenarios
 
-6. **Internal Review**
-   - Agent performs self-review for completeness
-   - Check for missing requirements
-   - Validate solution approaches
-   - Ensure all questions are addressed
+6. **Expert Consultation (DEFAULT - MANDATORY)**
+   - **First Consultation** (after initial draft):
+     - MUST consult GPT-5 AND Gemini Pro
+     - Focus: Problem clarity, solution completeness, missing requirements
+     - Update specification with ALL feedback from both models
+     - Document changes in "Consultation Log" section of the spec
+   - **Second Consultation** (after human comments):
+     - MUST consult GPT-5 AND Gemini Pro again
+     - Focus: Validate changes, ensure alignment
+     - Final specification update with both models' input
+     - Update "Consultation Log" with new feedback
+
+   **Note**: Self-review only - no multi-agent consultation in SOLO variant
+
+**Review Process**: Self-review and human approval only
 
 **Output**: Single specification document in `codev/specs/####-descriptive-name.md`
-- All analysis and decisions documented directly
+- All consultation feedback incorporated directly into this document
+- Include a "Consultation Log" section summarizing key feedback and changes
 - Version control captures evolution through commits
 **Template**: `templates/spec.md`
 **Review Required**: Yes - Human approval AFTER consultations
@@ -117,11 +152,16 @@ SPIDER-SOLO is a streamlined variant of the SPIDER protocol for single-agent dev
 **Workflow Overview**:
 1. Agent creates initial plan document
 2. **COMMIT**: "Initial plan draft"
-3. User reviews and requests modifications
-4. Agent updates plan based on user feedback
-5. **COMMIT**: "Plan with user feedback"
-6. **COMMIT**: "Final approved plan"
-7. Iterate steps 3-6 until agreement is reached
+3. Multi-agent review (GPT-5 and Gemini Pro)
+4. Agent updates plan with multi-agent feedback
+5. **COMMIT**: "Plan with multi-agent review"
+6. User reviews and requests modifications
+7. Agent updates plan based on user feedback
+8. **COMMIT**: "Plan with user feedback"
+9. Multi-agent review of updated plan
+10. Final updates based on second review
+11. **COMMIT**: "Final approved plan"
+12. Iterate steps 6-11 until agreement is reached
 
 **Phase Design Goals**:
 Each phase should be:
@@ -153,13 +193,23 @@ Each phase should be:
    - Specify performance benchmarks
    - Document acceptance tests
 
-3. **Internal Review**
-   - Agent self-reviews for feasibility
-   - Validate phase breakdown
-   - Check completeness of deliverables
+3. **Expert Review (DEFAULT - MANDATORY)**
+   - **First Consultation** (after plan creation):
+     - MUST consult GPT-5 AND Gemini Pro
+     - Focus: Feasibility, phase breakdown, completeness
+     - Update plan with ALL feedback from both models
+   - **Second Consultation** (after human review):
+     - MUST consult GPT-5 AND Gemini Pro again
+     - Focus: Validate adjustments, confirm approach
+     - Final plan refinement with both models' input
+
+   **Note**: Self-review only - no multi-agent consultation in SOLO variant
+
+**Review Process**: Self-review and human approval only
 
 **Output**: Single plan document in `codev/plans/####-descriptive-name.md`
 - Same filename as specification, different directory
+- All consultation feedback incorporated directly
 - Include phase status tracking within this document
 - Version control captures evolution through commits
 **Template**: `templates/plan.md`
@@ -222,11 +272,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - No linting errors
 - CI pipeline pass link (build/test/lint)
 
-**Internal Code Review**:
-- Agent self-reviews for code quality
-- Check patterns and best practices
-- Validate security considerations
-- Ensure consistency with architecture
+**Expert Consultation (DEFAULT - MANDATORY)**:
+- MUST consult BOTH GPT-5 AND Gemini Pro after implementation
+- Focus: Code quality, patterns, security, best practices
+- Update code based on feedback from BOTH models before proceeding
+- Only skip if user explicitly disabled multi-agent consultation
 
 #### D - Defend (Write Comprehensive Tests)
 
@@ -260,11 +310,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - Security scan results (if configured)
 - CI test run link with artifacts
 
-**Test Review**:
-- Agent reviews test coverage
-- Identify missing edge cases
-- Validate defensive patterns
-- Ensure comprehensive test strategy
+**Expert Consultation (DEFAULT - MANDATORY)**:
+- MUST consult BOTH GPT-5 AND Gemini Pro for test defense review
+- Focus: Test coverage completeness, edge cases, defensive patterns, test strategy
+- Write additional defensive tests based on feedback from BOTH models
+- Share their feedback during the Evaluation discussion
+- Only skip if user explicitly disabled multi-agent consultation
 
 #### E - Evaluate (Assess Objectively)
 
@@ -295,7 +346,7 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 4. **Evaluation Discussion** (CRITICAL STEP)
    - Present to user: "Phase X complete. Here's what was built: [summary]"
    - Share test results and coverage metrics
-   - Share internal review findings
+   - Share multi-agent feedback received
    - Ask: "Any changes needed before I commit this phase?"
    - Incorporate user feedback if requested
    - Get explicit approval to proceed
@@ -307,16 +358,16 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Push all changes to version control
    - Document any deviations or decisions in the plan
 
-6. **Final Validation**
-   - Agent validates quality and architecture compliance
-   - Check best practices adherence
-   - Ensure security requirements met
-   - Verify all acceptance criteria satisfied
+6. **Expert Validation (DEFAULT - MANDATORY)**
+   - MUST consult BOTH GPT-5 AND Gemini Pro for validation
+   - Focus: Quality, architecture compliance, best practices, security
+   - Incorporate feedback from both models before proceeding
+   - Only skip if user explicitly disabled multi-agent consultation
 
 **Evidence Required**:
 - Evaluation checklist completed
 - Test results and coverage report
-- Internal review notes
+- Expert review notes from GPT-5 and Gemini Pro
 - User approval from evaluation discussion
 - Updated plan document with:
   - Phase marked complete
@@ -359,11 +410,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Propose process improvements
    - Update templates if needed
    - Share learnings with team
-   - Document in `codev/ref/lessons/`
+   - Document in `codev/lessons/`
    - **Important**: Update the protocol document in `codev/protocols/` to improve the process based on learnings
 
 **Output**:
-- Single lessons learned document in `codev/ref/lessons/####-descriptive-name.md`
+- Single lessons learned document in `codev/lessons/####-descriptive-name.md`
 - Same filename as spec/plan, captures all learnings from this feature
 - Methodology improvement proposals (update protocol if needed)
 
@@ -399,7 +450,7 @@ For specification/plan documents:
 Examples:
 ```
 [Spec 0001] Initial specification draft
-[Spec 0001] Specification reviewed
+[Spec 0001] Specification with multi-agent review
 [Spec 0001] Specification with user feedback
 [Spec 0001] Final approved specification
 ```

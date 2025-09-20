@@ -8,7 +8,7 @@ Key locations:
 - Protocol details: `codev/protocols/spider/protocol.md` (READ THIS FIRST)
 - Specifications go in: `codev/specs/`
 - Plans go in: `codev/plans/`
-- Lessons learned go in: `codev/ref/lessons/`
+- Lessons learned go in: `codev/lessons/`
 
 ## Core Workflow
 
@@ -24,7 +24,8 @@ project-root/
 │   ├── protocols/spider/    # Protocol documentation and templates
 │   ├── specs/               # Feature specifications (WHAT to build)
 │   ├── plans/               # Implementation plans (HOW to build)
-│   └── ref/lessons/         # Lessons learned from each feature
+│   ├── lessons/             # Lessons learned from each feature
+│   └── resources/           # Reference materials (llms.txt, guides, etc.)
 ├── CLAUDE.md               # This file
 └── [project code]
 ```
@@ -34,7 +35,7 @@ project-root/
 Use sequential numbering with descriptive names:
 - Specification: `codev/specs/0001-feature-name.md`
 - Plan: `codev/plans/0001-feature-name.md`
-- Lessons: `codev/ref/lessons/0001-feature-name.md`
+- Lessons: `codev/lessons/0001-feature-name.md`
 
 ## Multi-Agent Consultation
 

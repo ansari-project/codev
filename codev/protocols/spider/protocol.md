@@ -1,21 +1,30 @@
-# SP(IDE)R Protocol
+# SPIDER Protocol
+
+## Prerequisites
+
+**Required for Multi-Agent Consultation**:
+- Zen MCP server must be installed and running
+- Check with: `mcp list` or test with `mcp__zen__version`
+- If not available:
+  - Option 1: "Would you like help installing Zen MCP server?"
+  - Option 2: "Use spider-solo protocol instead (no multi-agent consultation)"
 
 ## Protocol Configuration
 
 ### Multi-Agent Consultation (ENABLED BY DEFAULT)
 
 **DEFAULT BEHAVIOR:**
-Multi-agent consultation is **ENABLED BY DEFAULT** when using SP(IDE)R protocol.
+Multi-agent consultation is **ENABLED BY DEFAULT** when using SPIDER protocol.
 
 **DEFAULT AGENTS:**
 - **GPT-5**: Primary reviewer for architecture, feasibility, and code quality
 - **Gemini Pro**: Secondary reviewer for completeness, edge cases, and alternative approaches
 
 **DISABLING CONSULTATION:**
-The user can disable multi-agent consultation by explicitly requesting: "use SP(IDE)R without multi-agent consultation"
+For single-agent workflow, use the spider-solo protocol instead.
 
 **CUSTOM AGENTS:**
-The user can specify different agents by saying: "use SP(IDE)R with consultation from [agent1] and [agent2]"
+The user can specify different agents by saying: "use SPIDER with consultation from [agent1] and [agent2]"
 
 **CONSULTATION BEHAVIOR:**
 - DEFAULT: MANDATORY consultation with GPT-5 and Gemini Pro at EVERY checkpoint
@@ -31,13 +40,13 @@ The user can specify different agents by saying: "use SP(IDE)R with consultation
 - **Review**: After review document
 
 ## Overview
-SP(IDE)R is a structured development protocol that emphasizes specification-driven development with iterative implementation and continuous review. It builds upon the DAPPER methodology with a focus on context-first development.
+SPIDER is a structured development protocol that emphasizes specification-driven development with iterative implementation and continuous review. It builds upon the DAPPER methodology with a focus on context-first development and multi-agent collaboration.
 
 **Core Principle**: Each feature is tracked through exactly THREE documents - a specification, a plan, and a lessons-learned summary - all sharing the same filename and sequential identifier.
 
-## When to Use SP(IDE)R
+## When to Use SPIDER
 
-### Use SP(IDE)R for:
+### Use SPIDER for:
 - New feature development
 - Architecture changes
 - Complex refactoring
@@ -45,7 +54,7 @@ SP(IDE)R is a structured development protocol that emphasizes specification-driv
 - API design and implementation
 - Performance optimization initiatives
 
-### Skip SP(IDE)R for:
+### Skip SPIDER for:
 - Simple bug fixes (< 10 lines)
 - Documentation updates
 - Configuration changes

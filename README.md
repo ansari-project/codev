@@ -8,12 +8,8 @@ A methodology framework for building software where context drives development, 
 # Clone the repository
 git clone https://github.com/ansari-project/codev.git
 
-# Install in your project
-cd your-project
-../codev/install.sh
-
 # Tell your AI agent
-"Follow the Codev methodology in CLAUDE.md"
+"Install Codev following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md"
 ```
 
 ## What is Codev?

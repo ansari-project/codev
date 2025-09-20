@@ -44,9 +44,10 @@ your-project/
 │   │       ├── protocol.md  # Detailed protocol documentation
 │   │       ├── manifest.yaml
 │   │       └── templates/   # Document templates
-│   ├── specs/              # WHAT to build
-│   ├── plans/              # HOW to build
-│   └── ref/                # Research & lessons learned
+│   ├── specs/              # Feature specifications
+│   ├── plans/              # Implementation plans
+│   └── ref/
+│       └── lessons/        # Lessons learned
 ├── CLAUDE.md               # AI agent instructions
 └── [your code]
 ```
@@ -54,7 +55,7 @@ your-project/
 ## Key Features
 
 ### 📄 Documents Are First-Class Citizens
-- Three documents per feature: spec, plan, lessons
+- Specifications, plans, and lessons all tracked
 - All decisions captured in version control
 - Clear traceability from idea to implementation
 

@@ -12,11 +12,11 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 ## Success Metrics
 - [ ] All three core test scenarios pass
-- [ ] Tests run in under 30 seconds total
-- [ ] No network access required during tests
+- [ ] Fast tests (non-Claude) run in under 30 seconds via `run-tests.sh`
+- [ ] Integration tests (Claude) run separately via `run-integration-tests.sh`
+- [ ] No network access required for core tests
 - [ ] Tests can run on macOS and Linux
-- [ ] Single command to run all tests
-- [ ] Clear pass/fail reporting
+- [ ] Clear pass/fail reporting with bats TAP output
 
 ## Phase Breakdown
 
@@ -27,10 +27,14 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 **Tasks**:
 1. Create `tests/` directory structure
-2. Vendor bats-core and helper libraries
-3. Create run-tests.sh entry point script
-4. Set up basic test helpers (mktemp, cleanup)
-5. Verify bats runs successfully
+2. Vendor bats-core and explicitly vendor:
+   - bats-support (load helper functions)
+   - bats-assert (assertion helpers)
+   - bats-file (file assertion helpers)
+3. Create run-tests.sh entry point script (fast tests only)
+4. Create run-integration-tests.sh script (Claude tests)
+5. Set up basic test helpers with teardown for guaranteed cleanup
+6. Verify bats runs successfully
 
 **Deliverables**:
 - Working bats-core installation in tests/lib/
@@ -52,9 +56,10 @@ This plan implements a shell-based test suite for validating the Codev installat
 **Tasks**:
 1. Create mock_mcp helper for Zen detection
 2. Create setup_test_project helper using mktemp
-3. Create install_from_local helper to copy codev-skeleton
-4. Create assertion helpers for directory structure
-5. Fix INSTALL.md issues (tar flag, cp command)
+3. Implement teardown function for guaranteed cleanup (even on test failure)
+4. Create install_from_local helper to copy codev-skeleton
+5. Create assertion helpers for directory structure
+6. Fix INSTALL.md issues (tar flag, cp command)
 
 **Deliverables**:
 - tests/helpers/common.bash with project setup
@@ -147,10 +152,13 @@ This plan implements a shell-based test suite for validating the Codev installat
 
 **Tasks**:
 1. Create 04_claude_execution.bats for real Claude testing
-2. Use Claude isolation flags (--strict-mcp-config --mcp-config '[]')
+2. Use comprehensive Claude isolation flags:
+   - `--strict-mcp-config --mcp-config '[]'` (no MCP servers)
+   - `--settings '{}'` (no user settings)
 3. Test Claude executing actual installation instructions
-4. Verify Claude can run without user settings interference
+4. Assert final file system state matches "golden state" from Phase 3/4 tests
 5. Tests skip gracefully if Claude not available (for contributors without Claude)
+6. Run via separate `run-integration-tests.sh` script (slower tests)
 
 **Deliverables**:
 - Integration tests with real Claude
@@ -158,9 +166,11 @@ This plan implements a shell-based test suite for validating the Codev installat
 - Local testing only (not for CI/CD due to API keys)
 
 **Success Criteria**:
-- Claude executes installation in isolated environment
+- Claude executes installation in fully isolated environment
+- Final file system state matches "golden state" from shell tests
 - Tests work locally for developers with Claude installed
 - Graceful skip for environments without Claude
+- Integration tests separated from fast feedback loop
 
 ---
 

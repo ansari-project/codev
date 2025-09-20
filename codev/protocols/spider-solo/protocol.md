@@ -2,59 +2,45 @@
 
 ## Prerequisites
 
-**Required for Multi-Agent Consultation**:
-- Zen MCP server must be installed and running
-- Check with: `mcp list` or test with `mcp__zen__version`
-- If not available:
-  - Option 1: "Would you like help installing Zen MCP server?"
-  - Option 2: "Use spider-solo protocol instead (no multi-agent consultation)"
+**No External Dependencies Required**:
+- SPIDER-SOLO is a single-agent variant that doesn't require Zen MCP
+- All review and validation is done through self-review
+- Ideal when multi-agent infrastructure is not available
 
 ## Protocol Configuration
 
-### Multi-Agent Consultation (ENABLED BY DEFAULT)
+### Self-Review Only (NO MULTI-AGENT CONSULTATION)
 
 **DEFAULT BEHAVIOR:**
-Multi-agent consultation is **ENABLED BY DEFAULT** when using SPIDER protocol.
+SPIDER-SOLO uses self-review and human approval only.
 
-**DEFAULT AGENTS:**
-- **GPT-5**: Primary reviewer for architecture, feasibility, and code quality
-- **Gemini Pro**: Secondary reviewer for completeness, edge cases, and alternative approaches
+**KEY DIFFERENCE FROM SPIDER:**
+- No multi-agent consultation at any checkpoint
+- All review is done through careful self-examination
+- Emphasis on thorough self-validation before presenting to user
 
-**DISABLING CONSULTATION:**
-For single-agent workflow, use the spider-solo protocol instead.
-
-**CUSTOM AGENTS:**
-The user can specify different agents by saying: "use SPIDER with consultation from [agent1] and [agent2]"
-
-**CONSULTATION BEHAVIOR:**
-- DEFAULT: MANDATORY consultation with GPT-5 and Gemini Pro at EVERY checkpoint
-- When explicitly disabled: Skip all consultation steps
-- The protocol is BLOCKED until all required consultations are complete
-
-**Consultation Checkpoints**:
-- **Specification**: After initial draft, after human comments
-- **Planning**: After initial plan, after human review
-- **Implementation**: After code implementation
-- **Defending**: After test creation
-- **Evaluation**: Before marking phase complete
-- **Review**: After review document
+**REVIEW APPROACH:**
+- Self-review at each checkpoint where SPIDER would consult agents
+- Use critical thinking to identify gaps and issues
+- Document self-review findings transparently
+- Rely on human feedback for validation
 
 ## Overview
-SPIDER is a structured development protocol that emphasizes specification-driven development with iterative implementation and continuous review. It builds upon the DAPPER methodology with a focus on context-first development and multi-agent collaboration.
+SPIDER-SOLO is a single-agent variant of the SPIDER protocol that emphasizes specification-driven development with iterative implementation and continuous self-review. It maintains the same structured approach but without multi-agent collaboration.
 
 **Core Principle**: Each feature is tracked through exactly THREE documents - a specification, a plan, and a lessons-learned summary - all sharing the same filename and sequential identifier.
 
-## When to Use SPIDER
+## When to Use SPIDER-SOLO
 
-### Use SPIDER for:
-- New feature development
-- Architecture changes
-- Complex refactoring
-- System design decisions
+### Use SPIDER-SOLO for:
+- New feature development (when Zen MCP is not available)
+- Architecture changes (single-agent review)
+- Complex refactoring (self-validated)
+- System design decisions (human-approved)
 - API design and implementation
 - Performance optimization initiatives
 
-### Skip SPIDER for:
+### Skip SPIDER-SOLO for:
 - Simple bug fixes (< 10 lines)
 - Documentation updates
 - Configuration changes
@@ -63,7 +49,7 @@ SPIDER is a structured development protocol that emphasizes specification-driven
 
 ## Protocol Phases
 
-### S - Specify (Collaborative Design Exploration)
+### S - Specify (Design Exploration with Self-Review)
 
 **Purpose**: Thoroughly explore the problem space and solution options before committing to an approach.
 
@@ -71,14 +57,14 @@ SPIDER is a structured development protocol that emphasizes specification-driven
 1. User provides a prompt describing what they want built
 2. Agent generates initial specification document
 3. **COMMIT**: "Initial specification draft"
-4. Multi-agent review (GPT-5 and Gemini Pro)
-5. Agent updates spec with multi-agent feedback
-6. **COMMIT**: "Specification with multi-agent review"
+4. Self-review the specification critically
+5. Agent updates spec based on self-review
+6. **COMMIT**: "Specification after self-review"
 7. Human reviews and provides comments for changes
 8. Agent makes changes and lists what was modified
 9. **COMMIT**: "Specification with user feedback"
-10. Multi-agent review of updated document
-11. Final updates based on second review
+10. Final self-review of updated document
+11. Final updates based on self-review
 12. **COMMIT**: "Final approved specification"
 13. Iterate steps 7-12 until user approves and says to proceed to planning
 
@@ -122,28 +108,27 @@ SPIDER is a structured development protocol that emphasizes specification-driven
    - Specify quality metrics
    - Document test scenarios
 
-6. **Expert Consultation (DEFAULT - MANDATORY)**
-   - **First Consultation** (after initial draft):
-     - MUST consult GPT-5 AND Gemini Pro
-     - Focus: Problem clarity, solution completeness, missing requirements
-     - Update specification with ALL feedback from both models
-     - Document changes in "Consultation Log" section of the spec
-   - **Second Consultation** (after human comments):
-     - MUST consult GPT-5 AND Gemini Pro again
-     - Focus: Validate changes, ensure alignment
-     - Final specification update with both models' input
-     - Update "Consultation Log" with new feedback
+6. **Self-Review Process**
+   - **First Self-Review** (after initial draft):
+     - Critically examine problem clarity and solution completeness
+     - Look for missing requirements or edge cases
+     - Document self-identified improvements
+     - Update specification based on self-review
+   - **Second Self-Review** (after human comments):
+     - Validate changes align with feedback
+     - Ensure specification is comprehensive
+     - Final specification refinement
 
    **Note**: Self-review only - no multi-agent consultation in SOLO variant
 
-**Review Process**: Self-review and human approval only
+**⚠️ IMPORTANT**: Thorough self-review is critical before proceeding
 
 **Output**: Single specification document in `codev/specs/####-descriptive-name.md`
-- All consultation feedback incorporated directly into this document
-- Include a "Consultation Log" section summarizing key feedback and changes
+- All self-review findings incorporated directly into this document
+- Include a "Self-Review Notes" section summarizing identified improvements
 - Version control captures evolution through commits
 **Template**: `templates/spec.md`
-**Review Required**: Yes - Human approval AFTER consultations
+**Review Required**: Yes - Human approval AFTER self-review
 
 ### P - Plan (Structured Decomposition)
 
@@ -152,14 +137,14 @@ SPIDER is a structured development protocol that emphasizes specification-driven
 **Workflow Overview**:
 1. Agent creates initial plan document
 2. **COMMIT**: "Initial plan draft"
-3. Multi-agent review (GPT-5 and Gemini Pro)
-4. Agent updates plan with multi-agent feedback
-5. **COMMIT**: "Plan with multi-agent review"
+3. Self-review the plan thoroughly
+4. Agent updates plan with self-review findings
+5. **COMMIT**: "Plan after self-review"
 6. User reviews and requests modifications
 7. Agent updates plan based on user feedback
 8. **COMMIT**: "Plan with user feedback"
-9. Multi-agent review of updated plan
-10. Final updates based on second review
+9. Final self-review of updated plan
+10. Final updates based on self-review
 11. **COMMIT**: "Final approved plan"
 12. Iterate steps 6-11 until agreement is reached
 
@@ -193,38 +178,41 @@ Each phase should be:
    - Specify performance benchmarks
    - Document acceptance tests
 
-3. **Expert Review (DEFAULT - MANDATORY)**
-   - **First Consultation** (after plan creation):
-     - MUST consult GPT-5 AND Gemini Pro
-     - Focus: Feasibility, phase breakdown, completeness
-     - Update plan with ALL feedback from both models
-   - **Second Consultation** (after human review):
-     - MUST consult GPT-5 AND Gemini Pro again
-     - Focus: Validate adjustments, confirm approach
-     - Final plan refinement with both models' input
+3. **Self-Review Process**
+   - **First Self-Review** (after plan creation):
+     - Assess feasibility and phase breakdown
+     - Verify completeness of planned approach
+     - Update plan based on self-identified gaps
+   - **Second Self-Review** (after human review):
+     - Validate adjustments align with feedback
+     - Confirm approach is sound
+     - Final plan refinement
 
    **Note**: Self-review only - no multi-agent consultation in SOLO variant
 
-**Review Process**: Self-review and human approval only
+**⚠️ IMPORTANT**: Comprehensive self-review required before proceeding
 
 **Output**: Single plan document in `codev/plans/####-descriptive-name.md`
 - Same filename as specification, different directory
-- All consultation feedback incorporated directly
+- All self-review findings incorporated directly
 - Include phase status tracking within this document
 - Version control captures evolution through commits
+- **DO NOT include time estimates** - Focus on deliverables and dependencies, not hours/days
 **Template**: `templates/plan.md`
-**Review Required**: Yes - Technical lead approval AFTER consultations
+**Review Required**: Yes - Technical lead approval AFTER self-review
 
 ### (IDE) - Implementation Loop
 
 Execute for each phase in the plan. This is a strict cycle that must be completed in order.
 
+**CRITICAL PRECONDITION**: Before starting any phase, verify the previous phase was committed to git. No phase can begin without the prior phase's commit.
+
 **Phase Completion Process**:
 1. **Implement** - Build the code for this phase
 2. **Defend** - Write comprehensive tests that guard functionality
 3. **Evaluate** - Assess and discuss with user
-4. **Commit** - Single atomic commit for the phase
-5. **Proceed** - Move to next phase or address issues
+4. **Commit** - Single atomic commit for the phase (MANDATORY before next phase)
+5. **Proceed** - Move to next phase only after commit
 
 **Handling Failures**:
 - If **Defend** phase reveals gaps → return to **Implement** to fix
@@ -232,12 +220,21 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - If user requests changes → return to **Implement**
 - If fundamental plan flaws found → mark phase as `blocked` and revise plan
 
+**Commit Requirements**:
+- Each phase MUST end with a git commit before proceeding
+- Commit message format: `[Spec ####][Phase: name] type: Description`
+- No work on the next phase until current phase is committed
+- If changes are needed after commit, create a new commit with fixes
+
 #### I - Implement (Build with Discipline)
 
 **Purpose**: Transform the plan into working code with high quality standards.
 
+**Precondition**: Previous phase must be committed (verify with `git log`)
+
 **Requirements**:
 1. **Pre-Implementation**
+   - Verify previous phase is committed to git
    - Review the phase plan and success criteria
    - Set up the development environment
    - Create feature branch following naming convention
@@ -272,11 +269,10 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - No linting errors
 - CI pipeline pass link (build/test/lint)
 
-**Expert Consultation (DEFAULT - MANDATORY)**:
-- MUST consult BOTH GPT-5 AND Gemini Pro after implementation
-- Focus: Code quality, patterns, security, best practices
-- Update code based on feedback from BOTH models before proceeding
-- Only skip if user explicitly disabled multi-agent consultation
+**Self-Review Process**:
+- Critically review code quality, patterns, security, best practices
+- Look for potential improvements and issues
+- Update code based on self-identified concerns before proceeding
 
 #### D - Defend (Write Comprehensive Tests)
 
@@ -296,6 +292,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - No reduction in overall coverage
    - Performance benchmarks met
    - Security scans pass
+   - **Avoid Overmocking**:
+     - Test behavior, not implementation details
+     - Prefer integration tests over unit tests with heavy mocking
+     - Only mock external dependencies (APIs, databases, file systems)
+     - Never mock the system under test itself
+     - Use real implementations for internal module boundaries
 
 3. **Test Suite Documentation**
    - Document test scenarios
@@ -310,12 +312,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - Security scan results (if configured)
 - CI test run link with artifacts
 
-**Expert Consultation (DEFAULT - MANDATORY)**:
-- MUST consult BOTH GPT-5 AND Gemini Pro for test defense review
-- Focus: Test coverage completeness, edge cases, defensive patterns, test strategy
-- Write additional defensive tests based on feedback from BOTH models
-- Share their feedback during the Evaluation discussion
-- Only skip if user explicitly disabled multi-agent consultation
+**Self-Review Process**:
+- Review test coverage completeness and edge cases
+- Assess defensive patterns and test strategy
+- Write additional tests based on self-identified gaps
+- Document review findings for evaluation discussion
 
 #### E - Evaluate (Assess Objectively)
 
@@ -339,35 +340,47 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Explain reasoning for changes
    - Assess impact on other phases
    - Update future phases if needed
-   - **Important**: Check that tests aren't overmocked:
+   - **Overmocking Check** (MANDATORY):
+     - Verify tests focus on behavior, not implementation
      - Ensure at least one integration test per critical path
-     - Avoid mocking across module boundaries except for external systems
+     - Check that internal module boundaries use real implementations
+     - Confirm mocks are only used for external dependencies
+     - Tests should survive refactoring that preserves behavior
 
-4. **Evaluation Discussion** (CRITICAL STEP)
+4. **Final Self-Review Before User Evaluation**
+   - Perform thorough self-assessment of the phase
+   - Identify and fix any remaining issues
+   - **CRITICAL**: Ensure high confidence in the implementation
+   - Only proceed to user evaluation after thorough self-validation
+   - If any doubts remain, address them FIRST
+
+5. **Evaluation Discussion with User**
    - Present to user: "Phase X complete. Here's what was built: [summary]"
    - Share test results and coverage metrics
-   - Share multi-agent feedback received
+   - Share self-review findings and confidence level
    - Ask: "Any changes needed before I commit this phase?"
    - Incorporate user feedback if requested
    - Get explicit approval to proceed
 
-5. **Phase Commit**
+6. **Phase Commit** (MANDATORY - NO EXCEPTIONS)
    - Create single atomic commit for the entire phase
    - Commit message: `[Spec ####][Phase: name] type: Description`
    - Update the plan document marking this phase as complete
    - Push all changes to version control
    - Document any deviations or decisions in the plan
+   - **CRITICAL**: Next phase CANNOT begin until this commit is complete
+   - Verify commit with `git log` before proceeding
 
-6. **Expert Validation (DEFAULT - MANDATORY)**
-   - MUST consult BOTH GPT-5 AND Gemini Pro for validation
-   - Focus: Quality, architecture compliance, best practices, security
-   - Incorporate feedback from both models before proceeding
-   - Only skip if user explicitly disabled multi-agent consultation
+7. **Final Verification**
+   - Confirm all self-review findings were addressed
+   - Verify all tests pass
+   - Check that documentation is updated
+   - Ensure no outstanding concerns from user
 
 **Evidence Required**:
 - Evaluation checklist completed
 - Test results and coverage report
-- Expert review notes from GPT-5 and Gemini Pro
+- Self-review notes and findings
 - User approval from evaluation discussion
 - Updated plan document with:
   - Phase marked complete
@@ -380,8 +393,11 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 
 **Purpose**: Ensure overall coherence, capture learnings, and improve the methodology.
 
+**Precondition**: All implementation phases must be committed (verify with `git log --oneline | grep "\[Phase"`)
+
 **Process**:
 1. **Comprehensive Review**
+   - Verify all phases have been committed to git
    - Compare final implementation to original specification
    - Assess overall architecture impact
    - Review code quality across all changes
@@ -450,7 +466,7 @@ For specification/plan documents:
 Examples:
 ```
 [Spec 0001] Initial specification draft
-[Spec 0001] Specification with multi-agent review
+[Spec 0001] Specification after self-review
 [Spec 0001] Specification with user feedback
 [Spec 0001] Final approved specification
 ```

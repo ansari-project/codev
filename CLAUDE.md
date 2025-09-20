@@ -1,8 +1,14 @@
 # Codev Project Instructions for AI Agents
 
+## Project Context
+
+**THIS IS THE CODEV SOURCE REPOSITORY - WE ARE SELF-HOSTED**
+
+This project IS Codev itself, and we use our own methodology for development. All new features and improvements to Codev should follow the SPIDER protocol defined in `codev/protocols/spider/protocol.md`.
+
 ## Quick Start
 
-You are working in a project that uses the **Codev methodology** with the **SP(IDE)R protocol**.
+You are working in the Codev project itself, using the **SPIDER protocol** with multi-agent consultation.
 
 Key locations:
 - Protocol details: `codev/protocols/spider/protocol.md` (READ THIS FIRST)
@@ -10,9 +16,24 @@ Key locations:
 - Plans go in: `codev/plans/`
 - Lessons learned go in: `codev/lessons/`
 
+## What Goes Through SPIDER in This Repo
+
+Since this is the Codev source repository, use SPIDER for:
+- New protocols or protocol variants
+- Major changes to the SPIDER protocol itself
+- New example projects
+- Significant changes to installation process
+- New features for the methodology
+- Integration tools or utilities
+
+Skip SPIDER for:
+- README typos or minor documentation fixes
+- Small bug fixes in templates
+- Dependency updates
+
 ## Core Workflow
 
-1. **When asked to build something**: Start with the Specification phase
+1. **When asked to build NEW FEATURES FOR CODEV**: Start with the Specification phase
 2. **Create exactly THREE documents per feature**: spec, plan, and lessons (all with same filename)
 3. **Follow the SP(IDE)R phases**: Specify → Plan → (Implement → Defend → Evaluate) → Review
 4. **Use multi-agent consultation by default** unless user says "without consultation"

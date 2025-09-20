@@ -47,7 +47,7 @@ Currently, there is no automated way to verify that the Codev installation proce
 - Should not require network access for basic tests (mock the GitHub download)
 - Must handle testing AI agent interactions (which are text-based instructions)
 - Should work on common development platforms (macOS, Linux)
-- Cannot directly test Claude's execution of instructions
+- Cannot directly test Claude's execution of instructions (test outcomes instead)
 
 ### Business Constraints
 - Should be simple enough for contributors to understand and modify
@@ -62,14 +62,15 @@ Currently, there is no automated way to verify that the Codev installation proce
 
 ## Solution Approaches
 
-### Approach 1: Shell Script Test Suite
+### Approach 1: Shell Script Test Suite (SELECTED)
 **Description**: Create a bash-based test suite that runs installation commands and verifies outcomes
 
 **Pros**:
 - No additional language dependencies
-- Directly tests the actual shell commands
+- Directly tests the actual shell commands from INSTALL.md
 - Simple to understand for shell-savvy developers
 - Can easily test file system operations
+- Maintains simplicity without additional install.sh script
 
 **Cons**:
 - Limited testing framework capabilities
@@ -77,10 +78,12 @@ Currently, there is no automated way to verify that the Codev installation proce
 - Less structured test reporting
 - Difficult to test edge cases cleanly
 
+**User Decision**: Selected for its simplicity and to avoid creating an install.sh script
+
 **Estimated Complexity**: Medium
 **Risk Level**: Low
 
-### Approach 2: Python + Canonical install.sh (RECOMMENDED)
+### Approach 2: Python + Canonical install.sh
 **Description**: Create a canonical `install.sh` script as the single source of truth, then use pytest to test it
 
 **Pros**:
@@ -122,29 +125,37 @@ Currently, there is no automated way to verify that the Codev installation proce
 ## Open Questions
 
 ### Critical (Blocks Progress)
-- [ ] How do we test the AI agent instruction portions of installation?
-- [ ] Should we test the actual GitHub download or always mock it?
+- [x] How do we test the AI agent instruction portions of installation?
+  - **Answer**: Create safe temporary directories and test file outcomes
+- [x] Should we test the actual GitHub download or always mock it?
+  - **Answer**: Use the local codev-skeleton directory
 
 ### Important (Affects Design)
-- [ ] Do we need to test on Windows or just Unix-like systems?
-- [ ] Should tests be able to run without any network access?
-- [ ] How do we handle testing the Zen MCP detection?
+- [x] Do we need to test on Windows or just Unix-like systems?
+  - **Answer**: Unix-like systems only
+- [x] Should tests be able to run without any network access?
+  - **Answer**: Not a requirement, but will use local skeleton anyway
+- [x] How do we handle testing the Zen MCP detection?
+  - **Answer**: Mock it
 
 ### Nice-to-Know (Optimization)
 - [ ] Could we generate test cases from the INSTALL.md automatically?
+  - **Deferred**: Not required for v1
 - [ ] Should we test upgrade scenarios (existing Codev to new version)?
+  - **Deferred**: Not for v1
 
 ## Performance Requirements
 - **Test Execution Time**: < 30 seconds for full suite
 - **Individual Test**: < 2 seconds per test
-- **Resource Usage**: Minimal CPU/memory usage
-- **Parallelization**: Tests should be parallelizable where possible
+- **Resource Usage**: Minimal CPU/memory usage (desirable)
+- **Parallelization**: Tests should be parallelizable where possible (desirable)
 
 ## Security Considerations
 - Tests should not require elevated privileges
 - Should not modify system files outside of test directories
 - Must clean up all test artifacts after completion
 - Should not expose any sensitive information in test logs
+
 
 ## Test Scenarios
 ### Functional Tests
@@ -157,19 +168,14 @@ Currently, there is no automated way to verify that the Codev installation proce
 7. Verify llms.txt is created in resources/
 8. Test cleanup of temporary installation directory
 
-### Edge Cases
-1. Installation with read-only directories
-2. Installation with spaces in path names
-3. Installation with existing codev/ directory
-4. Network timeout during GitHub download
-5. Corrupted tar file download
-6. Partial installation recovery
+### Edge Cases (Deferred to V2)
+Edge case testing deferred per user feedback - focusing on happy path for v1.
 
 ## Dependencies
-- **External Services**: GitHub (for downloading skeleton) - should be mocked
-- **Internal Systems**: File system operations, shell commands
-- **Libraries/Frameworks**: Testing framework (pytest or bash-based)
+- **External Services**: GitHub - will use local codev-skeleton directory instead
 
+- **Internal Systems**: File system operations, shell commands
+- **Libraries/Frameworks**: Shell-based testing (potentially using bash test frameworks like bats if available)
 ## References
 - [INSTALL.md](/INSTALL.md)
 - [codev-skeleton structure](/codev-skeleton/)
@@ -183,14 +189,15 @@ Currently, there is no automated way to verify that the Codev installation proce
 | Platform-specific issues | Medium | Medium | Focus on Unix-like systems initially |
 | Mocking adds complexity | Low | Medium | Start with simple file-based tests |
 
-## V1 Scope Definition (Based on Multi-Agent Feedback)
+## V1 Scope Definition (Based on User Feedback)
 
 ### In Scope for V1
-1. **Create canonical `install.sh` script** with:
-   - `--non-interactive` flag to bypass prompts
-   - `--protocol` flag to specify spider or spider-solo
-   - Offline mode support via `CODEV_OFFLINE=1` or local archive path
-   - Fix tar flag bug (`--strip-components=1`)
+1. **Shell-based test suite** that:
+   - Runs installation commands directly from INSTALL.md
+   - Uses local codev-skeleton directory (no network access needed)
+   - Creates safe temporary directories for testing
+   - Mocks Zen MCP detection
+   - Tests on Unix-like systems only
 
 2. **Core "happy path" tests**:
    - Fresh installation with SPIDER protocol (Zen present)
@@ -198,15 +205,16 @@ Currently, there is no automated way to verify that the Codev installation proce
    - Basic file structure validation
    - CLAUDE.md creation verification
 
+   - **Existing CLAUDE.md updates** (common case, per user feedback)
+
 3. **Test infrastructure**:
-   - pytest harness using tmp_path fixtures
+   - Shell-based test framework
    - Mock mcp command for Zen detection
-   - Local skeleton archive for offline testing
-   - "Sync linter" test to ensure install.sh and INSTALL.md stay aligned
+   - Use local codev-skeleton (no downloads)
+   - Temporary directory isolation for each test
 
 ### Out of Scope for V1 (Defer to V2)
 - Idempotence and re-run safety
-- Existing CLAUDE.md updates
 - Existing codev/ directory handling
 - Complex edge cases (read-only dirs, network failures)
 - Windows support
@@ -236,9 +244,9 @@ Currently, there is no automated way to verify that the Codev installation proce
 - Keep v1 simple: two scenarios, one command to run tests
 
 ## Approval
-- [ ] Technical Lead Review
+- [x] Technical Lead Review (User feedback incorporated)
 - [x] Multi-Agent Consultation Complete
-- [ ] Stakeholder Sign-off
+- [x] Stakeholder Sign-off (User has provided direction)
 
 ## Notes
 This test infrastructure will be critical for maintaining Codev's reliability as it grows. Starting simple with file system validation and expanding to more complex scenarios over time is the recommended approach.

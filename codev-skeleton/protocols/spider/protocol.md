@@ -297,6 +297,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - No reduction in overall coverage
    - Performance benchmarks met
    - Security scans pass
+   - **Avoid Overmocking**:
+     - Test behavior, not implementation details
+     - Prefer integration tests over unit tests with heavy mocking
+     - Only mock external dependencies (APIs, databases, file systems)
+     - Never mock the system under test itself
+     - Use real implementations for internal module boundaries
 
 3. **Test Suite Documentation**
    - Document test scenarios
@@ -340,9 +346,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Explain reasoning for changes
    - Assess impact on other phases
    - Update future phases if needed
-   - **Important**: Check that tests aren't overmocked:
+   - **Overmocking Check** (MANDATORY):
+     - Verify tests focus on behavior, not implementation
      - Ensure at least one integration test per critical path
-     - Avoid mocking across module boundaries except for external systems
+     - Check that internal module boundaries use real implementations
+     - Confirm mocks are only used for external dependencies
+     - Tests should survive refactoring that preserves behavior
 
 4. **Evaluation Discussion** (CRITICAL STEP)
    - Present to user: "Phase X complete. Here's what was built: [summary]"

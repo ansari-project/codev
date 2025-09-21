@@ -149,6 +149,14 @@ SPIDER is a structured development protocol that emphasizes specification-driven
 
 **Purpose**: Transform the approved specification into an executable roadmap with clear phases.
 
+**⚠️ CRITICAL: No Time Estimates in the AI Age**
+- **NEVER include time estimates** (hours, days, weeks, story points)
+- AI-driven development makes traditional time estimates meaningless
+- Delivery speed depends on iteration cycles, not calendar time
+- Focus on logical dependencies and phase ordering instead
+- Measure progress by completed phases, not elapsed time
+- The only valid metrics are: "done" or "not done"
+
 **Workflow Overview**:
 1. Agent creates initial plan document
 2. **COMMIT**: "Initial plan draft"
@@ -212,7 +220,6 @@ Each phase should be:
 - All consultation feedback incorporated directly
 - Include phase status tracking within this document
 - Version control captures evolution through commits
-- **DO NOT include time estimates** - Focus on deliverables and dependencies, not hours/days
 **Template**: `templates/plan.md`
 **Review Required**: Yes - Technical lead approval AFTER consultations
 

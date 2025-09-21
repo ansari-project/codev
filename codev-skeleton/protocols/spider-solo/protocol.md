@@ -396,6 +396,59 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 - Git commit for this phase
 - Final CI run link after all fixes
 
+## 📋 PHASE COMPLETION CHECKLIST (MANDATORY BEFORE NEXT PHASE)
+
+**⚠️ STOP: DO NOT PROCEED TO NEXT PHASE UNTIL ALL ITEMS ARE ✅**
+
+### Before Starting ANY Phase:
+- [ ] Previous phase is committed to git (verify with `git log`)
+- [ ] Plan document shows previous phase as `completed`
+- [ ] No outstanding issues from previous phase
+
+### After Implement Phase:
+- [ ] All code for this phase is complete
+- [ ] Code follows project style guide
+- [ ] No commented-out code or debug prints
+- [ ] Error handling is implemented
+- [ ] Documentation is updated (if needed)
+- [ ] Self-review completed (critical examination)
+- [ ] Self-identified issues have been fixed
+
+### After Defend Phase:
+- [ ] Unit tests written for all new functions
+- [ ] Integration tests written for critical paths
+- [ ] Edge cases have test coverage
+- [ ] All new tests are passing
+- [ ] All existing tests still pass
+- [ ] No reduction in code coverage
+- [ ] Overmocking check completed (tests focus on behavior)
+- [ ] Self-review of test coverage completed
+- [ ] Test gaps identified and addressed
+
+### After Evaluate Phase:
+- [ ] All acceptance criteria from spec are met
+- [ ] Performance requirements satisfied
+- [ ] Security standards maintained
+- [ ] Thorough self-assessment completed
+- [ ] High confidence in implementation achieved
+- [ ] User evaluation discussion completed
+- [ ] User has given explicit approval to proceed
+- [ ] Plan document updated with phase status
+- [ ] Phase commit created with proper message format
+- [ ] Commit pushed to version control
+- [ ] Commit verified with `git log`
+
+### ❌ PHASE BLOCKERS (Fix Before Proceeding):
+- Any failing tests
+- Unresolved self-review concerns
+- Missing user approval
+- Uncommitted changes
+- Incomplete documentation
+- Coverage reduction
+- Low confidence in implementation
+
+**REMINDER**: Each phase is atomic. You cannot start the next phase until the current phase is fully complete, tested, evaluated, and committed.
+
 ### R - Review/Refine/Revise (Continuous Improvement)
 
 **Purpose**: Ensure overall coherence, capture learnings, and improve the methodology.

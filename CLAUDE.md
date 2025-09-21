@@ -38,6 +38,11 @@ Skip SPIDER for:
 3. **Follow the SP(IDE)R phases**: Specify → Plan → (Implement → Defend → Evaluate) → Review
 4. **Use multi-agent consultation by default** unless user says "without consultation"
 
+### CRITICAL CONSULTATION CHECKPOINTS (DO NOT SKIP):
+- After writing implementation code → STOP → Consult GPT-5 and Gemini Pro
+- After writing tests → STOP → Consult GPT-5 and Gemini Pro
+- ONLY THEN present results to user for evaluation
+
 ## Directory Structure
 ```
 project-root/
@@ -121,6 +126,40 @@ When the user requests "Consult" or "consultation" (including variations like "u
 3. **Document all deviations** from the plan with reasoning
 4. **Create atomic commits** for each phase completion
 5. **Maintain >90% test coverage** where possible
+
+## Lessons Learned from Test Infrastructure (Spec 0001)
+
+### Critical Requirements
+
+1. **Multi-Agent Consultation is MANDATORY**:
+   - MUST consult GPT-5 AND Gemini Pro after implementation
+   - MUST get FINAL approval from ALL experts on FIXED versions
+   - Consultation happens BEFORE presenting to user, not after
+   - Skipping consultation leads to rework and missed issues
+
+2. **Test Environment Isolation**:
+   - **NEVER touch real $HOME directories** in tests
+   - Always use XDG sandboxing: `export XDG_CONFIG_HOME="$TEST_PROJECT/.xdg"`
+   - Tests must be hermetic - no side effects on user environment
+   - Use failing shims instead of removing from PATH
+
+3. **Strong Assertions**:
+   - Never use `|| true` patterns that mask failures
+   - Avoid `assert true` - be specific about expectations
+   - Create control tests to verify default behavior
+   - Prefer behavior testing over implementation testing
+
+4. **Platform Compatibility**:
+   - Test on both macOS and Linux
+   - Handle stat command differences
+   - Use portable shell constructs
+   - Gracefully handle missing dependencies
+
+5. **Review Phase Requirements**:
+   - Update ALL documentation (README, CLAUDE.md, specs, plans)
+   - Review for systematic issues across the project
+   - Update protocol documents based on lessons learned
+   - Create comprehensive lessons learned document
 
 ## For Detailed Instructions
 

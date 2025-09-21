@@ -66,6 +66,46 @@ your-project/
 - Lessons learned feed back into the process
 - Templates evolve based on real experience
 
+## 🐕 Eating Our Own Dog Food
+
+Codev is **self-hosted** - we use Codev methodology to build Codev itself. This means:
+
+- **Our test infrastructure** is specified in `codev/specs/0001-test-infrastructure.md`
+- **Our development process** follows the SP(IDE)R protocol we advocate
+- **Our improvements** come from lessons learned using our own methodology
+
+This self-hosting approach ensures:
+1. The methodology is battle-tested on real development
+2. We experience the same workflow we recommend to users
+3. Any pain points are felt by us first and fixed quickly
+4. The framework evolves based on actual usage, not theory
+
+You can see this in practice:
+- Check `codev/specs/` for our feature specifications
+- Review `codev/plans/` for how we break down work
+- Learn from `codev/lessons/` to see what we've discovered
+
+### Test Infrastructure
+
+Our comprehensive test suite (52 tests) validates the Codev installation process:
+
+- **Framework**: Shell-based testing with bats-core (zero dependencies)
+- **Coverage**: SPIDER protocol, SPIDER-SOLO variant, CLAUDE.md preservation
+- **Isolation**: XDG sandboxing ensures tests never touch real user directories
+- **CI/CD Ready**: Tests run in seconds with clear TAP output
+- **Multi-Platform**: Works on macOS and Linux without modification
+
+Run tests locally:
+```bash
+# Fast tests (< 30 seconds)
+./scripts/run-tests.sh
+
+# All tests including Claude CLI integration
+./scripts/run-all-tests.sh
+```
+
+See `tests/README.md` for detailed test documentation.
+
 ## Installation
 
 Ask your AI agent to:

@@ -409,25 +409,39 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Improve test coverage gaps
    - Enhance documentation
 
-3. **Revision Requirements**
+3. **Revision Requirements** (MANDATORY)
    - Update README.md with any new features or changes
-   - Update all affected documentation
+   - Update CLAUDE.md with protocol improvements from lessons learned
+   - Update specification and plan documents with final status
    - Revise architectural diagrams if needed
    - Update API documentation
    - Modify deployment guides as necessary
+   - **CRITICAL**: Update this protocol document based on lessons learned
 
-4. **Lessons Learned** (MANDATORY)
+4. **Systematic Issue Review** (MANDATORY)
+   - Review entire project for systematic issues:
+     - Repeated problems across phases
+     - Process bottlenecks or inefficiencies
+     - Missing documentation patterns
+     - Technical debt accumulation
+     - Testing gaps or quality issues
+   - Document systematic findings in lessons learned
+   - Create action items for addressing systematic issues
+
+5. **Lessons Learned** (MANDATORY)
    - What went well?
    - What was challenging?
    - What would you do differently?
    - What methodology improvements are needed?
+   - What systematic issues were identified?
 
-5. **Methodology Evolution**
-   - Propose process improvements
+6. **Methodology Evolution**
+   - Propose process improvements based on lessons
+   - Update protocol documents with improvements
    - Update templates if needed
    - Share learnings with team
    - Document in `codev/lessons/`
-   - **Important**: Update the protocol document in `codev/protocols/` to improve the process based on learnings
+   - **Important**: This protocol should evolve based on each project's learnings
 
 **Output**:
 - Single lessons learned document in `codev/lessons/####-descriptive-name.md`

@@ -145,6 +145,18 @@ Each phase must end with a commit - this should be more prominent in the protoco
 ### 3. Expert Consultation Timing
 The protocol now correctly states consultation must happen before user evaluation, not after.
 
+## Systematic Issues Identified
+
+During the Review phase, we identified these recurring patterns:
+
+1. **Protocol Compliance** - Skipped consultation twice, leading to rework
+2. **Template Duplication** - SPIDER-SOLO was incorrectly a copy of SPIDER
+3. **Platform Compatibility** - Recurring BSD/GNU and tool availability issues
+4. **Environment Safety** - Late implementation of sandboxing (should start Phase 1)
+5. **Documentation Gaps** - Review phase wasn't explicit about updating all docs
+
+These systematic issues have been addressed through protocol updates and documentation improvements.
+
 ## Summary
 
 The test infrastructure implementation was successful, delivering 52 comprehensive tests that ensure Codev installation reliability. The SPIDER protocol proved valuable, especially the multi-agent consultation which caught critical issues.

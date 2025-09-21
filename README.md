@@ -139,6 +139,29 @@ Templates in `codev/protocols/spider/templates/` can be modified to fit your tea
 - `plan.md` - Planning format
 - `lessons.md` - Retrospective template
 
+## Protocol Improvement Process
+
+### Spider-Protocol-Updater Agent
+
+When SPIDER implementations in other repositories discover improvements, we can incorporate them back into the main protocol using the `spider-protocol-updater` agent (requires Claude Code with the Task tool):
+
+```bash
+# Check a repository for SPIDER improvements
+# The agent will analyze their implementation and suggest protocol updates
+```
+
+To invoke the agent, ask Claude: "Check [repository-url] for SPIDER improvements"
+
+The agent will:
+1. Analyze the repository's SPIDER implementation
+2. Compare it against our current protocol
+3. Identify valuable improvements and lessons learned
+4. Suggest specific protocol updates with justification
+
+Example repositories to monitor:
+- `ansari-project/todo-manager-spider` - Example implementation with lessons learned
+- Your own SPIDER projects that discovered better patterns
+
 ## Contributing
 
 We welcome contributions:
@@ -146,6 +169,7 @@ We welcome contributions:
 - Improved templates
 - Integration tools
 - Case studies
+- SPIDER protocol improvements from your implementations
 
 ## License
 

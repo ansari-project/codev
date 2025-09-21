@@ -204,6 +204,7 @@ Each phase should be:
 - Same filename as specification, different directory
 - All self-review findings incorporated directly
 - Include phase status tracking within this document
+- **DO NOT include time estimates** - Focus on deliverables and dependencies, not hours/days
 - Version control captures evolution through commits
 **Template**: `templates/plan.md`
 **Review Required**: Yes - Technical lead approval AFTER self-review
@@ -211,6 +212,8 @@ Each phase should be:
 ### (IDE) - Implementation Loop
 
 Execute for each phase in the plan. This is a strict cycle that must be completed in order.
+
+**⚠️ MANDATORY**: The I-D-E cycle MUST be completed for EACH PHASE, not just at the end of all phases. Skipping D (Defend) or E (Evaluate) for any phase is a PROTOCOL VIOLATION.
 
 **CRITICAL PRECONDITION**: Before starting any phase, verify the previous phase was committed to git. No phase can begin without the prior phase's commit.
 
@@ -284,6 +287,8 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 #### D - Defend (Write Comprehensive Tests)
 
 **Purpose**: Create comprehensive automated tests that safeguard intended behavior and prevent regressions.
+
+**CRITICAL**: Tests must be written IMMEDIATELY after implementation, NOT retroactively at the end of all phases. This is MANDATORY.
 
 **Requirements**:
 1. **Defensive Test Creation**

@@ -136,10 +136,11 @@ Run these checks:
 # Verify codev is a directory, not spread across root
 ls -la codev/
 
-# Check directory structure
-tree codev -L 2
+# Check directory structure (using ls since tree isn't available on macOS by default)
+ls -la codev/
+ls -la codev/protocols/
 
-# Expected output:
+# Expected structure:
 # codev/                    # <-- Everything inside here!
 # ├── protocols/
 # │   ├── spider/

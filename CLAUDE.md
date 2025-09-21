@@ -81,24 +81,40 @@ To disable: User must explicitly say "without multi-agent consultation"
 
 ## Git Workflow
 
-### CRITICAL Git Safety Rules
+### 🚨 ABSOLUTE PROHIBITION: NEVER USE `git add -A` or `git add .` 🚨
 
-**NEVER use `git add -A` or `git add .`** - These are dangerous and can accidentally commit:
-- API keys and secrets
-- Large data files
-- Personal configuration files
-- Temporary files or caches
+**THIS IS A CRITICAL SECURITY REQUIREMENT - NO EXCEPTIONS**
 
-**ALWAYS use specific file additions**:
+**BANNED COMMANDS (NEVER USE THESE)**:
 ```bash
-# Good - explicit file additions
+git add -A        # ❌ ABSOLUTELY FORBIDDEN
+git add .         # ❌ ABSOLUTELY FORBIDDEN
+git add --all     # ❌ ABSOLUTELY FORBIDDEN
+```
+
+**WHY THIS IS CRITICAL**:
+- Can expose API keys, secrets, and credentials
+- May commit large data files or sensitive personal configs
+- Could reveal private information in temporary files
+- Has caused security incidents in the past
+
+**MANDATORY APPROACH - ALWAYS ADD FILES EXPLICITLY**:
+```bash
+# ✅ CORRECT - Always specify exact files
 git add codev/specs/0001-feature.md
 git add src/components/TodoList.tsx
+git add tests/helpers/common.bash
 
-# Bad - dangerous bulk additions
-git add -A  # NEVER DO THIS
-git add .   # NEVER DO THIS
+# ✅ CORRECT - Can use specific patterns if careful
+git add codev/specs/*.md
+git add tests/*.bats
 ```
+
+**BEFORE EVERY COMMIT**:
+1. Run `git status` to see what will be added
+2. Add each file or directory EXPLICITLY by name
+3. Never use shortcuts that could add unexpected files
+4. If you catch yourself typing `git add -A` or `git add .`, STOP immediately
 
 ### Commit Messages
 ```

@@ -68,7 +68,7 @@ your-project/
 
 ## 📚 Example Implementations
 
-Both projects below were given **the exact same prompt** to build a Todo Manager application. The difference? The methodology used:
+Both projects below were given **the exact same prompt** to build a Todo Manager application using **Claude Code with Opus**. The difference? The methodology used:
 
 ### [Todo Manager - VIBE](https://github.com/ansari-project/todo-manager-vibe)
 - Built using a **VIBE-style prompt** approach

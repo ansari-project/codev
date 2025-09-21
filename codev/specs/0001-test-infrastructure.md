@@ -163,7 +163,7 @@ Currently, there is no automated way to verify that the Codev installation proce
 2. Installation with existing CLAUDE.md file
 3. Installation with Zen MCP server available
 4. Installation without Zen MCP server (falls back to SPIDER-SOLO)
-5. Verify all directories are created (specs/, plans/, lessons/, resources/, protocols/)
+5. Verify all directories are created (specs/, plans/, reviews/, resources/, protocols/)
 6. Verify protocol files are copied correctly
 7. Verify llms.txt is created in resources/
 8. Test cleanup of temporary installation directory

@@ -49,7 +49,7 @@ This project uses the Codev context-driven development methodology.
 ### Directory Structure
 - Specifications: codev/specs/
 - Plans: codev/plans/
-- Lessons: codev/lessons/
+- Reviews: codev/reviews/
 
 See codev/protocols/spider-solo/protocol.md for full protocol details."
 
@@ -68,7 +68,7 @@ See codev/protocols/spider-solo/protocol.md for full protocol details."
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/templates/spec.md"
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/templates/plan.md"
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/templates/review.md"
-  assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/templates/lessons.md"
+  assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/templates/review.md"
 
   # Verify protocol.md exists and has content
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider-solo/protocol.md"
@@ -181,12 +181,12 @@ See codev/protocols/spider-solo/protocol.md for full protocol details."
   assert_dir_exist "$TEST_PROJECT/codev"
   assert_dir_exist "$TEST_PROJECT/codev/specs"
   assert_dir_exist "$TEST_PROJECT/codev/plans"
-  assert_dir_exist "$TEST_PROJECT/codev/lessons"
+  assert_dir_exist "$TEST_PROJECT/codev/reviews"
   assert_dir_exist "$TEST_PROJECT/codev/resources"
 
   # Same resources
   assert_file_exist "$TEST_PROJECT/codev/resources/llms.txt"
-  assert_file_exist "$TEST_PROJECT/codev/specs/example-spec.md"
+  # example-spec.md was removed from skeleton
 }
 
 @test "SPIDER-SOLO emphasizes self-review" {

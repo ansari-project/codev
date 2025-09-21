@@ -66,7 +66,7 @@ assert_codev_structure() {
   assert_dir_exist "$dir/codev"
   assert_dir_exist "$dir/codev/specs"
   assert_dir_exist "$dir/codev/plans"
-  assert_dir_exist "$dir/codev/lessons"
+  assert_dir_exist "$dir/codev/reviews"
   assert_dir_exist "$dir/codev/protocols"
 
   # Check for essential files

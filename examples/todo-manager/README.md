@@ -210,7 +210,7 @@ Agent: "Optimistic updates added. Phase 2 evaluation complete."
 - **Each phase gets one atomic commit** capturing all work
 - **Plan document preserves** the evaluation discussion
 
-### Document 3: Lessons Learned (`codev/ref/lessons/0001-todo-manager.md`)
+### Document 3: Review & Lessons Learned (`codev/reviews/0001-todo-manager.md`)
 
 After completion:
 
@@ -246,7 +246,7 @@ After the entire process, you have exactly **three documents** that tell the com
 
 1. **`codev/specs/0001-todo-manager.md`** - What we built and why
 2. **`codev/plans/0001-todo-manager.md`** - How we built it (with status updates)
-3. **`codev/ref/lessons/0001-todo-manager.md`** - What we learned
+3. **`codev/reviews/0001-todo-manager.md`** - Review and what we learned
 
 ## How to Use This Tutorial
 

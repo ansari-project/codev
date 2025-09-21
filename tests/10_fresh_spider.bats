@@ -49,7 +49,7 @@ This project uses the Codev context-driven development methodology.
 ### Directory Structure
 - Specifications: codev/specs/
 - Plans: codev/plans/
-- Lessons: codev/lessons/
+- Reviews: codev/reviews/
 
 See codev/protocols/spider/protocol.md for full protocol details."
 
@@ -68,7 +68,7 @@ See codev/protocols/spider/protocol.md for full protocol details."
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider/templates/spec.md"
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider/templates/plan.md"
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider/templates/review.md"
-  assert_file_exist "$TEST_PROJECT/codev/protocols/spider/templates/lessons.md"
+  assert_file_exist "$TEST_PROJECT/codev/protocols/spider/templates/review.md"
 
   # Verify protocol.md exists and is not empty
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider/protocol.md"
@@ -108,7 +108,7 @@ See codev/protocols/spider/protocol.md for full protocol details."
   assert_dir_exist "$TEST_PROJECT/codev"
   assert_dir_exist "$TEST_PROJECT/codev/specs"
   assert_dir_exist "$TEST_PROJECT/codev/plans"
-  assert_dir_exist "$TEST_PROJECT/codev/lessons"
+  assert_dir_exist "$TEST_PROJECT/codev/reviews"
   assert_dir_exist "$TEST_PROJECT/codev/protocols"
   assert_dir_exist "$TEST_PROJECT/codev/resources"
 

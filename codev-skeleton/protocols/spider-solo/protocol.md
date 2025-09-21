@@ -28,7 +28,7 @@ SPIDER-SOLO uses self-review and human approval only.
 ## Overview
 SPIDER-SOLO is a single-agent variant of the SPIDER protocol that emphasizes specification-driven development with iterative implementation and continuous self-review. It maintains the same structured approach but without multi-agent collaboration.
 
-**Core Principle**: Each feature is tracked through exactly THREE documents - a specification, a plan, and a lessons-learned summary - all sharing the same filename and sequential identifier.
+**Core Principle**: Each feature is tracked through exactly THREE documents - a specification, a plan, and a review with lessons learned - all sharing the same filename and sequential identifier.
 
 ## When to Use SPIDER-SOLO
 
@@ -71,7 +71,7 @@ SPIDER-SOLO is a single-agent variant of the SPIDER protocol that emphasizes spe
 **Important**: Keep documentation minimal - use only THREE core files with the same name:
 - `specs/####-descriptive-name.md` - The specification
 - `plans/####-descriptive-name.md` - The implementation plan
-- `lessons/####-descriptive-name.md` - Lessons learned (created during Review phase)
+- `reviews/####-descriptive-name.md` - Review and lessons learned (created during Review phase)
 
 **Process**:
 1. **Clarifying Questions** (ALWAYS START HERE)
@@ -500,12 +500,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Update protocol documents with improvements
    - Update templates if needed
    - Share learnings with team
-   - Document in `codev/lessons/`
+   - Document in `codev/reviews/`
    - **Important**: This protocol should evolve based on each project's learnings
 
 **Output**:
-- Single lessons learned document in `codev/lessons/####-descriptive-name.md`
-- Same filename as spec/plan, captures all learnings from this feature
+- Single review document in `codev/reviews/####-descriptive-name.md`
+- Same filename as spec/plan, captures review and learnings from this feature
 - Methodology improvement proposals (update protocol if needed)
 
 **Review Required**: Yes - Team retrospective recommended
@@ -601,9 +601,9 @@ spider/0001-user-authentication/database-schema
 Templates for each phase are available in the `templates/` directory:
 - `spec.md` - Specification template
 - `plan.md` - Planning template (includes phase status tracking)
-- `lessons.md` - Lessons learned template
+- `review.md` - Review and lessons learned template
 
-**Remember**: Only create THREE documents per feature - spec, plan, and lessons with the same filename in different directories.
+**Remember**: Only create THREE documents per feature - spec, plan, and review with the same filename in different directories.
 
 ## Protocol Evolution
 

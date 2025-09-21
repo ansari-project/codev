@@ -51,7 +51,7 @@ teardown() {
   assert_dir_exist "$TEST_TEMP_DIR/codev/protocols/spider-solo"
   assert_dir_exist "$TEST_TEMP_DIR/codev/specs"
   assert_dir_exist "$TEST_TEMP_DIR/codev/plans"
-  assert_dir_exist "$TEST_TEMP_DIR/codev/lessons"
+  assert_dir_exist "$TEST_TEMP_DIR/codev/reviews"
 }
 
 @test "create_claude_md creates file with content" {
@@ -70,7 +70,7 @@ teardown() {
   # Create the expected structure
   mkdir -p "$TEST_TEMP_DIR/codev/specs"
   mkdir -p "$TEST_TEMP_DIR/codev/plans"
-  mkdir -p "$TEST_TEMP_DIR/codev/lessons"
+  mkdir -p "$TEST_TEMP_DIR/codev/reviews"
   mkdir -p "$TEST_TEMP_DIR/codev/protocols"
   touch "$TEST_TEMP_DIR/CLAUDE.md"
 

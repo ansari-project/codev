@@ -43,7 +43,7 @@ your-project/
 │   │       └── templates/   # Document templates
 │   ├── specs/              # Feature specifications
 │   ├── plans/              # Implementation plans
-│   ├── lessons/            # Lessons learned
+│   ├── reviews/            # Review and lessons learned
 │   └── resources/          # Reference materials (llms.txt, etc.)
 ├── CLAUDE.md               # AI agent instructions
 └── [your code]
@@ -83,7 +83,7 @@ This self-hosting approach ensures:
 You can see this in practice:
 - Check `codev/specs/` for our feature specifications
 - Review `codev/plans/` for how we break down work
-- Learn from `codev/lessons/` to see what we've discovered
+- Learn from `codev/reviews/` to see what we've discovered
 
 ### Test Infrastructure
 

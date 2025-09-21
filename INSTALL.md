@@ -61,7 +61,7 @@ project-root/
 │   ├── protocols/      # Protocol definitions
 │   ├── specs/          # Specifications
 │   ├── plans/          # Implementation plans
-│   ├── lessons/        # Lessons learned
+│   ├── reviews/        # Reviews and lessons learned
 │   └── resources/      # Reference materials (llms.txt, guides, etc.)
 ├── CLAUDE.md           # In project root
 └── [project files]     # Your actual code
@@ -105,7 +105,7 @@ This project uses the Codev context-driven development methodology.
 ### Directory Structure
 - Specifications: codev/specs/
 - Plans: codev/plans/
-- Lessons: codev/lessons/
+- Reviews: codev/reviews/
 - Resources: codev/resources/
 
 See codev/protocols/spider/protocol.md for full protocol details.
@@ -146,7 +146,7 @@ find codev -type d -maxdepth 2 | sort
 # │   └── spider-solo/
 # ├── specs/
 # ├── plans/
-# ├── lessons/
+# ├── reviews/
 # └── resources/
 
 # WRONG structure (files in root):
@@ -215,7 +215,7 @@ After installation, guide the user:
 
 ## Remember
 
-- The goal is THREE documents per feature (spec, plan, lessons)
+- The goal is THREE documents per feature (spec, plan, review)
 - Each stage gets one pull request
 - Phases can have multiple commits within the PR
 - User approval required before creating PRs

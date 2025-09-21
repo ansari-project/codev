@@ -66,6 +66,23 @@ your-project/
 - Lessons learned feed back into the process
 - Templates evolve based on real experience
 
+## 📚 Example Implementations
+
+See Codev in action with these real-world examples:
+
+### [Todo Manager - VIBE](https://github.com/ansari-project/todo-manager-vibe)
+- Built using a **VIBE-style prompt** approach
+- Shows rapid prototyping with conversational AI interaction
+- Demonstrates how a simple prompt can drive development
+- Good for comparison with structured protocol approach
+
+### [Todo Manager - SPIDER](https://github.com/ansari-project/todo-manager-spider)
+- Built using the **SPIDER protocol** with full document-driven development
+- Demonstrates all phases: Specify → Plan → (IDE Loop) → Review
+- Shows how lessons learned improve the protocol
+- Complete with specs, plans, and review documents
+- Multi-agent consultation throughout the process
+
 ## 🐕 Eating Our Own Dog Food
 
 Codev is **self-hosted** - we use Codev methodology to build Codev itself. This means:
@@ -159,7 +176,8 @@ The agent will:
 4. Suggest specific protocol updates with justification
 
 Example repositories to monitor:
-- `ansari-project/todo-manager-spider` - Example implementation with lessons learned
+- `ansari-project/todo-manager-spider` - SPIDER protocol implementation with lessons learned
+- `ansari-project/todo-manager-vibe` - VIBE-style implementation for methodology comparison
 - Your own SPIDER projects that discovered better patterns
 
 ## Contributing

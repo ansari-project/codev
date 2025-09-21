@@ -85,7 +85,7 @@ Both projects below were given **the exact same prompt** to build a Todo Manager
 
 ### 📊 Automated Multi-Agent Analysis
 
-**Note**: This comparison was generated through automated analysis by 3 independent AI agents (GPT-5, Gemini Pro, and deep analysis agent), not human review. The findings below represent their consensus assessment:
+**Note**: This comparison was generated through automated analysis by 3 independent AI agents (Claude, GPT-5, and Gemini Pro), not human review. The findings below represent their consensus assessment:
 
 #### Quality Scores (out of 100)
 | Aspect | VIBE | SPIDER |

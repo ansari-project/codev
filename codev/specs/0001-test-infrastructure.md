@@ -3,7 +3,6 @@
 ## Metadata
 - **ID**: 0001-test-infrastructure
 - **Status**: draft
-- **Author**: Claude (with Waleed)
 - **Created**: 2025-01-20
 - **Multi-Agent**: true (GPT-5 and Gemini Pro)
 

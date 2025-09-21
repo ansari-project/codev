@@ -4,8 +4,6 @@
 - **Date**: [YYYY-MM-DD]
 - **Specification**: [Link to codev/specs/spec-file.md]
 - **Plan**: [Link to codev/plans/plan-file.md]
-- **Reviewer**: [name]
-- **Duration**: [Actual time taken vs. estimated]
 
 ## Executive Summary
 [Brief overview of what was built, how it went, and key outcomes]
@@ -28,10 +26,10 @@
 ## Plan Execution Review
 
 ### Phase Completion
-| Phase | Planned Duration | Actual Duration | Status | Notes |
-|-------|-----------------|-----------------|--------|-------|
-| Phase 1 | [X days] | [Y days] | Complete | [Context] |
-| Phase 2 | [X days] | [Y days] | Complete | [Context] |
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1 | Complete | [Context] |
+| Phase 2 | Complete | [Context] |
 
 ### Deliverables Checklist
 - [x] All planned features implemented

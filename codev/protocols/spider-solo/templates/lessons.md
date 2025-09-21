@@ -4,7 +4,6 @@
 - **Spec ID**: ####-descriptive-name
 - **Date Completed**: [YYYY-MM-DD]
 - **Team Members**: [names]
-- **Total Duration**: [actual time taken]
 
 ## What Went Well
 - [Specific success 1]

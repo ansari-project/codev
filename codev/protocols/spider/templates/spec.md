@@ -3,7 +3,6 @@
 ## Metadata
 - **ID**: spec-[YYYY-MM-DD]-[short-name]
 - **Status**: draft
-- **Author**: [name]
 - **Created**: [YYYY-MM-DD]
 
 ## Clarifying Questions Asked

@@ -4,9 +4,7 @@
 - **ID**: plan-[YYYY-MM-DD]-[short-name]
 - **Status**: draft
 - **Specification**: [Link to codev/specs/spec-file.md]
-- **Author**: [name]
 - **Created**: [YYYY-MM-DD]
-- **Estimated Duration**: [X days/weeks]
 
 ## Executive Summary
 [Brief overview of the implementation approach chosen and why. Reference the specification's selected approach.]
@@ -22,7 +20,6 @@
 ## Phase Breakdown
 
 ### Phase 1: [Descriptive Name]
-**Duration**: [X days]
 **Dependencies**: None
 
 #### Objectives

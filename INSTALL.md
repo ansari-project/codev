@@ -136,9 +136,8 @@ Run these checks:
 # Verify codev is a directory, not spread across root
 ls -la codev/
 
-# Check directory structure (using ls since tree isn't available on macOS by default)
-ls -la codev/
-ls -la codev/protocols/
+# Check directory structure (using find for cross-platform compatibility)
+find codev -type d -maxdepth 2 | sort
 
 # Expected structure:
 # codev/                    # <-- Everything inside here!

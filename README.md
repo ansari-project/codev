@@ -68,20 +68,22 @@ your-project/
 
 ## 📚 Example Implementations
 
-See Codev in action with these real-world examples:
+Both projects below were given **the exact same prompt** to build a Todo Manager application. The difference? The methodology used:
 
 ### [Todo Manager - VIBE](https://github.com/ansari-project/todo-manager-vibe)
 - Built using a **VIBE-style prompt** approach
 - Shows rapid prototyping with conversational AI interaction
 - Demonstrates how a simple prompt can drive development
-- Good for comparison with structured protocol approach
+- Results in working code through chat-based iteration
 
 ### [Todo Manager - SPIDER](https://github.com/ansari-project/todo-manager-spider)
 - Built using the **SPIDER protocol** with full document-driven development
+- Same requirements, but structured through formal specifications and plans
 - Demonstrates all phases: Specify → Plan → (IDE Loop) → Review
-- Shows how lessons learned improve the protocol
 - Complete with specs, plans, and review documents
 - Multi-agent consultation throughout the process
+
+**Compare the approaches**: Same prompt, different methodologies - see which works better for your use case!
 
 ## 🐕 Eating Our Own Dog Food
 

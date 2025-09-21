@@ -177,7 +177,6 @@ The agent will:
 
 Example repositories to monitor:
 - `ansari-project/todo-manager-spider` - SPIDER protocol implementation with lessons learned
-- `ansari-project/todo-manager-vibe` - VIBE-style implementation for methodology comparison
 - Your own SPIDER projects that discovered better patterns
 
 ## Contributing

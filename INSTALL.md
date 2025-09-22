@@ -213,6 +213,40 @@ After installation, guide the user:
 | Code reviews per phase | Multi-agent | Self-review |
 | Recommended for | Critical projects | Rapid prototyping |
 
+## Optional: Spider Protocol Updater Agent
+
+For projects using Claude Code with the Task tool, you can install the `spider-protocol-updater` agent to help evolve the SPIDER protocol by learning from other implementations:
+
+**Installation**:
+```bash
+# Create the .claude/agents directory if it doesn't exist
+mkdir -p .claude/agents
+
+# Copy the spider-protocol-updater agent from codev source
+# (Assuming codev source is available)
+cp path/to/codev/.claude/agents/spider-protocol-updater.md .claude/agents/
+```
+
+**What it does**:
+- Analyzes SPIDER implementations in other GitHub repositories
+- Identifies improvements and lessons learned
+- Recommends protocol updates based on community usage
+- Helps the protocol evolve through collective wisdom
+
+**How to use**:
+```bash
+# Check a specific repository for improvements
+"Check the ansari-project/webapp repo for any SPIDER improvements"
+
+# Periodic review of SPIDER implementations
+"Scan recent SPIDER implementations for protocol enhancements"
+```
+
+**Note**: This agent requires:
+- Claude Code with Task tool support
+- Access to GitHub repositories
+- The agent file in `.claude/agents/spider-protocol-updater.md`
+
 ## Remember
 
 - The goal is THREE documents per feature (spec, plan, review)

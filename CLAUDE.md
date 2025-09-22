@@ -79,6 +79,33 @@ To disable: User must explicitly say "without multi-agent consultation"
 5. **Evaluation Phase**: After evaluation completion
 6. **Review Phase**: After review document
 
+## Spider Protocol Updater Agent
+
+The `spider-protocol-updater` agent helps evolve the SPIDER protocol by analyzing implementations in other repositories and identifying improvements to incorporate back into the main protocol.
+
+**When to use**:
+- Periodic review of SPIDER implementations in other repositories
+- When notified of significant SPIDER improvements in external projects
+- To check if a specific repository has protocol enhancements worth adopting
+
+**How to invoke**:
+```bash
+# Ask Claude to check a specific repository
+"Check the ansari-project/webapp repo for any SPIDER improvements we should adopt"
+
+# Or for periodic reviews
+"It's been a month since we last checked for SPIDER improvements in other repos"
+```
+
+**What the agent does**:
+1. Analyzes remote GitHub repositories implementing SPIDER
+2. Compares their protocol.md with our canonical version
+3. Reviews their lessons learned and review documents
+4. Classifies improvements as Universal, Domain-specific, Experimental, or Anti-pattern
+5. Recommends specific protocol updates with justification
+
+**Agent location**: `.claude/agents/spider-protocol-updater.md`
+
 ## Git Workflow
 
 ### 🚨 ABSOLUTE PROHIBITION: NEVER USE `git add -A` or `git add .` 🚨

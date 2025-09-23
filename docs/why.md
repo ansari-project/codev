@@ -1,10 +1,10 @@
 # Why We Created Codev: From Theory to Practice
 
-**TL;DR**: I previously [argued](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) that natural language has become our new high-level programming language. We've now developed Codev, a repository that embodies this principle. While "vibe coding" throws away the source conversation, Codev treats specifications as durable, executable programs. Using our SP(IDE)R protocol (a structured sequence of steps with both human review and multi-agent consultation), we built a todo app where the same AI model produced a basic demo with conversational prompting but achieved 100% of the specified functionality with comprehensive tests using SP(IDE)R. We did not directly edit the source code, but we still have all the characteristics of a well-engineered software project: comprehensive tests, clear architecture, and thorough documentation.
+**TL;DR**: I previously [argued](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) that natural language has become our new high-level programming language. We've now developed Codev, a repository that embodies this principle. While "vibe coding" throws away the source conversation, Codev treats specifications as durable, executable programs. Using our SP(IDE)R protocol (a structured sequence of steps with both human review and multi-agent consultation), we built a todo app where the same AI model produced a basic demo with conversational prompting but achieved 100% of the specified functionality with comprehensive tests using SP(IDE)R. We did not directly edit the source code, but we still have all the characteristics of a well-engineered software project: reliable application, comprehensive tests, clear architecture, and thorough documentation.
 
 ## The Journey to Codev
 
-You can see a particular trajectory in my writing about using agents for coding. ["Natural Language is Now Code"](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) argued that natural language has become the new high-level programming language. ["The Edit Trick"](https://waleedk.medium.com/the-edit-trick-efficient-llm-annotation-of-documents-d078429faf37) showed practical techniques for efficient LLM document processing. These articles explored the theory but didn't provide a complete system.
+You can see a particular trajectory in my writing about using agents for coding. ["Natural Language is Now Code"](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) argued that natural language has become the new high-level programming language. ["Good context leads to good code"](https://blog.stockapp.com/good-context-good-code/) showed how we built an AI-native engineering culture at StockApp. These articles explored the theory but didn't provide a complete system.
 
 Meanwhile, I watched teams struggle to find a middle path between tech-debt inducing vibe coding and taking advantage of AI in a structured way. They knew conversational coding was risky, but formal methodologies felt heavyweight and slow.
 
@@ -14,9 +14,9 @@ This brought us to Codev: **Co**-development between humans and agents, driven b
 
 ## The SP(IDE)R Protocol
 
-The SP(IDE)R protocol should look familiar to anyone who has built code with agentic systems. There are a few tweaks.
+The SP(IDE)R protocol structures the creation of a shared context between the agents and the human.
 
-**Specify**: The human and agents work together to align on a specification. Claude takes a first shot at transforming your request into concrete acceptance criteria, then gets reviews from other agents (Gemini 2.5 Pro and GPT-4o). These agents might identify missing requirements, security concerns, or architectural considerations. Claude then comes back to the human with remaining open questions and design choices. This collaborative specification is stored in `codev/specs/####-feature-name.md`.
+**Specify**: The human and agents work together to align on a specification. Claude takes a first shot at transforming your request into concrete acceptance criteria, then gets reviews from other agents (Gemini 2.5 Pro and GPT-5). These agents might identify missing requirements, security concerns, or architectural considerations. Claude then comes back to the human with remaining open questions and design choices. This collaborative specification is stored in `codev/specs/####-feature-name.md`.
 
 **Plan**: Claude proposes how to break down the implementation into phases, with clear deliverables and exit criteria. Again, other agents review: one might suggest a different sequencing, another might identify missing test considerations. The human has final review and can request changes. Any differences of opinion between agents are captured in the discussion. This plan is stored in `codev/plans/####-feature-name.md`.
 
@@ -27,17 +27,17 @@ Then for each phase, you run the **IDE loop**:
 
 **Review** (or Refine/Revise/Reflect): After all phases complete, document what you learned. What worked? What didn't? These lessons feed forward into the next feature. But here's the key: you also update the SP(IDE)R protocol itself based on what you learned. The methodology evolves with your project. This review is captured in `codev/reviews/####-feature-name.md`.
 
-The key differentiator is multi-agent consultation and fixed human review points. After writing the specification, we don't just proceed: we bring in multiple AI agents (GPT-4o and Gemini 2.5 Pro in our case) to review from different perspectives. One might catch security issues, another might spot performance problems. This happens again after implementation and testing. Each agent brings its own strengths and blind spots, as does the human who has final say at key decision points.
+The key differentiator is multi-agent consultation and fixed human review points. After writing the specification, we don't just proceed: we bring in multiple AI agents (GPT-5 and Gemini 2.5 Pro in our case) to review from different perspectives. One might catch security issues, another might spot performance problems. This happens again after implementation and testing. Each agent brings its own strengths and blind spots, as does the human who has final say at key decision points.
 
 ## The Todo Manager Case Study
 
-To test SP(IDE)R, we ran an experiment. Same AI model (Claude 3.5 Sonnet), same tools available. The only difference: methodology.
+To test SP(IDE)R, we ran an experiment. Same AI model (Claude Opus 4.1), same tools available. The only difference: methodology.
 
 The request was to build a modern web-based todo manager with both traditional UI and conversational interface.
 
 ### Without SP(IDE)R
 
-First attempt: conversational approach. Looking at the resulting codebase in `todo-manager-vibe/`, the AI did produce a working application:
+First attempt: conversational approach. Looking at the resulting codebase in [`todo-manager-vibe/`](https://github.com/ansari-project/todo-manager-vibe), the AI did produce a working application:
 - Next.js 14 with TypeScript
 - Flat file storage using JSON files
 - Basic CRUD API routes
@@ -53,11 +53,11 @@ However, critical gaps remain:
 - **Minimal conversational interface** - basic UI but no actual natural language processing
 - **No documentation** - no specs, plans, or architectural decisions recorded
 
-The AI built something that demos well but would fail in production. Without structured phases and review cycles, it optimized for "looks like it works" rather than "actually works reliably."
+The AI built something that looks good but didn't work. It used regexes for parsing the English. It put the conversational interface and the todo list on separate tabs. Without structured phases and review cycles, it optimized for "looks like it works" rather than "actually works reliably."
 
 ### With SP(IDE)R
 
-Using SP(IDE)R, the specification phase expanded that one-line prompt into concrete requirements. The plan broke it into five phases, each with its own IDE loop.
+Using SP(IDE)R, the specification phase expanded that prompt into concrete requirements. The plan broke it into five phases, each with its own IDE loop. You can explore the full implementation at [`todo-manager-spider`](https://github.com/ansari-project/todo-manager-spider).
 
 After multi-agent consultation and human review of the spec and plan stages, systematic implementation produced:
 - 32 source files with clear architecture
@@ -73,7 +73,7 @@ Most importantly, we deployed the application. The app went through four iterati
 
 ### What We Learned
 
-The review document (`codev/reviews/0001-todo-manager.md`) revealed important lessons. The AI documented where it had skipped IDE loops in early phases. It noted how multi-agent consultation caught deployment issues. The specification had started over-engineered and was simplified based on feedback.
+The review document ([`codev/reviews/0001-todo-manager.md`](https://github.com/ansari-project/todo-manager-spider/blob/main/codev/reviews/0001-todo-manager.md)) revealed important lessons. The AI documented where it had skipped IDE loops in early phases. It noted how multi-agent consultation caught deployment issues. The specification had started over-engineered and was simplified based on feedback. 
 
 Most importantly, these lessons updated the protocol itself. Each project makes the methodology better.
 
@@ -99,15 +99,21 @@ SP(IDE)R has real constraints worth acknowledging.
 
 ### Comparisons with Other Specification-Driven Approaches
 
-**vs Amazon Kiro**: Kiro uses three static specification files (requirements.md, design.md, tasks.md) following formal methods like EARS from Rolls Royce. SP(IDE)R uses natural language specifications with multi-agent review. Kiro focuses on synchronizing specs with code; SP(IDE)R treats specs as the source and code as the compilation target. Kiro requires their IDE; SP(IDE)R works with any AI agent.
+**vs Amazon Kiro**: Both approaches use structured specification files, with Kiro implementing EARS (Easy Approach to Requirements Syntax) from Rolls-Royce for formal requirements. Kiro uses three files (requirements.md, design.md, tasks.md) while SP(IDE)R uses specs, plans, and reviews. Key difference: Kiro is a full IDE with built-in hooks and automation, while SP(IDE)R is a methodology that works with any AI agent. Trade-off: Kiro offers tighter integration and automation at the cost of IDE lock-in; SP(IDE)R offers flexibility at the cost of manual coordination.
 
-**vs GitHub SpecKit**: SpecKit follows a similar four-phase process (Specify, Plan, Tasks, Implement) but treats each phase sequentially. SP(IDE)R wraps implementation in defensive IDE loops and adds mandatory review phases. SpecKit generates tasks once; SP(IDE)R iterates with continuous evaluation. Both are open source, but SP(IDE)R emphasizes protocol evolution through community learning.
+**vs GitHub SpecKit**: Both follow a four-phase process (Specify, Plan, Tasks, Implement). SpecKit uses slash commands (/specify, /plan, /tasks, /implement) that the AI executes autonomously. SP(IDE)R wraps implementation in IDE loops with explicit human checkpoints after each phase. Key difference: SpecKit aims for autonomous task completion; SP(IDE)R deliberately pulls humans in for review and course correction. Trade-off: SpecKit optimizes for speed and minimal interruption; SP(IDE)R optimizes for human oversight and multi-agent validation.
 
-**Key Differentiators**:
-- **Multi-agent consultation**: Neither Kiro nor SpecKit emphasize multiple AI perspectives during specification
-- **Protocol evolution**: SP(IDE)R updates itself based on project lessons; others maintain static methodologies
-- **Human review gates**: SP(IDE)R has explicit human checkpoints; others rely more on autonomous execution
-- **Test-first defense**: The "Defend" phase is unique to SP(IDE)R, building barriers against future regressions
+**Shared Goals, Different Philosophies**:
+All three methodologies address the same core challenge: moving from vague prompts to reliable, production-ready code. They differ fundamentally in their approach to human involvement:
+- **Kiro**: Enterprise-grade traceability and compliance (best for regulated environments)
+- **SpecKit**: Autonomous execution with minimal human intervention (best for rapid prototyping)
+- **SP(IDE)R**: Human-in-the-loop with deliberate review gates and multi-agent consultation by design (best for complex, evolving projects)
+
+**Unique SP(IDE)R Features**:
+- **Multi-agent by design**: Not just one AI's opinion - brings in multiple AI perspectives (GPT-5, Gemini 2.5 Pro) to catch blind spots
+- **Human review gates**: Explicit checkpoints where humans must approve before proceeding, preventing runaway automation
+- **Protocol evolution**: The methodology updates itself based on project lessons learned
+- **Community-driven improvement**: Protocol improvements are shared across implementations
 
 ## What Makes Codev Different
 
@@ -138,7 +144,7 @@ Every project has a CLAUDE.md file with project-specific guidance. Style prefere
 Want to try SP(IDE)R yourself?
 
 1. Visit: [`github.com/ansari-project/codev`](https://github.com/ansari-project/codev)
-2. Tell your AI: "Install Codev from this repository"
+2. Tell your AI: "Follow the instructions in [INSTALL.md](https://github.com/ansari-project/codev/blob/main/INSTALL.md)"
 3. Start with SP(IDE)R-SOLO for single-agent workflows
 4. Review our examples to see the methodology in action
 
@@ -150,6 +156,7 @@ Codev is in its early stages, and we're learning from every implementation. If y
 - Star the [GitHub repository](https://github.com/ansari-project/codev) to stay updated
 - Open issues with your experiences and suggestions
 - Share your SP(IDE)R implementations - we analyze them to evolve the protocol
+- Email us at hi@waleed.dk with feedback
 - Join the conversation about the future of specification-driven development
 
 The best methodologies emerge from collective practice, not ivory towers. Help us build the future where specifications are source code and natural language drives development.

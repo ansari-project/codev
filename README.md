@@ -13,6 +13,8 @@ Apply Codev to this repo following the instructions at https://github.com/ansari
 
 Codev is a development methodology that treats **natural language context as code**. Instead of writing code first and documenting later, you start with clear specifications that both humans and AI agents can understand and execute.
 
+📖 **Read the full story**: [Why We Created Codev: From Theory to Practice](docs/why.md) - Learn about our journey from theory to implementation and how we built a todo app without directly editing code.
+
 ### Core Philosophy
 
 1. **Context Drives Code** - Context definitions flow from high-level specifications down to implementation details
@@ -225,7 +227,15 @@ Example repositories to monitor:
 
 ## Contributing
 
-We welcome contributions:
+We welcome contributions! Please help us improve Codev:
+
+### Filing Issues
+- **Bug Reports**: [Open an issue](https://github.com/ansari-project/codev/issues) with clear reproduction steps
+- **Feature Requests**: Share your ideas for new features or improvements
+- **Documentation**: Report unclear or missing documentation
+- **Questions**: Ask for clarification or help with implementation
+
+### Contributing Code
 - New protocols beyond SP(IDE)R
 - Improved templates
 - Integration tools

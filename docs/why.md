@@ -1,12 +1,14 @@
 # Why We Created Codev: From Theory to Practice
 
-**TL;DR**: I previously [argued](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) that natural language has become our new high-level programming language. We've now developed Codev, a repository that embodies this principle. While "vibe coding" throws away the source conversation, Codev treats specifications as durable, executable programs. Using our SP(IDE)R protocol (a structured sequence of steps with both human review and multi-agent consultation), we built a todo app where the same AI model produced a basic demo with conversational prompting but achieved 100% of the specified functionality with comprehensive tests using SP(IDE)R. We did not directly edit the source code, but we still have all the characteristics of a well-engineered software project: reliable application, comprehensive tests, clear architecture, and thorough documentation.
+Waleed Kadous, Amr Elsayed
+
+**TL;DR**: We previously [argued](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) that natural language has become our new high-level programming language. We've now developed Codev, a repository that embodies this principle. While "vibe coding" throws away the source conversation, Codev treats specifications as durable, executable programs. Using our SP(IDE)R protocol (a structured sequence of steps with both human review and multi-agent consultation), we built a todo app where the same AI model produced a basic demo with conversational prompting but achieved 100% of the specified functionality with comprehensive tests using SP(IDE)R. We did not directly edit the source code, but we still have all the characteristics of a well-engineered software project: reliable application, comprehensive tests, clear architecture, and thorough documentation.
 
 ## The Journey to Codev
 
-You can see a particular trajectory in my writing about using agents for coding. ["Natural Language is Now Code"](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) argued that natural language has become the new high-level programming language. ["Good context leads to good code"](https://blog.stockapp.com/good-context-good-code/) showed how we built an AI-native engineering culture at StockApp. These articles explored the theory but didn't provide a complete system.
+You can see a particular trajectory in our writing about using agents for coding. ["Natural Language is Now Code"](https://medium.com/@waleedk/natural-language-is-now-code-35e9b3379d42) argued that natural language has become the new high-level programming language. ["Good context leads to good code"](https://blog.stockapp.com/good-context-good-code/) showed how we built an AI-native engineering culture at StockApp. These articles explored the theory but didn't provide a complete system.
 
-Meanwhile, I watched teams struggle to find a middle path between tech-debt inducing vibe coding and taking advantage of AI in a structured way. They knew conversational coding was risky, but formal methodologies felt heavyweight and slow.
+Meanwhile, we watched teams struggle to find a middle path between tech-debt inducing vibe coding and taking advantage of AI in a structured way. They knew conversational coding was risky, but formal methodologies felt heavyweight and slow.
 
 We needed to translate these ideas into a practical system: installable in an afternoon, adoptable incrementally. Not another framework to learn, but a methodology supported by simple tooling that makes conversations durable, versioned, and executable.
 
@@ -154,7 +156,7 @@ We built a functional todo app without directly touching code, while maintaining
 
 Codev is in its early stages, and we're learning from every implementation. If you try SP(IDE)R:
 - Star the [GitHub repository](https://github.com/ansari-project/codev) to stay updated
-- Open issues with your experiences and suggestions
+- [File issues](https://github.com/ansari-project/codev/issues) with your experiences, suggestions, or questions
 - Share your SP(IDE)R implementations - we analyze them to evolve the protocol
 - Email us at hi@waleed.dk with feedback
 - Join the conversation about the future of specification-driven development

@@ -34,24 +34,20 @@ mcp__zen__version
 **IMPORTANT**: All Codev files go INSIDE a `codev/` directory, not in the project root!
 
 ```bash
-# Create a temporary directory for installation
-mkdir -p /tmp/codev-install
-cd /tmp/codev-install
+# Clone codev repository to temporary directory
+TEMP_DIR=$(mktemp -d)
+git clone --depth 1 https://github.com/ansari-project/codev.git "$TEMP_DIR"
 
-# Download and extract just the codev-skeleton
-curl -L https://github.com/ansari-project/codev/archive/main.tar.gz | tar xz --strip-components=1 codev-main/codev-skeleton
-
-# Go back to your project directory
-cd -
-
-# Create the codev directory in your project
+# Copy skeleton structure to your project
 mkdir -p codev
+cp -r "$TEMP_DIR/codev-skeleton/"* ./codev/
 
-# Copy the skeleton structure
-cp -r /tmp/codev-install/codev-skeleton/* codev/
+# Create required directories (ensures they exist even if skeleton is incomplete)
+mkdir -p codev/specs
+mkdir -p codev/plans
 
 # Clean up
-rm -rf /tmp/codev-install
+rm -rf "$TEMP_DIR"
 ```
 
 **Directory Structure Should Be**:
@@ -87,8 +83,8 @@ if [ -f "CLAUDE.md" ]; then
 else
     # Ask user for permission
     echo "No CLAUDE.md found. May I create one? [y/n]"
-    # If yes, copy from skeleton
-    cp codev/CLAUDE.md.template ./CLAUDE.md
+    # If yes, create a basic CLAUDE.md with Codev structure
+    # Note: No template exists in skeleton - AI should create appropriate one based on project context
 fi
 ```
 
@@ -130,36 +126,39 @@ echo "Use the template at codev/protocols/spider/templates/spec.md"
 
 ### Step 6: Verify Installation
 
-Run these checks:
-
+**Quick Verification Checklist**:
 ```bash
-# Verify codev is a directory, not spread across root
-ls -la codev/
+# 1. Verify codev/ directory exists
+test -d codev && echo "✓ codev/ directory exists" || echo "✗ FAIL: codev/ directory missing"
 
-# Check directory structure (using find for cross-platform compatibility)
+# 2. Verify required subdirectories
+test -d codev/protocols/spider && echo "✓ SPIDER protocol exists" || echo "✗ FAIL: SPIDER protocol missing"
+test -d codev/specs && echo "✓ specs/ directory exists" || echo "✗ FAIL: specs/ directory missing"
+
+# 3. Verify protocol is readable
+test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
+
+# 4. Verify CLAUDE.md references codev
+grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
+```
+
+**Detailed Structure Check**:
+```bash
+# View complete directory structure
 find codev -type d -maxdepth 2 | sort
 
-# Expected structure:
-# codev/                    # <-- Everything inside here!
-# ├── protocols/
-# │   ├── spider/
-# │   └── spider-solo/
-# ├── specs/
-# ├── plans/
-# ├── reviews/
-# └── resources/
+# Expected output:
+# codev/
+# codev/plans
+# codev/protocols
+# codev/protocols/spider
+# codev/protocols/spider-solo
+# codev/reviews
+# codev/resources
+# codev/specs
 
-# WRONG structure (files in root):
-# project-root/
-# ├── protocols/           # ❌ Wrong!
-# ├── specs/               # ❌ Wrong!
-# └── codev/               # Should all be inside here
-
-# Check protocol is accessible
+# Verify protocol content
 cat codev/protocols/spider/protocol.md | head -20
-
-# Check CLAUDE.md references correct protocol
-grep "protocols/spider" CLAUDE.md
 ```
 
 ## Post-Installation Guidance
@@ -206,12 +205,13 @@ After installation, guide the user:
 
 | Feature | SPIDER | SPIDER-SOLO |
 |---------|--------|-------------|
-| Multi-agent consultation | ✓ (GPT-5 + Gemini Pro) | ✗ |
+| Multi-agent consultation | ✓ (GPT-5 + Gemini Pro) | ✗ (self-review only) |
 | Prerequisites | Zen MCP server | None |
-| Specification reviews | 2 (multi-agent) | 0 (self-review) |
-| Plan reviews | 2 (multi-agent) | 0 (self-review) |
-| Code reviews per phase | Multi-agent | Self-review |
-| Recommended for | Critical projects | Rapid prototyping |
+| Specification reviews | Multi-agent external | Self-review |
+| Plan reviews | Multi-agent external | Self-review |
+| Implementation reviews | Multi-agent per phase | Self-review |
+| Best for | Production features | Exploration & prototypes |
+| Speed | Slower (thorough) | Faster (good enough) |
 
 ## Optional: Spider Protocol Updater Agent
 

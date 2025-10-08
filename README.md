@@ -202,28 +202,60 @@ Templates in `codev/protocols/spider/templates/` can be modified to fit your tea
 - `plan.md` - Planning format
 - `lessons.md` - Retrospective template
 
-## Protocol Improvement Process
+## AI Agents
 
-### Spider-Protocol-Updater Agent
+Codev includes three specialized AI agents to enhance your development workflow (requires Claude Code with the Task tool):
 
-When SPIDER implementations in other repositories discover improvements, we can incorporate them back into the main protocol using the `spider-protocol-updater` agent (requires Claude Code with the Task tool):
+### 🔄 Codev-Updater Agent
+
+Keep your Codev installation up-to-date with the latest protocols and improvements:
+
+```bash
+# Update your Codev framework
+"Please update my codev framework to the latest version"
+```
+
+The agent will:
+1. Check for updates to protocols (SPIDER, TICK, etc.)
+2. Update agents and templates
+3. **Preserve your specs, plans, and reviews**
+4. Create backups before updating
+5. Provide rollback instructions
+
+### 🏗️ Architecture-Documenter Agent
+
+Automatically maintains comprehensive architecture documentation:
+
+```bash
+# Invoked automatically at the end of TICK protocol reviews
+# Or manually: "Update the architecture documentation"
+```
+
+The agent maintains `codev/resources/arch.md` with:
+- Complete directory structure
+- All utility functions and helpers
+- Key architectural patterns
+- Component relationships
+- Technology stack details
+
+### 🕷️ Spider-Protocol-Updater Agent
+
+Learn from SPIDER implementations across the community:
 
 ```bash
 # Check a repository for SPIDER improvements
-# The agent will analyze their implementation and suggest protocol updates
+"Check [repository-url] for SPIDER improvements"
 ```
-
-To invoke the agent, ask Claude: "Check [repository-url] for SPIDER improvements"
 
 The agent will:
 1. Analyze the repository's SPIDER implementation
-2. Compare it against our current protocol
-3. Identify valuable improvements and lessons learned
-4. Suggest specific protocol updates with justification
+2. Compare against current protocol
+3. Identify improvements and lessons learned
+4. Suggest protocol updates with justification
 
 Example repositories to monitor:
-- `ansari-project/todo-manager-spider` - SPIDER protocol implementation with lessons learned
-- Your own SPIDER projects that discovered better patterns
+- `ansari-project/todo-manager-spider` - SPIDER implementation with lessons
+- Your own SPIDER projects with discovered patterns
 
 ## Contributing
 

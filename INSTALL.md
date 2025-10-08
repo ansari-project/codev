@@ -61,7 +61,7 @@ project-root/
 │   ├── specs/          # Specifications
 │   ├── plans/          # Implementation plans
 │   ├── reviews/        # Reviews and lessons learned
-│   └── resources/      # Reference materials (llms.txt, guides, etc.)
+│   └── resources/      # Reference materials and documentation
 ├── .claude/            # AI agent definitions
 │   └── agents/         # Custom agents
 │       ├── spider-protocol-updater.md

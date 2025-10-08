@@ -69,12 +69,12 @@ project-root/
 │   ├── plans/              # Implementation plans (HOW to build)
 │   ├── reviews/            # Reviews and lessons learned from each feature
 │   └── resources/          # Reference materials
-│       ├── llms.txt        # LLM comparison guide
 │       └── arch.md         # Architecture documentation (maintained by agent)
 ├── .claude/
 │   └── agents/             # AI agent definitions
 │       ├── spider-protocol-updater.md
-│       └── architecture-documenter.md
+│       ├── architecture-documenter.md
+│       └── codev-updater.md
 ├── CLAUDE.md              # This file
 └── [project code]
 ```
@@ -159,6 +159,43 @@ The `architecture-documenter` agent maintains comprehensive architecture documen
 4. Ensures documentation matches actual codebase state
 
 **Agent location**: `.claude/agents/architecture-documenter.md`
+
+## Codev Updater Agent
+
+The `codev-updater` agent keeps your Codev installation current with the latest improvements from the main repository while preserving your project work.
+
+**When to use**:
+- Periodic framework updates (monthly recommended)
+- When new protocols are released (like TICK)
+- When agents receive improvements or bug fixes
+- When protocol templates are enhanced
+- To check for available updates
+
+**How to invoke**:
+```bash
+# Update to latest version
+"Please update my codev framework to the latest version"
+
+# Check for available updates
+"Are there any updates available for codev?"
+```
+
+**What the agent does**:
+1. Checks current installation and identifies installed components
+2. Fetches latest version from the main codev repository
+3. **Creates backups** of current installation
+4. Updates protocols, agents, and templates
+5. **Preserves all user work** (specs, plans, reviews)
+6. Provides update report and rollback instructions
+
+**Safety features**:
+- Always creates timestamped backups before updating
+- Never modifies user's specs, plans, or reviews
+- Preserves CLAUDE.md customizations
+- Provides clear rollback instructions if needed
+- Verifies successful update before completing
+
+**Agent location**: `.claude/agents/codev-updater.md`
 
 ## Git Workflow
 

@@ -24,7 +24,7 @@ Key locations:
 ## Protocol Selection Guide
 
 ### Use TICK for:
-- Small features (< 100 lines of code)
+- Small features (< 300 lines of code)
 - Well-defined tasks with clear requirements
 - Bug fixes with known solutions
 - Simple configuration changes

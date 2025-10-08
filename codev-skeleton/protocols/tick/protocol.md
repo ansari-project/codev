@@ -9,7 +9,7 @@ TICK is a streamlined development protocol for rapid, autonomous implementation.
 ## When to Use TICK
 
 ### Use TICK for:
-- Small features (< 100 lines of code)
+- Small features (< 300 lines of code)
 - Well-defined tasks with clear requirements
 - Bug fixes with known solutions
 - Straightforward refactoring
@@ -180,14 +180,14 @@ Additional commits if changes requested:
 
 **Choose TICK when**:
 - Task is well-defined
-- < 100 lines of code
+- < 300 lines of code
 - Low risk of errors
 - Fast iteration needed
 - Requirements are clear
 
 **Choose SPIDER when**:
 - Requirements unclear
-- > 100 lines of code
+- > 300 lines of code
 - High complexity
 - Stakeholder alignment needed
 - Architecture changes

@@ -247,7 +247,7 @@ Updates applied:
 • All 15 specs, 12 plans, and 10 reviews preserved
 
 New features available:
-• TICK protocol: Use for tasks <100 LOC
+• TICK protocol: Use for tasks <300 LOC
 • Architecture documenter: Maintains arch.md automatically
 
 To rollback if needed, instructions are in the update report.

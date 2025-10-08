@@ -42,6 +42,9 @@ git clone --depth 1 https://github.com/ansari-project/codev.git "$TEMP_DIR"
 mkdir -p codev
 cp -r "$TEMP_DIR/codev-skeleton/"* ./codev/
 
+# Copy .claude directory with agents to project root
+cp -r "$TEMP_DIR/codev-skeleton/.claude" ./
+
 # Create required directories (ensures they exist even if skeleton is incomplete)
 mkdir -p codev/specs
 mkdir -p codev/plans
@@ -59,6 +62,10 @@ project-root/
 │   ├── plans/          # Implementation plans
 │   ├── reviews/        # Reviews and lessons learned
 │   └── resources/      # Reference materials (llms.txt, guides, etc.)
+├── .claude/            # AI agent definitions
+│   └── agents/         # Custom agents
+│       ├── spider-protocol-updater.md
+│       └── architecture-documenter.md
 ├── CLAUDE.md           # In project root
 └── [project files]     # Your actual code
 ```
@@ -70,6 +77,7 @@ The entire `codev/protocols/` directory is copied with all available protocols. 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
 - `codev/protocols/spider-solo/` - Single-agent variant
+- `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
 
 ### Step 4: Create or Update CLAUDE.md
 
@@ -133,7 +141,9 @@ test -d codev && echo "✓ codev/ directory exists" || echo "✗ FAIL: codev/ di
 
 # 2. Verify required subdirectories
 test -d codev/protocols/spider && echo "✓ SPIDER protocol exists" || echo "✗ FAIL: SPIDER protocol missing"
+test -d codev/protocols/tick && echo "✓ TICK protocol exists" || echo "✗ FAIL: TICK protocol missing"
 test -d codev/specs && echo "✓ specs/ directory exists" || echo "✗ FAIL: specs/ directory missing"
+test -d .claude/agents && echo "✓ .claude/agents/ directory exists" || echo "✗ FAIL: .claude/agents/ directory missing"
 
 # 3. Verify protocol is readable
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
@@ -224,14 +234,25 @@ mkdir -p .claude/agents
 
 # Copy the spider-protocol-updater agent from codev source
 # (Assuming codev source is available)
-cp path/to/codev/.claude/agents/spider-protocol-updater.md .claude/agents/
+cp path/to/codev-skeleton/.claude/agents/spider-protocol-updater.md .claude/agents/
+
+# Also copy the architecture-documenter agent (for TICK protocol support)
+cp path/to/codev-skeleton/.claude/agents/architecture-documenter.md .claude/agents/
 ```
 
-**What it does**:
+**What the agents do**:
+
+**spider-protocol-updater**:
 - Analyzes SPIDER implementations in other GitHub repositories
 - Identifies improvements and lessons learned
 - Recommends protocol updates based on community usage
 - Helps the protocol evolve through collective wisdom
+
+**architecture-documenter**:
+- Maintains comprehensive architecture documentation (arch.md)
+- Documents directory structure, utilities, and design patterns
+- Automatically invoked at the end of TICK protocol reviews
+- Helps developers quickly understand the codebase structure
 
 **How to use**:
 ```bash
@@ -242,10 +263,10 @@ cp path/to/codev/.claude/agents/spider-protocol-updater.md .claude/agents/
 "Scan recent SPIDER implementations for protocol enhancements"
 ```
 
-**Note**: This agent requires:
+**Note**: These agents require:
 - Claude Code with Task tool support
-- Access to GitHub repositories
-- The agent file in `.claude/agents/spider-protocol-updater.md`
+- Access to GitHub repositories (for spider-protocol-updater)
+- The agent files in `.claude/agents/`
 
 ## Remember
 

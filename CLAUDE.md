@@ -8,25 +8,39 @@ This project IS Codev itself, and we use our own methodology for development. Al
 
 ## Quick Start
 
-You are working in the Codev project itself, using the **SPIDER protocol** with multi-agent consultation.
+You are working in the Codev project itself, with multiple development protocols available:
+
+**Available Protocols**:
+- **SPIDER**: Multi-phase development with consultation - `codev/protocols/spider/protocol.md`
+- **SPIDER-SOLO**: Single-agent variant - `codev/protocols/spider-solo/protocol.md`
+- **TICK**: Fast autonomous implementation - `codev/protocols/tick/protocol.md`
 
 Key locations:
-- Protocol details: `codev/protocols/spider/protocol.md` (READ THIS FIRST)
+- Protocol details: `codev/protocols/` (Choose appropriate protocol)
 - Specifications go in: `codev/specs/`
 - Plans go in: `codev/plans/`
 - Reviews go in: `codev/reviews/`
 
-## What Goes Through SPIDER in This Repo
+## Protocol Selection Guide
 
-Since this is the Codev source repository, use SPIDER for:
+### Use TICK for:
+- Small features (< 100 lines of code)
+- Well-defined tasks with clear requirements
+- Bug fixes with known solutions
+- Simple configuration changes
+- Utility function additions
+- Tasks needing fast iteration
+
+### Use SPIDER for:
 - New protocols or protocol variants
-- Major changes to the SPIDER protocol itself
+- Major changes to existing protocols
 - New example projects
 - Significant changes to installation process
-- New features for the methodology
-- Integration tools or utilities
+- Complex features requiring multiple phases
+- Architecture changes
+- System design decisions
 
-Skip SPIDER for:
+### Skip formal protocols for:
 - README typos or minor documentation fixes
 - Small bug fixes in templates
 - Dependency updates
@@ -47,12 +61,21 @@ Skip SPIDER for:
 ```
 project-root/
 ├── codev/
-│   ├── protocols/spider/    # Protocol documentation and templates
-│   ├── specs/               # Feature specifications (WHAT to build)
-│   ├── plans/               # Implementation plans (HOW to build)
-│   ├── reviews/             # Reviews and lessons learned from each feature
-│   └── resources/           # Reference materials (llms.txt, guides, etc.)
-├── CLAUDE.md               # This file
+│   ├── protocols/           # Development protocols
+│   │   ├── spider/         # Multi-phase development with consultation
+│   │   ├── spider-solo/    # Single-agent SPIDER variant
+│   │   └── tick/           # Fast autonomous implementation
+│   ├── specs/              # Feature specifications (WHAT to build)
+│   ├── plans/              # Implementation plans (HOW to build)
+│   ├── reviews/            # Reviews and lessons learned from each feature
+│   └── resources/          # Reference materials
+│       ├── llms.txt        # LLM comparison guide
+│       └── arch.md         # Architecture documentation (maintained by agent)
+├── .claude/
+│   └── agents/             # AI agent definitions
+│       ├── spider-protocol-updater.md
+│       └── architecture-documenter.md
+├── CLAUDE.md              # This file
 └── [project code]
 ```
 
@@ -62,6 +85,8 @@ Use sequential numbering with descriptive names:
 - Specification: `codev/specs/0001-feature-name.md`
 - Plan: `codev/plans/0001-feature-name.md`
 - Review: `codev/reviews/0001-feature-name.md`
+
+**Note**: Sequential numbering is shared across all protocols (SPIDER, SPIDER-SOLO, TICK)
 
 ## Multi-Agent Consultation
 
@@ -105,6 +130,35 @@ The `spider-protocol-updater` agent helps evolve the SPIDER protocol by analyzin
 5. Recommends specific protocol updates with justification
 
 **Agent location**: `.claude/agents/spider-protocol-updater.md`
+
+## Architecture Documenter Agent
+
+The `architecture-documenter` agent maintains comprehensive architecture documentation (`codev/resources/arch.md`) that serves as the definitive reference for understanding the project's structure, components, and design decisions.
+
+**When to use**:
+- After significant implementation milestones
+- When new features are completed or modules added
+- During code reviews to capture architectural patterns
+- When specifications introduce new architectural components
+- Periodically during active development for up-to-date documentation
+
+**How it's used**:
+- Automatically invoked at the end of TICK protocol reviews
+- Can be manually invoked for architecture updates
+- Maintains directory structure, utilities, design patterns, and integration points
+
+**What the agent does**:
+1. Reviews specs, plans, and reviews for architectural information
+2. Scans the actual implementation to verify documented structure
+3. Maintains comprehensive `arch.md` with:
+   - Complete directory structure
+   - All utility functions and helpers
+   - Key architectural patterns
+   - Component relationships
+   - Technology stack details
+4. Ensures documentation matches actual codebase state
+
+**Agent location**: `.claude/agents/architecture-documenter.md`
 
 ## Git Workflow
 

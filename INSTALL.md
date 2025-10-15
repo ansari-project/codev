@@ -120,19 +120,7 @@ Key sections to verify in CLAUDE.md:
 - Consultation guidelines (if using SPIDER)
 - File naming conventions (####-descriptive-name.md)
 
-### Step 5: Initialize First Specification
-
-Help the user start their first feature:
-
-```bash
-# Create the first specification
-echo "# Specification: [Feature Name]" > codev/specs/0001-feature-name.md
-
-# Point them to the template
-echo "Use the template at codev/protocols/spider/templates/spec.md"
-```
-
-### Step 6: Verify Installation
+### Step 5: Verify Installation
 
 **Quick Verification Checklist**:
 ```bash

@@ -106,7 +106,7 @@ Both projects below were given **the exact same prompt** to build a Todo Manager
 - Demonstrates how a simple prompt can drive development
 - Results in working code through chat-based iteration
 
-### [Todo Manager - SPIDER](https://github.com/ansari-project/todo-manager-spider)
+### [Todo Manager - SPIDER](https://github.com/ansari-project/codev-demo)
 - Built using the **SPIDER protocol** with full document-driven development
 - Same requirements, but structured through formal specifications and plans
 - Demonstrates all phases: Specify → Plan → (IDE Loop) → Review

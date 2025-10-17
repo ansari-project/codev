@@ -2,12 +2,36 @@
 
 A methodology framework for building software where context drives development, not the other way around.
 
-## Quick Start
+## Get Started
 
 Tell your AI agent:
 ```
 Apply Codev to this repo following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
 ```
+
+## Learn about Codev
+
+### 📺 Quick Introduction (5 minutes)
+[![Codev Introduction](https://img.youtube.com/vi/vq_dmfyMHRA/0.jpg)](https://youtu.be/vq_dmfyMHRA)
+
+Watch a brief overview of what Codev is and how it works.
+
+### 📺 Extended Overview (Full Version)
+[![Codev Extended Overview](https://img.youtube.com/vi/8KTHoh4Q6ww/0.jpg)](https://www.youtube.com/watch?v=8KTHoh4Q6ww)
+
+A comprehensive walkthrough of the Codev methodology and its benefits.
+
+### 🎯 Codev Tour - Building a Conversational Todo Manager
+See Codev in action! Follow along as we use the SPIDER protocol to build a conversational todo list manager from scratch:
+
+👉 [**Codev Demo Tour**](https://github.com/ansari-project/codev-demo/blob/main/codev-tour.md)
+
+This tour demonstrates:
+- How to write specifications that capture all requirements
+- How the planning phase breaks work into manageable chunks
+- The IDE loop in action (Implement → Defend → Evaluate)
+- Multi-agent consultation with GPT-5 and Gemini Pro
+- How lessons learned improve future development
 
 ## What is Codev?
 

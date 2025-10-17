@@ -1,6 +1,6 @@
 # Codev: Context-First Development
 
-A methodology framework for building software where context drives development, not the other way around.
+A development methodology that treats natural language context as code. Instead of writing code first and documenting later, you start with clear specifications that both humans and AI agents can understand and execute.
 
 ## Get Started
 
@@ -8,6 +8,8 @@ Tell your AI agent:
 ```
 Apply Codev to this repo following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
 ```
+
+Then say "I want to build X using the SPIDER protocol" or "Teach me about Codev". 
 
 ## Learn about Codev
 

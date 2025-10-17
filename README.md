@@ -16,6 +16,8 @@ Apply Codev to this repo following the instructions at https://github.com/ansari
 
 Watch a brief overview of what Codev is and how it works.
 
+*Generated using [NotebookLM](https://notebooklm.google.com/notebook/e8055d06-869a-40e0-ab76-81ecbfebd634)*
+
 ### 📺 Extended Overview (Full Version)
 [![Codev Extended Overview](https://img.youtube.com/vi/8KTHoh4Q6ww/0.jpg)](https://www.youtube.com/watch?v=8KTHoh4Q6ww)
 

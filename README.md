@@ -20,6 +20,12 @@ Watch a brief overview of what Codev is and how it works.
 
 *Generated using [NotebookLM](https://notebooklm.google.com/notebook/e8055d06-869a-40e0-ab76-81ecbfebd634) - Visit the notebook to ask questions about Codev and learn more.*
 
+### 💬 Participate
+
+Join the conversation in [GitHub Discussions](https://github.com/ansari-project/codev/discussions)! Share your specs, ask questions, and learn from the community.
+
+**Get notified of new discussions**: Click the **Watch** button at the top of this repo → **Custom** → check **Discussions**.
+
 ### 📺 Extended Overview (Full Version)
 [![Codev Extended Overview](https://img.youtube.com/vi/8KTHoh4Q6ww/0.jpg)](https://www.youtube.com/watch?v=8KTHoh4Q6ww)
 

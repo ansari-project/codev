@@ -489,7 +489,12 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Improve test coverage gaps
    - Enhance documentation
 
-3. **Revision Requirements** (MANDATORY)
+3. **Update Architecture Documentation**
+   - Use architecture-documenter agent to update `codev/resources/arch.md`
+   - Document new modules, utilities, or architectural changes
+   - Ensure arch.md reflects current codebase state
+
+4. **Revision Requirements** (MANDATORY)
    - Update README.md with any new features or changes
    - Update CLAUDE.md with protocol improvements from lessons learned
    - Update specification and plan documents with final status
@@ -498,7 +503,7 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Modify deployment guides as necessary
    - **CRITICAL**: Update this protocol document based on lessons learned
 
-4. **Systematic Issue Review** (MANDATORY)
+5. **Systematic Issue Review** (MANDATORY)
    - Review entire project for systematic issues:
      - Repeated problems across phases
      - Process bottlenecks or inefficiencies
@@ -508,14 +513,14 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
    - Document systematic findings in lessons learned
    - Create action items for addressing systematic issues
 
-5. **Lessons Learned** (MANDATORY)
+6. **Lessons Learned** (MANDATORY)
    - What went well?
    - What was challenging?
    - What would you do differently?
    - What methodology improvements are needed?
    - What systematic issues were identified?
 
-6. **Methodology Evolution**
+7. **Methodology Evolution**
    - Propose process improvements based on lessons
    - Update protocol documents with improvements
    - Update templates if needed

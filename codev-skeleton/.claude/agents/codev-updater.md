@@ -56,7 +56,7 @@ While ALWAYS preserving:
 - User's specs/ directory
 - User's plans/ directory
 - User's reviews/ directory
-- User's CLAUDE.md customizations
+- User's AGENTS.md and CLAUDE.md customizations
 
 ## Update Workflow
 
@@ -170,7 +170,7 @@ Generate a comprehensive update report:
 - Specs: X files preserved
 - Plans: X files preserved
 - Reviews: X files preserved
-- CLAUDE.md: User customizations preserved
+- AGENTS.md/CLAUDE.md: User customizations preserved
 
 ## Backup Location
 - Codev backup: codev-backup-[timestamp]
@@ -178,7 +178,7 @@ Generate a comprehensive update report:
 
 ## Next Steps
 1. Review new protocols in codev/protocols/
-2. Check CLAUDE.md for any manual updates needed
+2. Check AGENTS.md and CLAUDE.md for any manual updates needed
 3. Test that your existing workflows still function
 ```
 
@@ -190,7 +190,7 @@ Generate a comprehensive update report:
 - Any files in codev/specs/
 - Any files in codev/plans/
 - Any files in codev/reviews/
-- User's customizations in CLAUDE.md
+- User's customizations in AGENTS.md and CLAUDE.md
 - Project-specific configurations
 - The arch.md file if it exists (maintained by architecture-documenter)
 
@@ -208,7 +208,7 @@ When conflicts are detected:
 
 1. **Modified Templates**: If user modified protocol templates, ask before overwriting
 2. **Custom Agents**: If user created custom agents, preserve them
-3. **CLAUDE.md Changes**: Notify user of changes needed but don't auto-update
+3. **AGENTS.md/CLAUDE.md Changes**: Notify user of changes needed but don't auto-update
 4. **Resource Files**: If shared resources are modified, skip or ask
 
 ### Rollback Capability

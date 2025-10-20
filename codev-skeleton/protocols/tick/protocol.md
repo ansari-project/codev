@@ -102,7 +102,7 @@ TICK is a streamlined development protocol for rapid, autonomous implementation.
 **Output**: Working code committed to repository
 
 **Notes**:
-- Follow fail-fast principles from CLAUDE.md
+- Follow fail-fast principles from AGENTS.md/CLAUDE.md
 - Test before committing
 - No user approval needed during implementation
 - Single commit for all changes

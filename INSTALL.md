@@ -66,37 +66,41 @@ project-root/
 │   └── agents/         # Custom agents
 │       ├── spider-protocol-updater.md
 │       └── architecture-documenter.md
-├── CLAUDE.md           # In project root
+├── AGENTS.md           # Universal AI agent instructions (AGENTS.md standard)
+├── CLAUDE.md           # Claude Code-specific (identical to AGENTS.md)
 └── [project files]     # Your actual code
 ```
 
 ### Step 3: Protocol Selection
 
-The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the CLAUDE.md file to reference the appropriate protocol path.
+The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the AGENTS.md and CLAUDE.md files to reference the appropriate protocol path.
 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
 - `codev/protocols/spider-solo/` - Single-agent variant
 - `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
 
-### Step 4: Create or Update CLAUDE.md
+### Step 4: Create or Update AGENTS.md and CLAUDE.md
 
-**IMPORTANT**: Check if CLAUDE.md already exists before modifying!
+**IMPORTANT**: Check if AGENTS.md or CLAUDE.md already exists before modifying!
+
+Both files should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
 
 ```bash
-# Check if CLAUDE.md exists
-if [ -f "CLAUDE.md" ]; then
-    echo "CLAUDE.md exists. Updating to include Codev references..."
-    # APPEND Codev-specific instructions to existing file
+# Check if either file exists
+if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
+    echo "Agent configuration file exists. Updating to include Codev references..."
+    # APPEND Codev-specific instructions to existing file(s)
+    # Ensure both files exist and are synchronized
 else
     # Ask user for permission
-    echo "No CLAUDE.md found. May I create one? [y/n]"
-    # If yes, create a basic CLAUDE.md with Codev structure
-    # Note: No template exists in skeleton - AI should create appropriate one based on project context
+    echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
+    # If yes, create both files with Codev structure
+    # Note: No template exists in skeleton - AI should create appropriate ones based on project context
 fi
 ```
 
-**When updating existing CLAUDE.md**, add these sections:
+**When updating existing files**, add these sections:
 ```markdown
 ## Codev Methodology
 
@@ -115,10 +119,11 @@ This project uses the Codev context-driven development methodology.
 See codev/protocols/spider/protocol.md for full protocol details.
 ```
 
-Key sections to verify in CLAUDE.md:
+Key sections to verify in AGENTS.md and CLAUDE.md:
 - Active protocol path
 - Consultation guidelines (if using SPIDER)
 - File naming conventions (####-descriptive-name.md)
+- Both files should be identical in content
 
 ### Step 5: Verify Installation
 
@@ -136,7 +141,10 @@ test -d .claude/agents && echo "✓ .claude/agents/ directory exists" || echo "�
 # 3. Verify protocol is readable
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
-# 4. Verify CLAUDE.md references codev
+# 4. Verify AGENTS.md and CLAUDE.md exist and reference codev
+test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
+test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
+grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
 grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
 ```
 
@@ -195,7 +203,7 @@ After installation, guide the user:
 
 **Q: User wants a different protocol name**
 - Protocols can be renamed, just ensure:
-  - Directory name matches references in CLAUDE.md
+  - Directory name matches references in AGENTS.md and CLAUDE.md
   - All templates are present
   - manifest.yaml is updated
 

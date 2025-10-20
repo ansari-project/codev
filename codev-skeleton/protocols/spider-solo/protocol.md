@@ -476,7 +476,7 @@ Execute for each phase in the plan. This is a strict cycle that must be complete
 
 3. **Revision Requirements** (MANDATORY)
    - Update README.md with any new features or changes
-   - Update CLAUDE.md with protocol improvements from lessons learned
+   - Update AGENTS.md and CLAUDE.md with protocol improvements from lessons learned
    - Update specification and plan documents with final status
    - Revise architectural diagrams if needed
    - Update API documentation

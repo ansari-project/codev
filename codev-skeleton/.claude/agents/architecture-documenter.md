@@ -25,7 +25,7 @@ You will systematically review:
 - **codev/plans/**: Identify implementation decisions, module organization, and technical approaches
 - **codev/reviews/**: Capture architectural insights, pattern discoveries, and structural feedback
 - **src/ directory**: Scan for actual implementation to verify documented structure matches reality
-- **Project CLAUDE.md files**: Understand project-specific patterns and organizational principles
+- **Project AGENTS.md/CLAUDE.md files**: Understand project-specific patterns and organizational principles
 
 ### 2. Architecture Document Structure
 

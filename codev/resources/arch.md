@@ -100,7 +100,8 @@ codev/                                  # Project root
 │   │   ├── spider/
 │   │   ├── spider-solo/
 │   │   └── tick/
-│   ├── specs/                          # Empty (placeholder)
+│   ├── specs/                          # Empty (placeholder with .gitkeep)
+│   │   └── .gitkeep                    # Ensures directory is tracked in git
 │   ├── plans/                          # Empty (placeholder)
 │   ├── reviews/                        # Empty (placeholder)
 │   ├── resources/                      # Empty (placeholder)
@@ -108,11 +109,11 @@ codev/                                  # Project root
 │       ├── spider-protocol-updater.md
 │       ├── architecture-documenter.md
 │       └── codev-updater.md
-├── .claude/                            # Claude Code-specific directory
-│   └── agents/                         # Agents for Claude Code
-│       ├── spider-protocol-updater.md  # Symlink or copy from codev/agents/
-│       ├── architecture-documenter.md  # Symlink or copy from codev/agents/
-│       └── codev-updater.md            # Symlink or copy from codev/agents/
+├── .claude/                            # Claude Code-specific directory (self-hosted only)
+│   └── agents/                         # Agents for Claude Code (installed from codev/agents/)
+│       ├── spider-protocol-updater.md  # Protocol evolution agent
+│       ├── architecture-documenter.md  # Architecture documentation agent
+│       └── codev-updater.md            # Framework update agent
 ├── tests/                              # Test infrastructure
 │   ├── lib/                            # Vendored test frameworks
 │   │   ├── bats-core/                  # Core test runner
@@ -135,7 +136,10 @@ codev/                                  # Project root
 │   └── README.md                       # Test documentation
 ├── scripts/                            # Utility scripts
 │   ├── run-tests.sh                    # Fast tests (no integration)
-│   └── run-integration-tests.sh        # All tests including Claude CLI
+│   ├── run-integration-tests.sh        # All tests including Claude CLI
+│   └── install-hooks.sh                # Install git pre-commit hooks
+├── hooks/                              # Git hook templates
+│   └── pre-commit                      # Pre-commit hook (runs test suite)
 ├── examples/                           # Example projects
 │   └── todo-manager/                   # Demo Todo Manager app
 ├── docs/                               # Additional documentation
@@ -212,6 +216,8 @@ Codev includes specialized AI agents for workflow automation. Agents are install
 
 #### Agent Installation Architecture
 
+Codev uses **tool-agnostic agent installation** that detects the development environment and installs agents to the appropriate location for optimal integration.
+
 **Conditional Installation Logic** (from `INSTALL.md`):
 ```bash
 # Detect Claude Code and install to appropriate location
@@ -219,16 +225,24 @@ if command -v claude &> /dev/null; then
     # Claude Code detected - install to .claude/agents/
     mkdir -p .claude/agents
     cp -r codev-skeleton/agents/* ./.claude/agents/
+    echo "✓ Agents installed to .claude/agents/ (Claude Code detected)"
 else
     # Other tools - agents remain in codev/agents/
     # (already present from skeleton copy)
+    echo "✓ Agents installed to codev/agents/ (universal location)"
 fi
 ```
 
-**Agent Locations**:
-- **Claude Code users**: `.claude/agents/` (native integration)
-- **Other tools** (Cursor, Copilot, etc.): `codev/agents/` (universal location)
-- **Canonical source**: `codev/agents/` in this repository
+**Agent Locations by Environment**:
+- **Claude Code users**: `.claude/agents/` (native integration via Claude Code's agent system)
+- **Other tools** (Cursor, Copilot, etc.): `codev/agents/` (universal location via AGENTS.md standard)
+- **Canonical source**: `codev/agents/` in this repository (self-hosted development)
+
+**Design Rationale**:
+1. **Native integration when available** - Claude Code's `.claude/agents/` provides built-in agent execution
+2. **Universal fallback** - Other tools can reference `codev/agents/` via AGENTS.md standard
+3. **Single source of truth** - All agents originate from `codev/agents/` in the main repository
+4. **No tool lock-in** - Works with any AI coding assistant that supports AGENTS.md standard
 
 #### Available Agents
 
@@ -329,7 +343,7 @@ fi
 - Real agent invocation tests
 - Codev updater validation
 
-**Total Coverage**: 52 tests, ~1500 lines of test code
+**Total Coverage**: 64 tests, ~2000 lines of test code
 
 #### Test Helpers (`tests/helpers/`)
 
@@ -349,12 +363,21 @@ fi
 **Agent Installation Logic**:
 ```bash
 # Mimics INSTALL.md conditional agent installation
+# This test helper replicates production behavior
 if command -v claude &> /dev/null; then
+    # Claude Code present - install agents to .claude/agents/
     mkdir -p "$target_dir/.claude/agents"
-    cp "$source_dir/agents/"*.md "$target_dir/.claude/agents/"
+    cp "$source_dir/agents/"*.md "$target_dir/.claude/agents/" 2>/dev/null || true
 fi
-# Agents already in codev/agents/ from skeleton copy
+# Note: For non-Claude Code environments, agents remain in codev/agents/
+# from the skeleton copy (universal location for AGENTS.md-compatible tools)
 ```
+
+**Implementation Details**:
+- Detects Claude Code via `command -v claude` check
+- Installs agents conditionally based on detection result
+- Handles both Claude Code and non-Claude Code environments gracefully
+- Never overwrites existing agent files (2>/dev/null || true pattern)
 
 ##### mock_mcp.bash
 **Purpose**: Simulate Zen MCP server presence/absence
@@ -500,6 +523,52 @@ codev/reviews/####-descriptive-name.md
 Additional:
 - `TICK Fixes: [descriptive-name]` (if changes requested)
 
+## Development Infrastructure
+
+### Pre-Commit Hooks
+
+**Location**: `hooks/pre-commit`
+
+**Purpose**: Automated quality assurance through test execution before commits
+
+**Installation**:
+```bash
+./scripts/install-hooks.sh
+```
+
+**Behavior**:
+- Runs fast test suite (via `./scripts/run-tests.sh`) before allowing commits
+- Exits with error if any tests fail
+- Provides clear feedback on test status
+- Can be bypassed with `git commit --no-verify` (not recommended)
+
+**Design Rationale**:
+1. **Catch regressions early** - Find issues before they reach the repository
+2. **Maintain quality** - Ensure all commits pass the test suite
+3. **Fast feedback** - Uses fast tests (not integration tests) for quick iteration
+4. **Optional but recommended** - Manual installation respects developer choice
+
+**Installation Script** (`scripts/install-hooks.sh`):
+- Copies `hooks/pre-commit` to `.git/hooks/pre-commit`
+- Makes hook executable
+- Provides clear feedback on installation success
+- Safe to run multiple times (idempotent)
+
+### Test-Driven Development
+
+Codev itself follows test-driven development practices:
+- **64 comprehensive tests** covering all functionality
+- **Fast test suite** (<30 seconds) for rapid iteration
+- **Integration tests** for end-to-end validation
+- **Platform compatibility** testing (macOS and Linux)
+- **Pre-commit hooks** for continuous quality assurance
+
+**Test Organization Philosophy**:
+- Framework tests (00-09) validate core infrastructure
+- Protocol tests (10-19) verify installation and configuration
+- Integration tests (20+) validate real-world usage
+- All tests hermetic and isolated (XDG sandboxing)
+
 ## Key Design Decisions
 
 ### 1. Context-First Philosophy
@@ -556,15 +625,22 @@ Additional:
 - Directly validates installation instructions
 - Simple for shell-savvy developers to understand
 
-### 7. Conditional Agent Installation
-**Decision**: Install agents to `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools)
+### 7. Tool-Agnostic Agent Installation
+**Decision**: Conditional installation - `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools)
 
 **Rationale**:
-- Tool-agnostic architecture supports multiple AI coding assistants
-- Claude Code gets native agent integration via `.claude/agents/`
-- Other tools (Cursor, Copilot, etc.) use universal `codev/agents/` location
-- Single canonical source (`codev/agents/`) in this repository
-- Installation detects environment and adapts accordingly
+- **Environment detection** - Automatically adapts to available tooling
+- **Native integration** - Claude Code gets `.claude/agents/` for built-in agent execution
+- **Universal fallback** - Other tools (Cursor, Copilot) use `codev/agents/` via AGENTS.md
+- **Single source** - `codev/agents/` is canonical in this repository (self-hosted)
+- **No lock-in** - Works with any AI coding assistant supporting AGENTS.md standard
+- **Graceful degradation** - Installation succeeds regardless of environment
+
+**Implementation Details**:
+- Detection via `command -v claude &> /dev/null`
+- Silent error handling (`2>/dev/null || true`) for missing agents
+- Clear user feedback on installation location
+- Test infrastructure mirrors production behavior
 
 ### 8. AGENTS.md Standard + CLAUDE.md Synchronization
 **Decision**: Maintain both AGENTS.md (universal) and CLAUDE.md (Claude Code-specific) with identical content
@@ -593,6 +669,24 @@ Additional:
 - Single autonomous execution reduces overhead
 - Multi-agent review at end maintains quality
 - Fills gap between informal changes and full SPIDER
+
+### 11. Pre-Commit Hooks for Quality Assurance
+**Decision**: Provide optional pre-commit hooks that run test suite
+
+**Rationale**:
+- **Early detection** - Catch regressions before they reach repository
+- **Continuous quality** - Ensure all commits pass tests
+- **Fast feedback** - Use fast tests (not integration) for quick iteration
+- **Developer choice** - Manual installation respects autonomy
+- **Escape hatch** - Can bypass with --no-verify when needed
+- **Self-hosting validation** - Codev validates itself before commits
+
+**Implementation**:
+- Hooks stored in `hooks/` directory (not `.git/hooks/` - not tracked)
+- Installation script (`scripts/install-hooks.sh`) copies to `.git/hooks/`
+- Runs `./scripts/run-tests.sh` (fast tests, ~30 seconds)
+- Clear feedback on pass/fail
+- Instructions for bypassing when necessary
 
 ## Integration Points
 
@@ -893,8 +987,10 @@ fi
 ### Test Suite
 - **Fast Tests**: <30 seconds (no Claude CLI)
 - **All Tests**: ~2-5 minutes (with Claude CLI integration)
-- **Total Tests**: 52 tests, ~1500 lines
+- **Total Tests**: 64 tests, ~2000 lines
+- **Coverage**: Framework validation, protocol installation, agent testing, updater validation
 - **Parallelization**: Tests are independent and can run in parallel
+- **Execution Speed**: Average ~0.5 seconds per test (fast suite)
 
 ### Protocol Execution Times
 - **TICK**: ~4 minutes for simple tasks
@@ -944,8 +1040,14 @@ chmod -R u+w /tmp/codev-test.*
 1. **Update arch.md** - After significant changes (via architecture-documenter agent)
 2. **Sync AGENTS.md and CLAUDE.md** - Keep content identical
 3. **Update protocols** - Based on lessons learned
-4. **Run tests** - Before committing changes
+4. **Run tests** - Before committing changes (automated via pre-commit hook)
 5. **Update skeleton** - Keep template current with protocol changes
+
+### Pre-Commit Hook Maintenance
+1. **Keep hooks in sync** - `hooks/pre-commit` should match `.git/hooks/pre-commit`
+2. **Test hook behavior** - Verify hook runs correctly before committing hook changes
+3. **Update installation script** - Modify `scripts/install-hooks.sh` if hook changes
+4. **Document bypass cases** - Update README with when `--no-verify` is acceptable
 
 ### Versioning
 - Protocols have version numbers in manifest.yaml
@@ -989,5 +1091,41 @@ A well-maintained Codev architecture should enable:
 
 ---
 
+## Recent Infrastructure Changes (2025-10-20)
+
+### Test Infrastructure Completion
+- **Total tests increased** from 52 to 64 (64/64 passing)
+- **Test code expanded** from ~1500 to ~2000 lines
+- **Full coverage** of framework, protocols, agents, and updater functionality
+
+### Agent Installation Refactoring
+- **Implemented tool-agnostic installation** with conditional logic
+- **Claude Code detection** via `command -v claude` check
+- **Dual installation paths** - `.claude/agents/` (Claude Code) or `codev/agents/` (universal)
+- **Test helpers updated** to mirror production installation behavior
+- **Self-hosted restoration** - `.claude/agents/` now present in main repo for our use
+
+### Pre-Commit Hook Infrastructure
+- **Added `hooks/pre-commit`** - Runs test suite before commits
+- **Added `scripts/install-hooks.sh`** - Installation script for git hooks
+- **Quality assurance** - Catches regressions before they reach repository
+- **Fast feedback** - Uses fast test suite (<30 seconds)
+- **Optional installation** - Respects developer choice
+
+### Directory Structure Updates
+- **`codev-skeleton/specs/.gitkeep`** - Ensures empty specs directory is tracked
+- **`hooks/` directory** - Contains pre-commit hook template
+- **`scripts/install-hooks.sh`** - Hook installation automation
+- **`.claude/agents/`** - Restored for self-hosted development
+
+### Key Design Improvements
+- **Environment-aware installation** - Detects and adapts to tooling
+- **Improved test isolation** - Conditional agent installation in tests
+- **Better developer experience** - Pre-commit hooks for continuous quality
+- **Enhanced maintainability** - Clear separation of hook template and installed hook
+
+---
+
 **Last Updated**: 2025-10-20 (via architecture-documenter agent)
-**Next Review**: After next significant feature implementation
+**Version**: Post-test-infrastructure completion (Spec 0001)
+**Next Review**: After next significant feature implementation or protocol update

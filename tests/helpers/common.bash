@@ -36,13 +36,57 @@ install_from_local() {
   # Using cp -a to preserve modes and timestamps
   cp -a "$source_dir/." "$target_dir/codev/"
 
-  # Handle agent installation conditionally (mimics INSTALL.md logic)
+  # Handle agent installation and instruction file creation conditionally (mimics INSTALL.md logic)
   if command -v claude &> /dev/null; then
-    # Claude Code detected - install agents to .claude/agents/
+    # Claude Code detected - install agents to .claude/agents/ and create CLAUDE.md
     mkdir -p "$target_dir/.claude/agents"
     cp "$source_dir/agents/"*.md "$target_dir/.claude/agents/" 2>/dev/null || true
+
+    # Create CLAUDE.md only if it doesn't exist
+    if [[ ! -f "$target_dir/CLAUDE.md" ]]; then
+      cat > "$target_dir/CLAUDE.md" << 'EOF'
+# Codev Methodology
+
+This project uses the Codev context-driven development methodology.
+
+## Active Protocol
+- Protocol: SPIDER
+- Location: codev/protocols/spider/protocol.md
+
+## Directory Structure
+- Specifications: codev/specs/
+- Plans: codev/plans/
+- Reviews: codev/reviews/
+- Resources: codev/resources/
+
+See codev/protocols/spider/protocol.md for full protocol details.
+EOF
+    fi
+  else
+    # Non-Claude Code environment - agents remain in codev/agents/ and create AGENTS.md
+    # (agents already in codev/agents/ from skeleton copy)
+
+    # Create AGENTS.md only if it doesn't exist
+    if [[ ! -f "$target_dir/AGENTS.md" ]]; then
+      cat > "$target_dir/AGENTS.md" << 'EOF'
+# Codev Methodology
+
+This project uses the Codev context-driven development methodology.
+
+## Active Protocol
+- Protocol: SPIDER
+- Location: codev/protocols/spider/protocol.md
+
+## Directory Structure
+- Specifications: codev/specs/
+- Plans: codev/plans/
+- Reviews: codev/reviews/
+- Resources: codev/resources/
+
+See codev/protocols/spider/protocol.md for full protocol details.
+EOF
+    fi
   fi
-  # Note: For non-Claude Code, agents are already in codev/agents/ from skeleton copy
 
   # Verify copy was successful by checking for key protocol directory
   if [[ ! -d "$target_dir/codev/protocols/spider" ]]; then
@@ -77,8 +121,14 @@ assert_codev_structure() {
   assert_dir_exist "$dir/codev/reviews"
   assert_dir_exist "$dir/codev/protocols"
 
-  # Check for essential files
-  assert_file_exist "$dir/CLAUDE.md"
+  # Check for appropriate agent instruction file based on environment
+  if command -v claude &> /dev/null; then
+    # Claude Code detected - should have CLAUDE.md
+    assert_file_exist "$dir/CLAUDE.md"
+  else
+    # Other tools - should have AGENTS.md
+    assert_file_exist "$dir/AGENTS.md"
+  fi
   # INSTALL.md is optional (provided by user, not skeleton)
 }
 

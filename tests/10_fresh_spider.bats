@@ -194,6 +194,35 @@ See codev/protocols/spider/protocol.md for full protocol details."
   assert_success
 }
 
+@test "creates only CLAUDE.md when Claude is detected" {
+  # This test verifies the fix for: only one file should be created based on environment
+  # Since we're running in Claude Code, only CLAUDE.md should be created
+
+  # Fresh install
+  run install_from_local "$TEST_PROJECT"
+  assert_success
+
+  # If Claude is detected, should have CLAUDE.md
+  if command -v claude &> /dev/null; then
+    assert_file_exist "$TEST_PROJECT/CLAUDE.md"
+    # Should NOT have AGENTS.md
+    assert_file_not_exist "$TEST_PROJECT/AGENTS.md"
+
+    # Verify CLAUDE.md has Codev content
+    run file_contains "$TEST_PROJECT/CLAUDE.md" "Codev Methodology"
+    assert_success
+  else
+    # If Claude is NOT detected, should have AGENTS.md
+    assert_file_exist "$TEST_PROJECT/AGENTS.md"
+    # Should NOT have CLAUDE.md
+    assert_file_not_exist "$TEST_PROJECT/CLAUDE.md"
+
+    # Verify AGENTS.md has Codev content
+    run file_contains "$TEST_PROJECT/AGENTS.md" "Codev Methodology"
+    assert_success
+  fi
+}
+
 @test "installation preserves file attributes and permissions" {
   # Installation should preserve modes with cp -a
   install_from_local "$TEST_PROJECT"

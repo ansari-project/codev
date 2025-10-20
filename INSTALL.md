@@ -72,42 +72,56 @@ project-root/
 │   ├── resources/      # Reference materials and documentation
 │   └── agents/         # Custom agents (non-Claude Code tools)
 │       └── spider-protocol-updater.md
-├── .claude/            # Claude Code-specific directory
+├── .claude/            # Claude Code-specific directory (only if Claude detected)
 │   └── agents/         # Custom agents (Claude Code only)
 │       └── spider-protocol-updater.md
-├── AGENTS.md           # Universal AI agent instructions (AGENTS.md standard)
-├── CLAUDE.md           # Claude Code-specific (identical to AGENTS.md)
+├── AGENTS.md           # Universal AI agent instructions (created if Claude NOT detected)
+├── CLAUDE.md           # Claude Code-specific (created if Claude detected)
 └── [project files]     # Your actual code
 ```
 
-**Note**: Agents are installed to either `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools), not both.
+**Important Notes**:
+- Agents are installed to either `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools), not both
+- Only ONE agent instruction file is created: CLAUDE.md (Claude Code) OR AGENTS.md (other tools)
 
 ### Step 3: Protocol Selection
 
-The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the AGENTS.md and CLAUDE.md files to reference the appropriate protocol path.
+The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the AGENTS.md or CLAUDE.md file (whichever is appropriate for your environment) to reference the appropriate protocol path.
 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
 - `codev/protocols/spider-solo/` - Single-agent variant
 - `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
 
-### Step 4: Create or Update AGENTS.md and CLAUDE.md
+### Step 4: Create or Update AGENTS.md or CLAUDE.md
 
-**IMPORTANT**: Check if AGENTS.md or CLAUDE.md already exists before modifying!
+**IMPORTANT**: Create ONLY ONE file based on the environment:
+- **Claude Code detected**: Create/update CLAUDE.md only
+- **Claude Code NOT detected**: Create/update AGENTS.md only
 
-Both files should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
+AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
 
 ```bash
-# Check if either file exists
-if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
-    echo "Agent configuration file exists. Updating to include Codev references..."
-    # APPEND Codev-specific instructions to existing file(s)
-    # Ensure both files exist and are synchronized
+# Determine which file to use based on Claude detection
+if command -v claude &> /dev/null; then
+    # Claude Code detected - use CLAUDE.md
+    TARGET_FILE="CLAUDE.md"
+    echo "Claude Code detected - will use CLAUDE.md"
+else
+    # Other tools - use AGENTS.md
+    TARGET_FILE="AGENTS.md"
+    echo "Using AGENTS.md for universal AI tool compatibility"
+fi
+
+# Check if target file exists
+if [ -f "$TARGET_FILE" ]; then
+    echo "$TARGET_FILE exists. Preserving existing content..."
+    # DO NOT MODIFY - preserve existing file
 else
     # Ask user for permission
-    echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
-    # If yes, create both files with Codev structure
-    # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+    echo "No $TARGET_FILE found. May I create it? [y/n]"
+    # If yes, create the appropriate file with Codev structure
+    # Note: No template exists in skeleton - AI should create appropriate one based on project context
 fi
 ```
 
@@ -130,11 +144,10 @@ This project uses the Codev context-driven development methodology.
 See codev/protocols/spider/protocol.md for full protocol details.
 ```
 
-Key sections to verify in AGENTS.md and CLAUDE.md:
+Key sections to verify in your agent instruction file (AGENTS.md or CLAUDE.md):
 - Active protocol path
 - Consultation guidelines (if using SPIDER)
 - File naming conventions (####-descriptive-name.md)
-- Both files should be identical in content
 
 ### Step 5: Verify Installation
 
@@ -158,11 +171,16 @@ fi
 # 4. Verify protocol is readable
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
-# 5. Verify AGENTS.md and CLAUDE.md exist and reference codev
-test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
-test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
-grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
-grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
+# 5. Verify appropriate agent file exists and references codev
+if command -v claude &> /dev/null; then
+    # Claude Code - should have CLAUDE.md
+    test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
+    grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
+else
+    # Other tools - should have AGENTS.md
+    test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
+    grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
+fi
 ```
 
 **Detailed Structure Check**:

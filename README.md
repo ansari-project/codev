@@ -81,7 +81,8 @@ your-project/
 │   ├── plans/              # Implementation plans
 │   ├── reviews/            # Review and lessons learned
 │   └── resources/          # Reference materials (llms.txt, etc.)
-├── CLAUDE.md               # AI agent instructions
+├── AGENTS.md               # AI agent instructions (AGENTS.md standard)
+├── CLAUDE.md               # AI agent instructions (Claude Code)
 └── [your code]
 ```
 
@@ -96,6 +97,7 @@ your-project/
 - Structured formats that AI agents understand
 - Multi-agent consultation support (GPT-5, Gemini Pro, etc.)
 - Reduces back-and-forth from dozens of messages to 3-4 document reviews
+- Supports both AGENTS.md standard (Cursor, Copilot, etc.) and CLAUDE.md (Claude Code)
 
 ### 🔄 Continuous Improvement
 - Every project improves the methodology

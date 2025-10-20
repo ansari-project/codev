@@ -1,6 +1,6 @@
 # Codev Project Instructions for AI Agents
 
-> **Note**: This file is specific to Claude Code. An identical [AGENTS.md](AGENTS.md) file is also maintained following the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. Both files contain the same content and should be kept synchronized.
+> **Note**: This file follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. For Claude Code users, an identical [CLAUDE.md](CLAUDE.md) file is maintained for native support. Both files contain the same content and should be kept synchronized.
 
 ## Project Context
 
@@ -77,8 +77,8 @@ project-root/
 │       ├── spider-protocol-updater.md
 │       ├── architecture-documenter.md
 │       └── codev-updater.md
-├── AGENTS.md              # Universal AI agent instructions (AGENTS.md standard)
-├── CLAUDE.md              # This file (Claude Code-specific, identical to AGENTS.md)
+├── AGENTS.md              # This file (universal AI agent instructions)
+├── CLAUDE.md              # Claude Code-specific (identical to AGENTS.md)
 └── [project code]
 ```
 
@@ -293,7 +293,7 @@ When the user requests "Consult" or "consultation" (including variations like "u
    - Gracefully handle missing dependencies
 
 5. **Review Phase Requirements**:
-   - Update ALL documentation (README, AGENTS.md/CLAUDE.md, specs, plans)
+   - Update ALL documentation (README, CLAUDE.md, specs, plans)
    - Review for systematic issues across the project
    - Update protocol documents based on lessons learned
    - Create comprehensive lessons learned document

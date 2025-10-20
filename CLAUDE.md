@@ -8,6 +8,25 @@
 
 This project IS Codev itself, and we use our own methodology for development. All new features and improvements to Codev should follow the SPIDER protocol defined in `codev/protocols/spider/protocol.md`.
 
+### Important: Understanding This Repository's Structure
+
+This repository has a dual nature that's important to understand:
+
+1. **`codev/`** - This is OUR instance of Codev
+   - This is where WE (the Codev project) keep our specs, plans, reviews, and resources
+   - When working on Codev features, you work in this directory
+   - Example: `codev/specs/0001-test-infrastructure.md` is a feature spec for Codev itself
+
+2. **`codev-skeleton/`** - This is the template for OTHER projects
+   - This is what gets copied to other projects when they install Codev
+   - Contains the protocol definitions, templates, and agents
+   - Does NOT contain specs/plans/reviews (those are created by users)
+   - Think of it as "what Codev provides" vs "how Codev uses itself"
+
+**When to modify each**:
+- **Modify `codev/`**: When implementing features for Codev (specs, plans, reviews, our architecture docs)
+- **Modify `codev-skeleton/`**: When updating protocols, templates, or agents that other projects will use
+
 ## Quick Start
 
 You are working in the Codev project itself, with multiple development protocols available:

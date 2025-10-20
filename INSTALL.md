@@ -42,8 +42,16 @@ git clone --depth 1 https://github.com/ansari-project/codev.git "$TEMP_DIR"
 mkdir -p codev
 cp -r "$TEMP_DIR/codev-skeleton/"* ./codev/
 
-# Copy .claude directory with agents to project root
-cp -r "$TEMP_DIR/codev-skeleton/.claude" ./
+# Detect if Claude Code is available and install agents to appropriate location
+if command -v claude &> /dev/null; then
+    # Claude Code detected - install agents to .claude/agents/
+    mkdir -p .claude/agents
+    cp -r "$TEMP_DIR/codev-skeleton/agents/"* ./.claude/agents/ 2>/dev/null || true
+    echo "✓ Agents installed to .claude/agents/ (Claude Code detected)"
+else
+    # Non-Claude Code environment - agents already in codev/agents/ from skeleton
+    echo "✓ Agents installed to codev/agents/ (universal location)"
+fi
 
 # Create required directories (ensures they exist even if skeleton is incomplete)
 mkdir -p codev/specs
@@ -61,15 +69,18 @@ project-root/
 │   ├── specs/          # Specifications
 │   ├── plans/          # Implementation plans
 │   ├── reviews/        # Reviews and lessons learned
-│   └── resources/      # Reference materials and documentation
-├── .claude/            # AI agent definitions
-│   └── agents/         # Custom agents
-│       ├── spider-protocol-updater.md
-│       └── architecture-documenter.md
+│   ├── resources/      # Reference materials and documentation
+│   └── agents/         # Custom agents (non-Claude Code tools)
+│       └── spider-protocol-updater.md
+├── .claude/            # Claude Code-specific directory
+│   └── agents/         # Custom agents (Claude Code only)
+│       └── spider-protocol-updater.md
 ├── AGENTS.md           # Universal AI agent instructions (AGENTS.md standard)
 ├── CLAUDE.md           # Claude Code-specific (identical to AGENTS.md)
 └── [project files]     # Your actual code
 ```
+
+**Note**: Agents are installed to either `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools), not both.
 
 ### Step 3: Protocol Selection
 
@@ -136,12 +147,18 @@ test -d codev && echo "✓ codev/ directory exists" || echo "✗ FAIL: codev/ di
 test -d codev/protocols/spider && echo "✓ SPIDER protocol exists" || echo "✗ FAIL: SPIDER protocol missing"
 test -d codev/protocols/tick && echo "✓ TICK protocol exists" || echo "✗ FAIL: TICK protocol missing"
 test -d codev/specs && echo "✓ specs/ directory exists" || echo "✗ FAIL: specs/ directory missing"
-test -d .claude/agents && echo "✓ .claude/agents/ directory exists" || echo "✗ FAIL: .claude/agents/ directory missing"
 
-# 3. Verify protocol is readable
+# 3. Verify agents are installed in appropriate location
+if command -v claude &> /dev/null; then
+    test -d .claude/agents && echo "✓ .claude/agents/ directory exists (Claude Code)" || echo "✗ FAIL: .claude/agents/ directory missing"
+else
+    test -d codev/agents && echo "✓ codev/agents/ directory exists (universal)" || echo "✗ FAIL: codev/agents/ directory missing"
+fi
+
+# 4. Verify protocol is readable
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
-# 4. Verify AGENTS.md and CLAUDE.md exist and reference codev
+# 5. Verify AGENTS.md and CLAUDE.md exist and reference codev
 test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
 test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
 grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
@@ -219,22 +236,20 @@ After installation, guide the user:
 | Best for | Production features | Exploration & prototypes |
 | Speed | Slower (thorough) | Faster (good enough) |
 
-## Optional: Spider Protocol Updater Agent
+## Workflow Agents
 
-For projects using Claude Code with the Task tool, you can install the `spider-protocol-updater` agent to help evolve the SPIDER protocol by learning from other implementations:
+Codev includes specialized workflow agents that can be invoked for specific tasks. These agents are automatically installed during the setup process to the appropriate location based on your development environment.
 
-**Installation**:
-```bash
-# Create the .claude/agents directory if it doesn't exist
-mkdir -p .claude/agents
+**Available Agents**:
+- **spider-protocol-updater**: Analyzes SPIDER implementations in other repositories and recommends protocol improvements
+- **architecture-documenter**: Maintains comprehensive architecture documentation (arch.md)
+- **codev-updater**: Updates your Codev installation to the latest version
 
-# Copy the spider-protocol-updater agent from codev source
-# (Assuming codev source is available)
-cp path/to/codev-skeleton/.claude/agents/spider-protocol-updater.md .claude/agents/
+**Agent Location**:
+- **Claude Code users**: Agents are installed to `.claude/agents/` and accessible via native Claude Code agent invocation
+- **Other tool users**: Agents are installed to `codev/agents/` and can be manually referenced or invoked
 
-# Also copy the architecture-documenter agent (for TICK protocol support)
-cp path/to/codev-skeleton/.claude/agents/architecture-documenter.md .claude/agents/
-```
+The installation process automatically detects your environment and installs agents to the appropriate location.
 
 **What the agents do**:
 

@@ -184,6 +184,21 @@ You can see this in practice:
 - Review `codev/plans/` for how we break down work
 - Learn from `codev/reviews/` to see what we've discovered
 
+### Understanding This Repository's Structure
+
+This repository has a dual nature:
+
+1. **`codev/`** - Our instance of Codev for developing Codev itself
+   - Contains our specs, plans, reviews, and resources
+   - Example: `codev/specs/0001-test-infrastructure.md` documents how we built our test suite
+
+2. **`codev-skeleton/`** - The template that gets installed in other projects
+   - Contains protocol definitions, templates, and agents
+   - What users get when they install Codev
+   - Does NOT contain specs/plans/reviews (those are created by users)
+
+**In short**: `codev/` is how we use Codev, `codev-skeleton/` is what we provide to others.
+
 ### Test Infrastructure
 
 Our comprehensive test suite (52 tests) validates the Codev installation process:

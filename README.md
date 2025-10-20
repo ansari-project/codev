@@ -6,7 +6,7 @@ A development methodology that treats natural language context as code. Instead 
 
 Tell your AI agent:
 ```
-Apply Codev to this repo following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
+Apply Codev to this repo following the instructions at https://github.com/ansari-project/codev/
 ```
 
 Then say "I want to build X using the SPIDER protocol" or "Teach me about Codev". 

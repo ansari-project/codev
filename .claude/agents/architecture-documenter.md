@@ -17,6 +17,10 @@ Maintain arch.md as a living document that enables any developer (or AI agent) t
 - Technology stack and integration points
 - Critical files and their purposes
 
+**IMPORTANT**: The architecture document must be created/updated at: `codev/resources/arch.md`
+
+This is the canonical location for the architecture documentation. Always write to this path, never to the project root.
+
 ## Your Workflow
 
 ### 1. Information Gathering

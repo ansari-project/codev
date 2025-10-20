@@ -161,25 +161,24 @@ See codev/protocols/spider/protocol.md for full protocol details."
   assert_success
 }
 
-@test "example spec exists in specs directory" {
+@test "specs directory is created and ready" {
   install_from_local "$TEST_PROJECT"
 
-  # Check for example spec
-  assert_file_exist "$TEST_PROJECT/codev/specs/example-spec.md"
+  # Check specs directory exists
+  assert_dir_exist "$TEST_PROJECT/codev/specs"
 
-  # Verify it contains basic structure
-  run file_contains "$TEST_PROJECT/codev/specs/example-spec.md" "# Specification:"
-  assert_success
+  # Should have gitkeep to ensure directory is tracked
+  assert_file_exist "$TEST_PROJECT/codev/specs/.gitkeep"
 }
 
-@test "resources directory contains reference materials" {
+@test "resources directory is created and ready" {
   install_from_local "$TEST_PROJECT"
 
-  # Check for resources
+  # Check for resources directory
   assert_dir_exist "$TEST_PROJECT/codev/resources"
 
-  # At minimum should have llms.txt
-  assert_file_exist "$TEST_PROJECT/codev/resources/llms.txt"
+  # Resources directory should exist (llms.txt removed from skeleton)
+  # Users can add their own resources here
 }
 
 @test "both SPIDER and SPIDER-SOLO protocols are installed" {
@@ -201,7 +200,7 @@ See codev/protocols/spider/protocol.md for full protocol details."
 
   # Verify regular files are copied
   assert_file_exist "$TEST_PROJECT/codev/protocols/spider/protocol.md"
-  assert_file_exist "$TEST_PROJECT/codev/specs/example-spec.md"
+  assert_file_exist "$TEST_PROJECT/codev/specs/.gitkeep"
 
   # Check that directories have expected permissions (readable and executable)
   # Use platform-specific stat command

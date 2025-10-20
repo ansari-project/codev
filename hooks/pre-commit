@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Pre-commit hook for Codev
+# Runs the test suite before allowing commits
+
+set -e
+
+echo "Running Codev test suite..."
+
+# Change to project root
+cd "$(git rev-parse --show-toplevel)"
+
+# Run the test suite
+if ./scripts/run-tests.sh; then
+    echo "✅ All tests passed"
+    exit 0
+else
+    echo "❌ Tests failed - commit aborted"
+    echo ""
+    echo "To skip this check (not recommended):"
+    echo "  git commit --no-verify"
+    exit 1
+fi

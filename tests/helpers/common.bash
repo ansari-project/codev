@@ -36,6 +36,14 @@ install_from_local() {
   # Using cp -a to preserve modes and timestamps
   cp -a "$source_dir/." "$target_dir/codev/"
 
+  # Handle agent installation conditionally (mimics INSTALL.md logic)
+  if command -v claude &> /dev/null; then
+    # Claude Code detected - install agents to .claude/agents/
+    mkdir -p "$target_dir/.claude/agents"
+    cp "$source_dir/agents/"*.md "$target_dir/.claude/agents/" 2>/dev/null || true
+  fi
+  # Note: For non-Claude Code, agents are already in codev/agents/ from skeleton copy
+
   # Verify copy was successful by checking for key protocol directory
   if [[ ! -d "$target_dir/codev/protocols/spider" ]]; then
     echo "Error: Installation failed - protocols not found" >&2

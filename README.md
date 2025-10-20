@@ -201,13 +201,14 @@ This repository has a dual nature:
 
 ### Test Infrastructure
 
-Our comprehensive test suite (52 tests) validates the Codev installation process:
+Our comprehensive test suite (64 tests) validates the Codev installation process:
 
 - **Framework**: Shell-based testing with bats-core (zero dependencies)
-- **Coverage**: SPIDER protocol, SPIDER-SOLO variant, CLAUDE.md preservation
+- **Coverage**: SPIDER protocol, SPIDER-SOLO variant, CLAUDE.md preservation, agent installation
 - **Isolation**: XDG sandboxing ensures tests never touch real user directories
 - **CI/CD Ready**: Tests run in seconds with clear TAP output
 - **Multi-Platform**: Works on macOS and Linux without modification
+- **Pre-commit Hook**: Automatically runs tests before commits
 
 Run tests locally:
 ```bash
@@ -216,6 +217,12 @@ Run tests locally:
 
 # All tests including Claude CLI integration
 ./scripts/run-all-tests.sh
+```
+
+Install pre-commit hook for development:
+```bash
+# Install git hooks (runs tests before each commit)
+./scripts/install-hooks.sh
 ```
 
 See `tests/README.md` for detailed test documentation.

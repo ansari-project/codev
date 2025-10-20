@@ -184,9 +184,8 @@ See codev/protocols/spider-solo/protocol.md for full protocol details."
   assert_dir_exist "$TEST_PROJECT/codev/reviews"
   assert_dir_exist "$TEST_PROJECT/codev/resources"
 
-  # Same resources
-  assert_file_exist "$TEST_PROJECT/codev/resources/llms.txt"
-  # example-spec.md was removed from skeleton
+  # Resources directory exists (no llms.txt required - removed from skeleton)
+  assert_dir_exist "$TEST_PROJECT/codev/resources"
 }
 
 @test "SPIDER-SOLO emphasizes self-review" {

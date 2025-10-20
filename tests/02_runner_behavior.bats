@@ -28,10 +28,11 @@ teardown() {
 }
 
 @test "run-integration-tests.sh looks for integration tests" {
-  # Currently we have no integration tests, so it should report none found
+  # We have integration tests (12_existing_claude_md.bats, 20_claude_execution.bats)
   DRY_RUN=1 run "$PROJECT_ROOT/scripts/run-integration-tests.sh"
   assert_success
-  assert_output --partial "No integration test files found"
+  assert_output --partial "12_existing_claude_md.bats"
+  assert_output --partial "20_claude_execution.bats"
   # Should not include regular tests
   refute_output --partial "00_framework.bats"
   refute_output --partial "01_framework_validation.bats"

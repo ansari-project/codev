@@ -116,7 +116,7 @@ teardown() {
   assert_not_exist "$TEST_PROJECT/.claude/agents/architecture-documenter.md"
 
   # Simulate update that adds new agent
-  cp "$PROJECT_ROOT/codev-skeleton/.claude/agents/architecture-documenter.md" \
+  cp "$PROJECT_ROOT/codev-skeleton/agents/architecture-documenter.md" \
      "$TEST_PROJECT/.claude/agents/"
 
   # Verify agent was added
@@ -128,7 +128,7 @@ teardown() {
   echo "# Old agent version" > "$TEST_PROJECT/.claude/agents/spider-protocol-updater.md"
 
   # Simulate update
-  cp "$PROJECT_ROOT/codev-skeleton/.claude/agents/spider-protocol-updater.md" \
+  cp "$PROJECT_ROOT/codev-skeleton/agents/spider-protocol-updater.md" \
      "$TEST_PROJECT/.claude/agents/"
 
   # Verify agent was updated (should have more content)
@@ -138,7 +138,7 @@ teardown() {
 
 @test "all three agents are present after update" {
   # Simulate full update
-  cp "$PROJECT_ROOT/codev-skeleton/.claude/agents/"*.md "$TEST_PROJECT/.claude/agents/"
+  cp "$PROJECT_ROOT/codev-skeleton/agents/"*.md "$TEST_PROJECT/.claude/agents/"
 
   # Verify all agents exist
   assert_file_exist "$TEST_PROJECT/.claude/agents/spider-protocol-updater.md"

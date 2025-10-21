@@ -114,7 +114,7 @@ Use sequential numbering with descriptive names:
 
 **DEFAULT BEHAVIOR**: Consultation is ENABLED by default with:
 - **Gemini 2.5 Pro** (gemini-2.5-pro) for deep analysis
-- **GPT-5** (gpt-5) for additional perspective
+- **GPT-5 Codex** (gpt-5-codex) for coding and architecture perspective
 
 To disable: User must explicitly say "without multi-agent consultation"
 
@@ -272,7 +272,7 @@ spider/0001-feature-name/phase-name
 
 When the user requests "Consult" or "consultation" (including variations like "ultrathink and consult"), this specifically means:
 - Use Gemini 2.5 Pro (gemini-2.5-pro) for deep analysis
-- Use GPT-5 (gpt-5) for additional perspective
+- Use GPT-5 Codex (gpt-5-codex) for coding and architecture perspective
 - Both models should be consulted unless explicitly specified otherwise
 
 ## Important Notes

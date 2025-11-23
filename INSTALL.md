@@ -64,6 +64,9 @@ rm -rf "$TEMP_DIR"
 **Directory Structure Should Be**:
 ```
 project-root/
+├── .ruler/             # Optional: Ruler-managed agent configs
+│   ├── codev.md        # Codev-specific instructions (if using Ruler)
+│   └── ruler.toml      # Ruler configuration
 ├── codev/              # All Codev files go here!
 │   ├── protocols/      # Protocol definitions
 │   ├── specs/          # Specifications
@@ -84,32 +87,51 @@ project-root/
 
 ### Step 3: Protocol Selection
 
-The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the AGENTS.md and CLAUDE.md files to reference the appropriate protocol path.
+The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the agent configuration files to reference the appropriate protocol path:
+- For **direct management**: Modify `AGENTS.md` and `CLAUDE.md`
+- For **Ruler users**: Modify `.ruler/codev.md` and run `npx @intellectronica/ruler apply`
 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
 - `codev/protocols/spider-solo/` - Single-agent variant
 - `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
 
-### Step 4: Create or Update AGENTS.md and CLAUDE.md
+### Step 4: Create or Update Agent Configuration Files
 
-**IMPORTANT**: Check if AGENTS.md or CLAUDE.md already exists before modifying!
-
-Both files should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
+**IMPORTANT**: First check if the user is using Ruler for agent configuration management!
 
 ```bash
-# Check if either file exists
-if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
-    echo "Agent configuration file exists. Updating to include Codev references..."
-    # APPEND Codev-specific instructions to existing file(s)
-    # Ensure both files exist and are synchronized
+# Check if Ruler is in use
+if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
+    echo "Ruler detected. Adding Codev instructions via .ruler/codev.md..."
+
+    # Create .ruler/codev.md with Codev-specific instructions
+    # Run ruler apply to regenerate all tool-specific configs
+    npx @intellectronica/ruler apply
+
+    echo "✓ Codev instructions added to .ruler/codev.md and distributed via ruler"
 else
-    # Ask user for permission
-    echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
-    # If yes, create both files with Codev structure
-    # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+    # Direct AGENTS.md and CLAUDE.md management
+    echo "No Ruler detected. Using direct AGENTS.md/CLAUDE.md management..."
+
+    # Check if either file exists
+    if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
+        echo "Agent configuration file exists. Updating to include Codev references..."
+        # APPEND Codev-specific instructions to existing file(s)
+        # Ensure both files exist and are synchronized
+    else
+        # Ask user for permission
+        echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
+        # If yes, create both files with Codev structure
+        # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+    fi
 fi
 ```
+
+**Content to add** (same for both approaches):
+
+For Ruler users, create `.ruler/codev.md` with this content.
+For direct management, AGENTS.md and CLAUDE.md should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
 
 **When updating existing files**, add these sections:
 ```markdown
@@ -130,11 +152,13 @@ This project uses the Codev context-driven development methodology.
 See codev/protocols/spider/protocol.md for full protocol details.
 ```
 
-Key sections to verify in AGENTS.md and CLAUDE.md:
-- Active protocol path
-- Consultation guidelines (if using SPIDER)
-- File naming conventions (####-descriptive-name.md)
-- Both files should be identical in content
+Key sections to verify:
+- For **Ruler users**: Ensure content in `.ruler/codev.md` is correct before running `npx @intellectronica/ruler apply`
+- In **AGENTS.md and CLAUDE.md**:
+  - Active protocol path
+  - Consultation guidelines (if using SPIDER)
+  - File naming conventions (####-descriptive-name.md)
+  - Both files should be identical in content
 
 ### Step 5: Verify Installation
 
@@ -159,6 +183,11 @@ fi
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
 # 5. Verify AGENTS.md and CLAUDE.md exist and reference codev
+# If ruler is detected, also verify .ruler/codev.md
+if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
+    test -f .ruler/codev.md && echo "✓ .ruler/codev.md exists (Ruler setup)" || echo "✗ FAIL: .ruler/codev.md missing"
+fi
+
 test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
 test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
 grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
@@ -187,6 +216,10 @@ cat codev/protocols/spider/protocol.md | head -20
 ## Post-Installation Guidance
 
 After installation, guide the user:
+
+**Note for future changes**: To modify the active protocol or other agent instructions:
+- **Ruler users**: Edit `.ruler/codev.md` and run `npx @intellectronica/ruler apply`
+- **Direct management**: Edit both `AGENTS.md` and `CLAUDE.md` (keep them synchronized)
 
 1. **First Specification**: "What would you like to build first? I can help create a specification. Which protocol would you prefer - SPIDER (with multi-agent consultation) or SPIDER-SOLO?"
 

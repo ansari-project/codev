@@ -91,25 +91,42 @@ Available protocols:
 - `codev/protocols/spider-solo/` - Single-agent variant
 - `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
 
-### Step 4: Create or Update AGENTS.md and CLAUDE.md
+### Step 4: Create or Update Agent Configuration Files
 
-**IMPORTANT**: Check if AGENTS.md or CLAUDE.md already exists before modifying!
-
-Both files should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
+**IMPORTANT**: First check if the user is using Ruler for agent configuration management!
 
 ```bash
-# Check if either file exists
-if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
-    echo "Agent configuration file exists. Updating to include Codev references..."
-    # APPEND Codev-specific instructions to existing file(s)
-    # Ensure both files exist and are synchronized
+# Check if Ruler is in use
+if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
+    echo "Ruler detected. Adding Codev instructions via .ruler/codev.md..."
+
+    # Create .ruler/codev.md with Codev-specific instructions
+    # Run ruler apply to regenerate all tool-specific configs
+    npx @intellectronica/ruler apply
+
+    echo "✓ Codev instructions added to .ruler/codev.md and distributed via ruler"
 else
-    # Ask user for permission
-    echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
-    # If yes, create both files with Codev structure
-    # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+    # Direct AGENTS.md and CLAUDE.md management
+    echo "No Ruler detected. Using direct AGENTS.md/CLAUDE.md management..."
+
+    # Check if either file exists
+    if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
+        echo "Agent configuration file exists. Updating to include Codev references..."
+        # APPEND Codev-specific instructions to existing file(s)
+        # Ensure both files exist and are synchronized
+    else
+        # Ask user for permission
+        echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
+        # If yes, create both files with Codev structure
+        # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+    fi
 fi
 ```
+
+**Content to add** (same for both approaches):
+
+For Ruler users, create `.ruler/codev.md` with this content.
+For direct management, AGENTS.md and CLAUDE.md should contain identical content - AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
 
 **When updating existing files**, add these sections:
 ```markdown
@@ -159,6 +176,11 @@ fi
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
 # 5. Verify AGENTS.md and CLAUDE.md exist and reference codev
+# If ruler is detected, also verify .ruler/codev.md
+if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
+    test -f .ruler/codev.md && echo "✓ .ruler/codev.md exists (Ruler setup)" || echo "✗ FAIL: .ruler/codev.md missing"
+fi
+
 test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
 test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
 grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"

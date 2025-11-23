@@ -64,6 +64,9 @@ rm -rf "$TEMP_DIR"
 **Directory Structure Should Be**:
 ```
 project-root/
+├── .ruler/             # Optional: Ruler-managed agent configs
+│   ├── codev.md        # Codev-specific instructions (if using Ruler)
+│   └── ruler.toml      # Ruler configuration
 ├── codev/              # All Codev files go here!
 │   ├── protocols/      # Protocol definitions
 │   ├── specs/          # Specifications
@@ -84,7 +87,9 @@ project-root/
 
 ### Step 3: Protocol Selection
 
-The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the AGENTS.md and CLAUDE.md files to reference the appropriate protocol path.
+The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the agent configuration files to reference the appropriate protocol path:
+- For **direct management**: Modify `AGENTS.md` and `CLAUDE.md`
+- For **Ruler users**: Modify `.ruler/codev.md` and run `npx @intellectronica/ruler apply`
 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
@@ -147,11 +152,13 @@ This project uses the Codev context-driven development methodology.
 See codev/protocols/spider/protocol.md for full protocol details.
 ```
 
-Key sections to verify in AGENTS.md and CLAUDE.md:
-- Active protocol path
-- Consultation guidelines (if using SPIDER)
-- File naming conventions (####-descriptive-name.md)
-- Both files should be identical in content
+Key sections to verify:
+- For **Ruler users**: Ensure content in `.ruler/codev.md` is correct before running `npx @intellectronica/ruler apply`
+- In **AGENTS.md and CLAUDE.md**:
+  - Active protocol path
+  - Consultation guidelines (if using SPIDER)
+  - File naming conventions (####-descriptive-name.md)
+  - Both files should be identical in content
 
 ### Step 5: Verify Installation
 
@@ -209,6 +216,10 @@ cat codev/protocols/spider/protocol.md | head -20
 ## Post-Installation Guidance
 
 After installation, guide the user:
+
+**Note for future changes**: To modify the active protocol or other agent instructions:
+- **Ruler users**: Edit `.ruler/codev.md` and run `npx @intellectronica/ruler apply`
+- **Direct management**: Edit both `AGENTS.md` and `CLAUDE.md` (keep them synchronized)
 
 1. **First Specification**: "What would you like to build first? I can help create a specification. Which protocol would you prefer - SPIDER (with multi-agent consultation) or SPIDER-SOLO?"
 

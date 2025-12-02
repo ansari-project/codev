@@ -152,7 +152,37 @@ Track builder status in a git-tracked markdown file (like projectlist.md):
 
 The `builders.md` file can note blockers for visibility, but resolution happens in the terminal.
 
-#### 5. Builder Prompt Template
+#### 5. File Review Tool
+
+The architect needs to review builder work without switching directories or interrupting workflow. Simple CLI commands provide quick access to builder file state:
+
+```bash
+# List files changed by a builder (vs main)
+architect files 0003
+# Output: M src/auth/login.ts, A src/auth/types.ts, ...
+
+# Show diff of builder's changes
+architect diff 0003
+# Output: unified diff of all changes
+
+# View a specific file in builder's worktree
+architect cat 0003 src/auth/login.ts
+# Output: file contents with line numbers
+
+# Quick review summary (files + stats)
+architect review 0003
+# Output: file list, lines added/removed, branch info
+```
+
+**Why CLI (not web)?**
+- Faster for quick checks than navigating dashboard
+- Pipe-able output for scripts
+- Works in architect's existing terminal
+- No context switch from Claude Code session
+
+**Builders can also use these** to review files in main (though they typically just use git directly in their worktree).
+
+#### 6. Builder Prompt Template
 
 Standard instructions given to each builder when spawned:
 
@@ -217,6 +247,12 @@ architect status
 # Open the web dashboard
 architect dashboard
 # Opens browser to localhost with all builder terminals
+
+# Review builder work (without switching context)
+architect files 0003      # List changed files
+architect diff 0003       # Show unified diff vs main
+architect cat 0003 FILE   # View specific file
+architect review 0003     # Summary: files, stats, branch info
 
 # Clean up a completed builder (removes worktree, stops ttyd)
 architect cleanup 0003
@@ -293,13 +329,15 @@ When builder completes (PR merged):
 1. **Parallel Execution**: Can run multiple builders simultaneously without conflicts
 2. **Status Visibility**: Dashboard shows all builder terminals at a glance
 3. **Simple Blocking**: Can respond to stuck builders by typing in terminal
-4. **Clean Integration**: Builder PRs merge cleanly after architect review
-5. **Minimal Tooling**: Works with just ttyd + a shell script + HTML file
+4. **Quick File Review**: Can inspect builder changes without leaving main terminal
+5. **Clean Integration**: Builder PRs merge cleanly after architect review
+6. **Minimal Tooling**: Works with just ttyd + a shell script + HTML file
 
 ## Phase 1 Deliverables
 
 - [ ] `.builders/` directory structure with .gitignore entry
 - [ ] `architect` shell script with spawn/status/dashboard/cleanup commands
+- [ ] File review commands: `files`, `diff`, `cat`, `review`
 - [ ] Git worktree-based isolation
 - [ ] `builders.md` template and status tracking
 - [ ] `builder-prompt.md` template

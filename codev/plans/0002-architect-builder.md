@@ -232,8 +232,9 @@ Track active builder agents here. Update manually or via `architect status`.
 2. Implement `spawn` command (worktree + ttyd)
 3. Implement `status` command (show builders.md)
 4. Implement `dashboard` command (open browser)
-5. Implement `cleanup` command (remove worktree + kill ttyd)
-6. Make script executable
+5. Implement file review commands (`files`, `diff`, `cat`, `review`)
+6. Implement `cleanup` command (remove worktree + kill ttyd)
+7. Make script executable
 
 **Script structure** (codev/bin/architect):
 ```bash
@@ -259,6 +260,10 @@ BASE_PORT=7681
 | `spawn --issue NN` | Same but fetch spec from GitHub issue |
 | `status` | Display builders.md |
 | `dashboard` | Open dashboard.html in browser |
+| `files XXXX` | List files changed by builder (vs main) |
+| `diff XXXX` | Show unified diff of builder's changes |
+| `cat XXXX FILE` | View specific file in builder's worktree |
+| `review XXXX` | Summary: file list, lines added/removed, branch info |
 | `cleanup XXXX` | Kill ttyd, remove worktree, update builders.md |
 
 **Acceptance criteria**:
@@ -266,6 +271,7 @@ BASE_PORT=7681
 - [ ] Port allocation finds next available port
 - [ ] Worktrees created correctly
 - [ ] ttyd processes tracked (PID file or port scanning)
+- [ ] File review commands show correct output
 - [ ] Cleanup removes all artifacts
 
 ---
@@ -325,7 +331,23 @@ BASE_PORT=7681
    # Verify: ttyd stopped, worktree removed, builders.md updated
    ```
 
-5. **Full workflow test**:
+5. **File review test**:
+   ```bash
+   # After builder has made some changes
+   architect files 0003
+   # Verify: shows list of modified files with status (M/A/D)
+
+   architect diff 0003
+   # Verify: shows unified diff of all changes vs main
+
+   architect cat 0003 src/some/file.ts
+   # Verify: displays file contents with line numbers
+
+   architect review 0003
+   # Verify: shows summary with file list and line stats
+   ```
+
+6. **Full workflow test**:
    - Spawn builder for a real spec
    - Watch builder implement (or simulate)
    - Create PR

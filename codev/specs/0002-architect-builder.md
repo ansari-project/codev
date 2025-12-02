@@ -182,7 +182,67 @@ architect review 0003
 
 **Builders can also use these** to review files in main (though they typically just use git directly in their worktree).
 
-#### 6. Builder Prompt Template
+#### 6. Annotation Viewer for Design Review
+
+The architect needs to review builder work and leave persistent comments. Rather than a separate comment database, **comments live directly in the files** using standard comment syntax with a `REVIEW:` prefix.
+
+**Comment Format by File Type:**
+
+```typescript
+// REVIEW: Should this handle the null case?
+// REVIEW(@architect): Consider using a Map for O(1) lookup
+```
+
+```python
+# REVIEW: This could be simplified with a list comprehension
+# REVIEW(@builder): Good catch - fixed in next commit
+```
+
+```markdown
+<!-- REVIEW: This requirement is ambiguous - needs clarification -->
+<!-- REVIEW(@architect): Added detail in section 2.3 -->
+```
+
+**Why Inline Comments?**
+- **Visible everywhere**: Any editor, GitHub, git log shows them
+- **Git history**: Comments become part of commit history (valuable for decisions)
+- **No sync issues**: No separate comment file to keep in sync
+- **Natural cleanup**: Remove `REVIEW:` comments when merging PR
+- **Threaded discussion**: Use `@username` to attribute responses
+
+**Web-Based Annotation Viewer:**
+
+A simple HTML viewer that:
+- Renders files with syntax highlighting (Prism.js)
+- Supports both **code** and **markdown** highlighting
+- Highlights `REVIEW:` lines distinctly (yellow background, margin icons)
+- Click any line → insert new `REVIEW:` comment
+- Click existing `REVIEW:` comment → edit or resolve (removes from file)
+- Saves changes directly to the builder's worktree
+- All edits tracked by git
+
+**CLI Commands:**
+```bash
+# Open annotation viewer for a specific file
+architect annotate 0003 src/auth/login.ts
+
+# Open annotation viewer for a markdown spec
+architect annotate 0003 codev/specs/0003-feature.md
+
+# List all files with unresolved REVIEW comments
+architect annotations 0003
+```
+
+**Workflow:**
+1. Builder implements feature
+2. Architect opens annotation viewer: `architect annotate 0003 src/main.ts`
+3. Architect clicks line 42, types "Consider error handling here"
+4. File now contains `// REVIEW(@architect): Consider error handling here` at line 42
+5. Builder sees comment (in terminal, editor, or viewer)
+6. Builder addresses feedback, optionally adds `// REVIEW(@builder): Fixed`
+7. Before PR merge, clean up resolved `REVIEW:` comments
+
+#### 7. Builder Prompt Template
 
 Standard instructions given to each builder when spawned:
 
@@ -253,6 +313,10 @@ architect files 0003      # List changed files
 architect diff 0003       # Show unified diff vs main
 architect cat 0003 FILE   # View specific file
 architect review 0003     # Summary: files, stats, branch info
+
+# Annotation viewer for design review
+architect annotate 0003 FILE   # Open web viewer to annotate file
+architect annotations 0003     # List files with REVIEW comments
 
 # Clean up a completed builder (removes worktree, stops ttyd)
 architect cleanup 0003
@@ -330,14 +394,18 @@ When builder completes (PR merged):
 2. **Status Visibility**: Dashboard shows all builder terminals at a glance
 3. **Simple Blocking**: Can respond to stuck builders by typing in terminal
 4. **Quick File Review**: Can inspect builder changes without leaving main terminal
-5. **Clean Integration**: Builder PRs merge cleanly after architect review
-6. **Minimal Tooling**: Works with just ttyd + a shell script + HTML file
+5. **Design Annotations**: Can leave inline `REVIEW:` comments on code and markdown files
+6. **Clean Integration**: Builder PRs merge cleanly after architect review
+7. **Minimal Tooling**: Works with just ttyd + a shell script + HTML files
 
 ## Phase 1 Deliverables
 
 - [ ] `.builders/` directory structure with .gitignore entry
 - [ ] `architect` shell script with spawn/status/dashboard/cleanup commands
 - [ ] File review commands: `files`, `diff`, `cat`, `review`
+- [ ] Annotation viewer: `annotate`, `annotations` commands
+- [ ] `annotate.html` with Prism.js syntax highlighting (code + markdown)
+- [ ] Inline `REVIEW:` comment insertion and resolution
 - [ ] Git worktree-based isolation
 - [ ] `builders.md` template and status tracking
 - [ ] `builder-prompt.md` template

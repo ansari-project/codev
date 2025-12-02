@@ -223,7 +223,165 @@ Track active builder agents here. Update manually or via `architect status`.
 
 ---
 
-### Phase 5: Architect CLI Script
+### Phase 5: Annotation Viewer
+
+**Goal**: Create a web-based file viewer for leaving inline `REVIEW:` comments.
+
+**Tasks**:
+1. Create `annotate.html` with Prism.js for syntax highlighting
+2. Support both code (JS, TS, Python, etc.) and markdown highlighting
+3. Render files with line numbers
+4. Highlight existing `REVIEW:` comments distinctly
+5. Click line → insert new `REVIEW:` comment
+6. Click existing `REVIEW:` comment → edit or resolve (remove)
+7. Save changes back to file via simple Node.js server (or Python)
+8. Add `annotate` and `annotations` commands to CLI
+
+**Template content** (codev/templates/annotate.html):
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Annotate: {{FILE}}</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; background: #1a1a1a; color: #fff; }
+    .header { padding: 15px 20px; background: #2a2a2a; border-bottom: 1px solid #333; }
+    .header h1 { font-size: 16px; font-weight: 500; }
+    .header .path { color: #888; font-size: 13px; margin-top: 4px; }
+    .content { display: flex; }
+    .line-numbers {
+      padding: 15px 10px; background: #252525; color: #666;
+      text-align: right; font-family: monospace; font-size: 13px;
+      user-select: none; border-right: 1px solid #333;
+    }
+    .line-numbers div { padding: 2px 8px; cursor: pointer; }
+    .line-numbers div:hover { background: #333; color: #fff; }
+    .code-content { flex: 1; padding: 15px; overflow-x: auto; }
+    pre { margin: 0; font-size: 13px; }
+    .review-line { background: rgba(250, 204, 21, 0.15); border-left: 3px solid #facc15; }
+    .review-badge {
+      display: inline-block; background: #facc15; color: #000;
+      font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 8px;
+    }
+    .comment-dialog {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: #2a2a2a; padding: 20px; border-radius: 8px; width: 500px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none;
+    }
+    .comment-dialog textarea {
+      width: 100%; height: 100px; background: #1a1a1a; border: 1px solid #444;
+      color: #fff; padding: 10px; border-radius: 4px; font-family: inherit;
+    }
+    .comment-dialog .actions { margin-top: 15px; text-align: right; }
+    .btn { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; margin-left: 8px; }
+    .btn-primary { background: #3b82f6; color: #fff; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-secondary { background: #444; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Annotation Viewer</h1>
+    <div class="path">{{BUILDER_ID}} / {{FILE_PATH}}</div>
+  </div>
+  <div class="content">
+    <div class="line-numbers" id="lineNumbers"></div>
+    <div class="code-content">
+      <pre><code id="codeContent" class="language-{{LANG}}"></code></pre>
+    </div>
+  </div>
+  <div class="comment-dialog" id="commentDialog">
+    <h3>Add Review Comment</h3>
+    <p style="color:#888;margin:10px 0;font-size:13px;">Line <span id="dialogLine"></span></p>
+    <textarea id="commentText" placeholder="Enter your review comment..."></textarea>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="closeDialog()">Cancel</button>
+      <button class="btn btn-danger" onclick="resolveComment()" id="resolveBtn" style="display:none">Resolve</button>
+      <button class="btn btn-primary" onclick="saveComment()">Save</button>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+  <script>
+    // File content loaded from server
+    let fileContent = [];
+    let currentLine = null;
+
+    // Initialize viewer (content injected by server)
+    function init(content, lang) {
+      fileContent = content.split('\n');
+      renderFile();
+    }
+
+    function renderFile() {
+      const lineNums = document.getElementById('lineNumbers');
+      const codeEl = document.getElementById('codeContent');
+
+      lineNums.innerHTML = fileContent.map((_, i) =>
+        `<div onclick="openDialog(${i+1})">${i+1}</div>`
+      ).join('');
+
+      codeEl.innerHTML = Prism.highlight(
+        fileContent.join('\n'),
+        Prism.languages[document.body.dataset.lang] || Prism.languages.plaintext,
+        document.body.dataset.lang
+      );
+
+      // Highlight REVIEW lines
+      highlightReviewLines();
+    }
+
+    function highlightReviewLines() {
+      // Implementation: find lines with REVIEW: and add .review-line class
+    }
+
+    function openDialog(line) { /* ... */ }
+    function closeDialog() { /* ... */ }
+    function saveComment() { /* POST to server, update file */ }
+    function resolveComment() { /* Remove REVIEW line, POST to server */ }
+  </script>
+</body>
+</html>
+```
+
+**Comment Detection Patterns**:
+```javascript
+const REVIEW_PATTERNS = {
+  'js': /^(\s*)\/\/\s*REVIEW(\(@\w+\))?:\s*(.*)$/,
+  'ts': /^(\s*)\/\/\s*REVIEW(\(@\w+\))?:\s*(.*)$/,
+  'py': /^(\s*)#\s*REVIEW(\(@\w+\))?:\s*(.*)$/,
+  'md': /^(\s*)<!--\s*REVIEW(\(@\w+\))?:\s*(.*)\s*-->$/,
+  'html': /^(\s*)<!--\s*REVIEW(\(@\w+\))?:\s*(.*)\s*-->$/,
+};
+```
+
+**Simple Server** (for saving changes):
+```bash
+# Option 1: Python one-liner
+python -m http.server 8080 --directory .builders/0003
+
+# Option 2: Node.js script with POST handler
+node codev/bin/annotate-server.js --builder 0003 --port 8080
+```
+
+**Acceptance criteria**:
+- [ ] Viewer renders code with syntax highlighting
+- [ ] Viewer renders markdown with syntax highlighting
+- [ ] Line numbers are clickable
+- [ ] `REVIEW:` lines highlighted distinctly
+- [ ] Can add new comment (inserts into file)
+- [ ] Can resolve comment (removes from file)
+- [ ] Changes saved to builder's worktree
+- [ ] `architect annotate` opens viewer in browser
+- [ ] `architect annotations` lists files with REVIEW comments
+
+---
+
+### Phase 6: Architect CLI Script
 
 **Goal**: Create the main `architect` shell script with all commands.
 
@@ -233,8 +391,9 @@ Track active builder agents here. Update manually or via `architect status`.
 3. Implement `status` command (show builders.md)
 4. Implement `dashboard` command (open browser)
 5. Implement file review commands (`files`, `diff`, `cat`, `review`)
-6. Implement `cleanup` command (remove worktree + kill ttyd)
-7. Make script executable
+6. Implement annotation commands (`annotate`, `annotations`)
+7. Implement `cleanup` command (remove worktree + kill ttyd)
+8. Make script executable
 
 **Script structure** (codev/bin/architect):
 ```bash
@@ -264,6 +423,8 @@ BASE_PORT=7681
 | `diff XXXX` | Show unified diff of builder's changes |
 | `cat XXXX FILE` | View specific file in builder's worktree |
 | `review XXXX` | Summary: file list, lines added/removed, branch info |
+| `annotate XXXX FILE` | Open annotation viewer for file in browser |
+| `annotations XXXX` | List files with unresolved REVIEW comments |
 | `cleanup XXXX` | Kill ttyd, remove worktree, update builders.md |
 
 **Acceptance criteria**:
@@ -276,7 +437,7 @@ BASE_PORT=7681
 
 ---
 
-### Phase 6: Integration & Documentation
+### Phase 7: Integration & Documentation
 
 **Goal**: Integrate into codev-skeleton and document usage.
 
@@ -290,14 +451,16 @@ BASE_PORT=7681
 - `codev-skeleton/builders.md` (template)
 - `codev-skeleton/templates/builder-prompt.md`
 - `codev-skeleton/templates/dashboard.html`
+- `codev-skeleton/templates/annotate.html`
 - `codev-skeleton/bin/architect`
+- `codev-skeleton/bin/annotate-server.js` (or Python equivalent)
 - `CLAUDE.md` - add architect-builder section
 - `AGENTS.md` - add architect-builder section
 
 **Acceptance criteria**:
 - [ ] Fresh codev install includes architect-builder
 - [ ] Documentation explains full workflow
-- [ ] End-to-end test: spawn → implement → PR → cleanup
+- [ ] End-to-end test: spawn → implement → annotate → PR → cleanup
 
 ---
 
@@ -347,7 +510,22 @@ BASE_PORT=7681
    # Verify: shows summary with file list and line stats
    ```
 
-6. **Full workflow test**:
+6. **Annotation viewer test**:
+   ```bash
+   architect annotate 0003 src/auth/login.ts
+   # Verify: browser opens, file displayed with syntax highlighting
+   # Verify: can click line to add REVIEW comment
+   # Verify: comment inserted into file with correct format
+
+   architect annotate 0003 codev/specs/0003-feature.md
+   # Verify: markdown file renders with syntax highlighting
+   # Verify: can add <!-- REVIEW: --> comments
+
+   architect annotations 0003
+   # Verify: lists all files containing REVIEW: comments
+   ```
+
+7. **Full workflow test**:
    - Spawn builder for a real spec
    - Watch builder implement (or simulate)
    - Create PR
@@ -376,9 +554,10 @@ BASE_PORT=7681
 | Phase 2: Builder prompt | 15 min |
 | Phase 3: builders.md | 10 min |
 | Phase 4: Dashboard HTML | 30 min |
-| Phase 5: Architect CLI | 1-2 hours |
-| Phase 6: Integration & docs | 30 min |
-| **Total** | ~3-4 hours |
+| Phase 5: Annotation Viewer | 1-2 hours |
+| Phase 6: Architect CLI | 1-2 hours |
+| Phase 7: Integration & docs | 30 min |
+| **Total** | ~4-6 hours |
 
 ---
 
@@ -387,13 +566,14 @@ BASE_PORT=7681
 ```
 Phase 1 ─┬─► Phase 2
          ├─► Phase 3
-         └─► Phase 4
+         ├─► Phase 4
+         └─► Phase 5
               │
               ▼
-         Phase 5 (needs 1-4)
+         Phase 6 (needs 1-5)
               │
               ▼
-         Phase 6 (needs 5)
+         Phase 7 (needs 6)
 ```
 
-Phases 2, 3, 4 can be done in parallel after Phase 1.
+Phases 2, 3, 4, 5 can be done in parallel after Phase 1.

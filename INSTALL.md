@@ -328,6 +328,66 @@ The installation process automatically detects your environment and installs age
 - Access to GitHub repositories (for spider-protocol-updater)
 - The agent files in `.claude/agents/`
 
+## Architect-Builder Pattern (Optional)
+
+For projects with parallelizable components, Codev includes the Architect-Builder pattern for running multiple AI agents simultaneously.
+
+### Prerequisites
+
+- **ttyd** (web-based terminal): `brew install ttyd` on macOS
+- **Node.js** (for annotation viewer)
+- **git** 2.5+ (with worktree support)
+
+### Setup
+
+The architect-builder tools are included in the codev-skeleton:
+
+```bash
+# Ensure .builders/ is in your .gitignore
+echo ".builders/" >> .gitignore
+
+# Verify the architect CLI is available
+ls codev/bin/architect
+```
+
+### Quick Start
+
+```bash
+# Spawn a builder for a spec
+./codev/bin/architect spawn --project 0003
+
+# Open the web dashboard to see all builders
+./codev/bin/architect dashboard
+
+# Review builder's work
+./codev/bin/architect files 0003
+./codev/bin/architect diff 0003
+
+# Annotate files with review comments
+./codev/bin/architect annotate 0003 src/auth/login.ts
+
+# Clean up when done
+./codev/bin/architect cleanup 0003
+```
+
+### How It Works
+
+1. **Architect** (you + primary AI) creates specs and plans
+2. **Builders** (autonomous AI agents) implement specs in isolated git worktrees
+3. Each builder runs in a **web terminal** (ttyd) accessible from a dashboard
+4. **Review comments** are stored directly in files using `// REVIEW:` syntax
+5. Builders create PRs when complete; architect reviews and merges
+
+### Key Files
+
+- `codev/builders.md` - Track active builder status
+- `codev/templates/builder-prompt.md` - Instructions given to builders
+- `codev/templates/dashboard.html` - Web dashboard for monitoring
+- `codev/templates/annotate.html` - Annotation viewer for code review
+- `codev/bin/architect` - CLI for managing builders
+
+See `codev/specs/0002-architect-builder.md` for full documentation.
+
 ## Remember
 
 - The goal is THREE documents per feature (spec, plan, review)

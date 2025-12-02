@@ -229,6 +229,72 @@ The `codev-updater` agent keeps your Codev installation current with the latest 
 
 **Agent location**: `codev/agents/codev-updater.md`
 
+## Architect-Builder Pattern
+
+The Architect-Builder pattern enables parallel AI-assisted development by separating concerns:
+- **Architect** (human + primary AI): Creates specs and plans, reviews work
+- **Builders** (autonomous AI agents): Implement specs in isolated git worktrees
+
+### Prerequisites
+
+- **ttyd**: `brew install ttyd` (web-based terminal)
+- **Node.js**: For the annotation viewer
+- **git 2.5+**: With worktree support
+
+### CLI Commands
+
+```bash
+# Spawn a builder for a spec
+./codev/bin/architect spawn --project 0003
+
+# Check status of all builders
+./codev/bin/architect status
+
+# Open web dashboard showing all builder terminals
+./codev/bin/architect dashboard
+
+# Review builder's changes
+./codev/bin/architect files 0003      # List changed files
+./codev/bin/architect diff 0003       # Show unified diff
+./codev/bin/architect review 0003     # Summary with stats
+
+# Annotate files with review comments
+./codev/bin/architect annotate 0003 src/auth/login.ts
+
+# List files with REVIEW comments
+./codev/bin/architect annotations 0003
+
+# Clean up when done
+./codev/bin/architect cleanup 0003
+```
+
+### Review Comments
+
+Comments are stored directly in files using language-appropriate syntax:
+
+```typescript
+// REVIEW(@architect): Consider error handling here
+// REVIEW(@builder): Fixed - added try/catch
+```
+
+```python
+# REVIEW: This could be simplified
+```
+
+```markdown
+<!-- REVIEW: Clarify this requirement -->
+```
+
+### Key Files
+
+- `codev/builders.md` - Active builder status tracking
+- `codev/templates/builder-prompt.md` - Instructions for builders
+- `codev/templates/dashboard.html` - Web dashboard
+- `codev/templates/annotate.html` - Annotation viewer
+- `codev/bin/architect` - CLI script
+
+See `codev/specs/0002-architect-builder.md` for full documentation.
+
 ## Git Workflow
 
 ### 🚨 ABSOLUTE PROHIBITION: NEVER USE `git add -A` or `git add .` 🚨

@@ -69,6 +69,7 @@ project-root/
 │   └── ruler.toml      # Ruler configuration
 ├── codev/              # All Codev files go here!
 │   ├── protocols/      # Protocol definitions
+│   ├── projectlist.md  # Master project tracking
 │   ├── specs/          # Specifications
 │   ├── plans/          # Implementation plans
 │   ├── reviews/        # Reviews and lessons learned
@@ -97,6 +98,7 @@ Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
 - `codev/protocols/spider-solo/` - Single-agent variant
 - `codev/protocols/tick/` - Fast autonomous implementation for simple tasks
+- `codev/protocols/experiment/` - Disciplined experimentation for research and prototyping
 
 ### Step 4: Create or Update Agent Configuration Files
 
@@ -272,15 +274,16 @@ After installation, guide the user:
 
 ## Protocol Comparison
 
-| Feature | SPIDER | SPIDER-SOLO |
-|---------|--------|-------------|
-| Multi-agent consultation | ✓ (GPT-5 + Gemini Pro) | ✗ (self-review only) |
-| Prerequisites | Zen MCP server | None |
-| Specification reviews | Multi-agent external | Self-review |
-| Plan reviews | Multi-agent external | Self-review |
-| Implementation reviews | Multi-agent per phase | Self-review |
-| Best for | Production features | Exploration & prototypes |
-| Speed | Slower (thorough) | Faster (good enough) |
+| Feature | SPIDER | SPIDER-SOLO | TICK | EXPERIMENT |
+|---------|--------|-------------|------|------------|
+| Multi-agent consultation | ✓ (GPT-5 + Gemini Pro) | ✗ (self-review only) | ✗ | ✗ |
+| Prerequisites | Zen MCP server | None | None | None |
+| Specification reviews | Multi-agent external | Self-review | Minimal | N/A |
+| Plan reviews | Multi-agent external | Self-review | Minimal | N/A |
+| Implementation reviews | Multi-agent per phase | Self-review | Post-implementation | Results-focused |
+| Best for | Production features | Medium features | Small tasks | Research & prototyping |
+| Speed | Slower (thorough) | Medium | Fast | Flexible |
+| Output | Spec + Plan + Review | Spec + Plan + Review | Spec + Plan + Review | notes.md per experiment |
 
 ## Workflow Agents
 

@@ -35,9 +35,11 @@ You are working in the Codev project itself, with multiple development protocols
 - **SPIDER**: Multi-phase development with consultation - `codev/protocols/spider/protocol.md`
 - **SPIDER-SOLO**: Single-agent variant - `codev/protocols/spider-solo/protocol.md`
 - **TICK**: Fast autonomous implementation - `codev/protocols/tick/protocol.md`
+- **EXPERIMENT**: Disciplined experimentation - `codev/protocols/experiment/protocol.md`
 
 Key locations:
 - Protocol details: `codev/protocols/` (Choose appropriate protocol)
+- **Project tracking**: `codev/projectlist.md` (Master list of all projects)
 - Specifications go in: `codev/specs/`
 - Plans go in: `codev/plans/`
 - Reviews go in: `codev/reviews/`
@@ -60,6 +62,13 @@ Key locations:
 - Complex features requiring multiple phases
 - Architecture changes
 - System design decisions
+
+### Use EXPERIMENT for:
+- Testing new approaches or techniques
+- Evaluating models or libraries
+- Proof-of-concept work
+- Research spikes
+- Prototyping before committing to implementation
 
 ### Skip formal protocols for:
 - README typos or minor documentation fixes
@@ -85,7 +94,9 @@ project-root/
 │   ├── protocols/           # Development protocols
 │   │   ├── spider/         # Multi-phase development with consultation
 │   │   ├── spider-solo/    # Single-agent SPIDER variant
-│   │   └── tick/           # Fast autonomous implementation
+│   │   ├── tick/           # Fast autonomous implementation
+│   │   └── experiment/     # Disciplined experimentation
+│   ├── projectlist.md      # Master project tracking (status, priority, dependencies)
 │   ├── specs/              # Feature specifications (WHAT to build)
 │   ├── plans/              # Implementation plans (HOW to build)
 │   ├── reviews/            # Reviews and lessons learned from each feature

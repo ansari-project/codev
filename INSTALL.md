@@ -75,21 +75,23 @@ project-root/
 │   ├── resources/      # Reference materials and documentation
 │   └── agents/         # Custom agents (non-Claude Code tools)
 │       └── spider-protocol-updater.md
-├── .claude/            # Claude Code-specific directory
+├── .claude/            # Claude Code-specific directory (if using Claude Code)
 │   └── agents/         # Custom agents (Claude Code only)
 │       └── spider-protocol-updater.md
-├── AGENTS.md           # Universal AI agent instructions (AGENTS.md standard)
-├── CLAUDE.md           # Claude Code-specific (identical to AGENTS.md)
+├── AGENTS.md           # Universal AI agent instructions (if NOT using Claude Code)
+├── CLAUDE.md           # Claude Code-specific instructions (if using Claude Code)
 └── [project files]     # Your actual code
 ```
 
-**Note**: Agents are installed to either `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools), not both.
+**Note**:
+- Agents are installed to either `.claude/agents/` (Claude Code) OR `codev/agents/` (other tools), not both
+- Agent configuration file is either `CLAUDE.md` (Claude Code) OR `AGENTS.md` (other tools), not both
 
 ### Step 3: Protocol Selection
 
 The entire `codev/protocols/` directory is copied with all available protocols. The active protocol is selected by modifying the agent configuration files to reference the appropriate protocol path:
-- For **direct management**: Modify `AGENTS.md` and `CLAUDE.md`
 - For **Ruler users**: Modify `.ruler/codev.md` and run `npx @intellectronica/ruler apply`
+- For **direct management**: Modify `CLAUDE.md` (Claude Code) or `AGENTS.md` (other tools)
 
 Available protocols:
 - `codev/protocols/spider/` - Full SPIDER with multi-agent consultation
@@ -98,7 +100,9 @@ Available protocols:
 
 ### Step 4: Create or Update Agent Configuration Files
 
-**IMPORTANT**: First check if the user is using Ruler for agent configuration management!
+**IMPORTANT**: Check if the user is using Ruler for agent configuration management first!
+
+AGENTS.md follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility (Cursor, GitHub Copilot, etc.), while CLAUDE.md provides native support for Claude Code.
 
 ```bash
 # Check if Ruler is in use
@@ -111,19 +115,27 @@ if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
 
     echo "✓ Codev instructions added to .ruler/codev.md and distributed via ruler"
 else
-    # Direct AGENTS.md and CLAUDE.md management
-    echo "No Ruler detected. Using direct AGENTS.md/CLAUDE.md management..."
+    # No Ruler - use single-file approach based on detected environment
+    echo "No Ruler detected. Using direct agent configuration..."
 
-    # Check if either file exists
-    if [ -f "AGENTS.md" ] || [ -f "CLAUDE.md" ]; then
-        echo "Agent configuration file exists. Updating to include Codev references..."
-        # APPEND Codev-specific instructions to existing file(s)
-        # Ensure both files exist and are synchronized
+    # Detect environment and set target file
+    if command -v claude &> /dev/null; then
+        TARGET_FILE="CLAUDE.md"
+        echo "Claude Code detected - using CLAUDE.md"
+    else
+        TARGET_FILE="AGENTS.md"
+        echo "Other AI tool detected - using AGENTS.md"
+    fi
+
+    # Check if target file exists
+    if [ -f "$TARGET_FILE" ]; then
+        echo "Agent configuration file ($TARGET_FILE) exists. Updating to include Codev references..."
+        # APPEND Codev-specific instructions to existing file
     else
         # Ask user for permission
-        echo "No AGENTS.md or CLAUDE.md found. May I create them? [y/n]"
-        # If yes, create both files with Codev structure
-        # Note: No template exists in skeleton - AI should create appropriate ones based on project context
+        echo "No $TARGET_FILE found. May I create it? [y/n]"
+        # If yes, create the appropriate file with Codev structure
+        # Note: No template exists in skeleton - AI should create appropriate one based on project context
     fi
 fi
 ```
@@ -154,11 +166,10 @@ See codev/protocols/spider/protocol.md for full protocol details.
 
 Key sections to verify:
 - For **Ruler users**: Ensure content in `.ruler/codev.md` is correct before running `npx @intellectronica/ruler apply`
-- In **AGENTS.md and CLAUDE.md**:
+- For **direct management** (CLAUDE.md or AGENTS.md):
   - Active protocol path
   - Consultation guidelines (if using SPIDER)
   - File naming conventions (####-descriptive-name.md)
-  - Both files should be identical in content
 
 ### Step 5: Verify Installation
 
@@ -182,16 +193,18 @@ fi
 # 4. Verify protocol is readable
 test -r codev/protocols/spider/protocol.md && echo "✓ protocol.md is readable" || echo "✗ FAIL: Cannot read protocol.md"
 
-# 5. Verify AGENTS.md and CLAUDE.md exist and reference codev
-# If ruler is detected, also verify .ruler/codev.md
+# 5. Verify agent configuration exists and references codev
+# Check for Ruler first, then fall back to single-file detection
 if [ -d ".ruler" ] && [ -f ".ruler/ruler.toml" ]; then
     test -f .ruler/codev.md && echo "✓ .ruler/codev.md exists (Ruler setup)" || echo "✗ FAIL: .ruler/codev.md missing"
+    grep -q "codev" .ruler/codev.md && echo "✓ .ruler/codev.md references codev" || echo "✗ FAIL: .ruler/codev.md missing codev references"
+elif command -v claude &> /dev/null; then
+    test -f CLAUDE.md && echo "✓ CLAUDE.md exists (Claude Code)" || echo "✗ FAIL: CLAUDE.md missing"
+    grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
+else
+    test -f AGENTS.md && echo "✓ AGENTS.md exists (universal)" || echo "✗ FAIL: AGENTS.md missing"
+    grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
 fi
-
-test -f AGENTS.md && echo "✓ AGENTS.md exists" || echo "✗ FAIL: AGENTS.md missing"
-test -f CLAUDE.md && echo "✓ CLAUDE.md exists" || echo "✗ FAIL: CLAUDE.md missing"
-grep -q "codev" AGENTS.md && echo "✓ AGENTS.md references codev" || echo "✗ FAIL: AGENTS.md missing codev references"
-grep -q "codev" CLAUDE.md && echo "✓ CLAUDE.md references codev" || echo "✗ FAIL: CLAUDE.md missing codev references"
 ```
 
 **Detailed Structure Check**:
@@ -253,7 +266,7 @@ After installation, guide the user:
 
 **Q: User wants a different protocol name**
 - Protocols can be renamed, just ensure:
-  - Directory name matches references in AGENTS.md and CLAUDE.md
+  - Directory name matches references in agent configuration file (AGENTS.md or CLAUDE.md)
   - All templates are present
   - manifest.yaml is updated
 

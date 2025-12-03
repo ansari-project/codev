@@ -216,3 +216,66 @@ The entire custom xterm.js approach was unnecessary. **ttyd's default xterm.js c
 2. **Test end-to-end** - The original custom xterm.js code was never actually tested in a browser
 3. **Simpler is better** - 300+ lines of custom xterm.js code replaced by zero lines
 4. **Understand the stack** - Knowing that ttyd uses xterm.js internally (and handles links) would have saved hours
+
+---
+
+## OSC 8 Investigation (2025-12-03)
+
+### Context
+The "Working Solution" above handles HTTP URLs (e.g., `http://localhost:4200/open-file?path=foo.ts`). But the original goal was to make **file path patterns** like `src/auth/login.ts:42` clickable without requiring the output to include full URLs.
+
+### OSC 8 Approach Evaluation
+
+**What is OSC 8**: Terminal escape sequence for hyperlinks: `\e]8;;URL\e\\TEXT\e]8;;\e\\`
+
+**Research findings**:
+1. xterm.js supports OSC 8 natively (PRs #4005, #4087, #4088)
+2. tmux 3.2+ supports passthrough with: `set -g allow-passthrough on` and `set -ga terminal-features "*:hyperlinks"`
+3. Created `~/.tmux.conf` with these settings
+
+**Why OSC 8 won't work for our use case**:
+- OSC 8 requires the **output source** to wrap text in escape sequences
+- We cannot modify Claude's output format
+- We cannot modify grep/compiler output
+- A filter/pipe approach breaks interactive terminals (buffering, color loss, vim/top broken)
+
+### Correct Approach: xterm.js `registerLinkProvider`
+
+**Consultation with Gemini 3 Pro confirmed**:
+- `registerLinkProvider` is the native, performant way to detect patterns in terminal output
+- It runs on each line, returns link ranges and click handlers
+- No DOM manipulation needed - just tell xterm.js "these coordinates are a link"
+
+**Implementation snippet**:
+```javascript
+term.registerLinkProvider({
+  provideLinks: (bufferLine, callback) => {
+    const text = bufferLine.translateToString(true);
+    const links = [];
+    // Regex: path/file.ext:line
+    const pathRegex = /((?:[\w\-\.]+\/)+[\w\-\.]+\.\w+):(\d+)/g;
+    let match;
+    while ((match = pathRegex.exec(text)) !== null) {
+      const [fullMatch, filePath, lineNumber] = match;
+      links.push({
+        range: { start: { x: match.index + 1, y: bufferLine.y + 1 }, end: { x: match.index + fullMatch.length + 1, y: bufferLine.y + 1 } },
+        text: fullMatch,
+        activate: () => window.open(`http://localhost:4200/annotate?file=${encodeURIComponent(filePath)}&line=${lineNumber}`, '_blank')
+      });
+    }
+    callback(links);
+  }
+});
+```
+
+**The challenge**: This requires accessing ttyd's xterm.js Terminal instance, which the original broken implementation tried to do by replacing ttyd's entire frontend. The module system issues (xterm v5 ES modules vs script tags) caused that to fail.
+
+### Next Steps for File Path Clicking
+
+1. **Option A**: Create bundled xterm.js frontend with esbuild that properly exports Terminal
+2. **Option B**: Use ttyd's internal xterm.js instance if accessible (needs research)
+3. **Option C**: Accept HTTP-only links and have tools output full URLs
+
+### npx Caching Issue Discovered
+
+When running `npx agent-farm util`, the old compiled JS was used even after rebuild. **Fix**: Run directly with `node agent-farm/dist/index.js util` to avoid cache.

@@ -106,4 +106,20 @@ program
     }
   });
 
+// Cleanup command - remove builder worktree and branch
+program
+  .command('cleanup')
+  .description('Clean up a builder worktree and branch after PR merge')
+  .requiredOption('-p, --project <id>', 'Builder ID to clean up')
+  .option('-f, --force', 'Force cleanup even if branch not merged')
+  .action(async (options) => {
+    const { cleanup } = await import('./commands/cleanup.js');
+    try {
+      await cleanup({ project: options.project, force: options.force });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 program.parse();

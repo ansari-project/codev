@@ -10,6 +10,9 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import net from 'node:net';
+import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { DashboardState, Annotation, UtilTerminal, Builder } from '../types.js';
 
@@ -66,17 +69,14 @@ function saveState(state: DashboardState): void {
   }
 }
 
-// Generate unique ID
+// Generate unique ID using crypto for collision resistance
 function generateId(prefix: string): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 4);
-  return `${prefix}${timestamp.slice(-3)}${random}`.toUpperCase();
+  const uuid = randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase();
+  return `${prefix}${uuid}`;
 }
 
 // Find available port in range
 async function findAvailablePort(startPort: number): Promise<number> {
-  const net = await import('node:net');
-
   return new Promise((resolve) => {
     const server = net.createServer();
     server.listen(startPort, () => {
@@ -89,34 +89,107 @@ async function findAvailablePort(startPort: number): Promise<number> {
   });
 }
 
-// Spawn detached process
-function spawnDetached(command: string, args: string[], cwd: string): number | null {
-  const { spawn } = require('node:child_process');
+// Graceful process termination with two-phase shutdown
+async function killProcessGracefully(pid: number): Promise<void> {
+  try {
+    // First try SIGTERM
+    process.kill(pid, 'SIGTERM');
 
-  const child = spawn(command, args, {
-    cwd,
-    detached: true,
-    stdio: 'ignore',
-  });
-
-  child.unref();
-  return child.pid || null;
+    // Wait up to 500ms for process to exit
+    await new Promise<void>((resolve) => {
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
+        try {
+          // Signal 0 checks if process exists
+          process.kill(pid, 0);
+          if (attempts >= 5) {
+            // Process still alive after 500ms, use SIGKILL
+            clearInterval(checkInterval);
+            try {
+              process.kill(pid, 'SIGKILL');
+            } catch {
+              // Already dead
+            }
+            resolve();
+          }
+        } catch {
+          // Process is dead
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    });
+  } catch {
+    // Process may already be dead
+  }
 }
 
-// Parse JSON body from request
-function parseJsonBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
+// Spawn detached process with error handling
+function spawnDetached(command: string, args: string[], cwd: string): number | null {
+  try {
+    const child = spawn(command, args, {
+      cwd,
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    child.on('error', (err) => {
+      console.error(`Failed to spawn ${command}:`, err.message);
+    });
+
+    child.unref();
+    return child.pid || null;
+  } catch (err) {
+    console.error(`Failed to spawn ${command}:`, (err as Error).message);
+    return null;
+  }
+}
+
+// Parse JSON body from request with size limit
+function parseJsonBody(req: http.IncomingMessage, maxSize = 1024 * 1024): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk: Buffer) => (body += chunk.toString()));
+    let size = 0;
+
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > maxSize) {
+        reject(new Error('Request body too large'));
+        req.destroy();
+        return;
+      }
+      body += chunk.toString();
+    });
+
     req.on('end', () => {
       try {
         resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
+      } catch {
         reject(new Error('Invalid JSON'));
       }
     });
+
     req.on('error', reject);
   });
+}
+
+// Validate path is within project root (prevent path traversal)
+function validatePathWithinProject(filePath: string): string | null {
+  // Resolve to absolute path
+  const resolvedPath = filePath.startsWith('/')
+    ? path.resolve(filePath)
+    : path.resolve(projectRoot, filePath);
+
+  // Normalize to remove any .. or . segments
+  const normalizedPath = path.normalize(resolvedPath);
+
+  // Check if path starts with project root
+  if (!normalizedPath.startsWith(projectRoot + path.sep) && normalizedPath !== projectRoot) {
+    return null; // Path escapes project root
+  }
+
+  return normalizedPath;
 }
 
 // Find annotation server script
@@ -136,8 +209,34 @@ if (!fs.existsSync(templatePath)) {
   }
 }
 
+// Security: Validate request origin
+function isRequestAllowed(req: http.IncomingMessage): boolean {
+  const host = req.headers.host;
+  const origin = req.headers.origin;
+
+  // Host check (prevent DNS rebinding attacks)
+  if (host && !host.startsWith('localhost') && !host.startsWith('127.0.0.1')) {
+    return false;
+  }
+
+  // Origin check (prevent CSRF from external sites)
+  // Note: CLI tools/curl might not send Origin, so we only block if Origin is present and invalid
+  if (origin && !origin.startsWith('http://localhost') && !origin.startsWith('http://127.0.0.1')) {
+    return false;
+  }
+
+  return true;
+}
+
 // Create server
 const server = http.createServer(async (req, res) => {
+  // Security: Validate Host and Origin headers
+  if (!isRequestAllowed(req)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
   // CORS headers - restrict to localhost only for security
   const origin = req.headers.origin;
   if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
@@ -145,6 +244,9 @@ const server = http.createServer(async (req, res) => {
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Prevent caching of API responses
+  res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -174,13 +276,18 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Resolve path
-      const fullPath = filePath.startsWith('/') ? filePath : path.join(projectRoot, filePath);
+      // Validate path is within project root (prevent path traversal)
+      const fullPath = validatePathWithinProject(filePath);
+      if (!fullPath) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Path must be within project directory');
+        return;
+      }
 
       // Check file exists
       if (!fs.existsSync(fullPath)) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end(`File not found: ${fullPath}`);
+        res.end(`File not found: ${filePath}`);
         return;
       }
 
@@ -313,12 +420,7 @@ const server = http.createServer(async (req, res) => {
         const annotationId = tabId.replace('file-', '');
         const annotation = state.annotations.find((a) => a.id === annotationId);
         if (annotation) {
-          // Kill the process
-          try {
-            process.kill(annotation.pid);
-          } catch {
-            // Process may already be dead
-          }
+          await killProcessGracefully(annotation.pid);
           state.annotations = state.annotations.filter((a) => a.id !== annotationId);
           found = true;
         }
@@ -329,12 +431,7 @@ const server = http.createServer(async (req, res) => {
         const builderId = tabId.replace('builder-', '');
         const builder = state.builders.find((b) => b.id === builderId);
         if (builder) {
-          // Kill the process
-          try {
-            process.kill(builder.pid);
-          } catch {
-            // Process may already be dead
-          }
+          await killProcessGracefully(builder.pid);
           state.builders = state.builders.filter((b) => b.id !== builderId);
           found = true;
         }
@@ -345,12 +442,7 @@ const server = http.createServer(async (req, res) => {
         const utilId = tabId.replace('shell-', '');
         const util = state.utils.find((u) => u.id === utilId);
         if (util) {
-          // Kill the process
-          try {
-            process.kill(util.pid);
-          } catch {
-            // Process may already be dead
-          }
+          await killProcessGracefully(util.pid);
           state.utils = state.utils.filter((u) => u.id !== utilId);
           found = true;
         }
@@ -371,7 +463,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/stop') {
       const state = loadState();
 
-      // Kill all processes
+      // Kill all processes gracefully
       const pids: number[] = [];
 
       if (state.architect) {
@@ -390,13 +482,8 @@ const server = http.createServer(async (req, res) => {
         pids.push(annotation.pid);
       }
 
-      for (const pid of pids) {
-        try {
-          process.kill(pid);
-        } catch {
-          // Process may already be dead
-        }
-      }
+      // Kill all processes in parallel
+      await Promise.all(pids.map((pid) => killProcessGracefully(pid)));
 
       // Clear state
       saveState({ architect: null, builders: [], utils: [], annotations: [] });

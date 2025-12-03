@@ -91,6 +91,10 @@
     /* Left pane - Architect */
     .left-pane {
       width: 50%;
+      min-width: 20%;
+      max-width: 80%;
+      resize: horizontal;
+      overflow: auto;
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -1034,7 +1038,7 @@
     let pollInterval = null;
 
     function startPolling() {
-      pollInterval = setInterval(refresh, 5000);
+      pollInterval = setInterval(refresh, 1000);
     }
 
     function stopPolling() {

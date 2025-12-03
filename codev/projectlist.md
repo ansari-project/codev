@@ -192,7 +192,7 @@ projects:
   - id: "0009"
     title: "Terminal File Click to Annotate"
     summary: "Click on file paths in terminal output to open them in the annotation viewer"
-    status: integrated
+    status: committed
     priority: medium
     files:
       spec: codev/specs/0009-terminal-file-click.md

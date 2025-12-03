@@ -384,6 +384,20 @@ git add tests/*.bats
 spider/0001-feature-name/phase-name
 ```
 
+### Pull Request Merging
+
+**DO NOT SQUASH MERGE** - Always use regular merge commits.
+
+```bash
+# ✅ CORRECT - Regular merge (preserves commit history)
+gh pr merge <number> --merge
+
+# ❌ FORBIDDEN - Squash merge (loses individual commits)
+gh pr merge <number> --squash
+```
+
+**Why no squashing**: Individual commits document the development process (spec, plan, implementation, review, fixes). Squashing loses this valuable history.
+
 ## Consultation Guidelines
 
 When the user requests "Consult" or "consultation" (including variations like "ultrathink and consult"), this specifically means:

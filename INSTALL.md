@@ -340,8 +340,18 @@ For projects with parallelizable components, Codev includes the Architect-Builde
 
 ### Setup
 
-The architect-builder tools are included in the codev-skeleton:
+The architect-builder tools are available via npm or included in the codev-skeleton:
 
+**Option 1: npm package (recommended)**
+```bash
+# Install globally
+npm install -g agent-farm
+
+# Or use npx (no installation required)
+npx agent-farm --help
+```
+
+**Option 2: Local bash script**
 ```bash
 # Ensure .builders/ is in your .gitignore
 echo ".builders/" >> .gitignore
@@ -352,6 +362,22 @@ ls codev/bin/architect
 
 ### Quick Start
 
+Using the npm package:
+```bash
+# Start the architect dashboard
+npx agent-farm start
+
+# Spawn a builder for a spec
+npx agent-farm spawn --project 0003
+
+# Check status of all builders
+npx agent-farm status
+
+# Stop the architect
+npx agent-farm stop
+```
+
+Using the local bash script:
 ```bash
 # Spawn a builder for a spec
 ./codev/bin/architect spawn --project 0003

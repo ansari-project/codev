@@ -76,11 +76,12 @@ program
     }
   });
 
-// Util command (placeholder)
+// Util/Shell command - spawns a utility terminal
 program
   .command('util')
-  .description('Spawn a utility terminal')
-  .option('-n, --name <name>', 'Name for the utility terminal')
+  .alias('shell')
+  .description('Spawn a utility shell terminal')
+  .option('-n, --name <name>', 'Name for the shell terminal')
   .action(async (options) => {
     const { util } = await import('./commands/util.js');
     try {

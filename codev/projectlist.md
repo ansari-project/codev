@@ -192,7 +192,7 @@ projects:
   - id: "0009"
     title: "Terminal File Click to Annotate"
     summary: "Click on file paths in terminal output to open them in the annotation viewer"
-    status: planned
+    status: integrated
     priority: medium
     files:
       spec: codev/specs/0009-terminal-file-click.md
@@ -319,9 +319,48 @@ projects:
     tags: [bugfix, dashboard]
     notes: "Fixed: (1) Template path now looks in codev/templates/ instead of deleted agent-farm/templates/, (2) Dashboard API now verifies annotation processes are alive before returning 'existing' entries, cleans up stale state automatically."
 
+  - id: "0019"
+    title: "Tab Bar Status Indicators"
+    summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
+    status: conceived
+    priority: medium
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0007"]
+    tags: [ui, dashboard]
+    notes: "Visual status indicators in tab headers so you can see builder state without switching tabs"
+
+  - id: "0020"
+    title: "Send Instructions to Builder"
+    summary: "Allow architect to send follow-up instructions to running builders via agent-farm CLI or dashboard"
+    status: conceived
+    priority: high
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0005"]
+    tags: [cli, agents, communication]
+    notes: "e.g., 'af send 0009 PR review complete, address the concerns' or dashboard text input. Could use tmux send-keys to inject text into builder terminal."
+
+  - id: "0021"
+    title: "Multi-CLI Builder Support"
+    summary: "Support spawning builders with Gemini CLI or Codex CLI in addition to Claude Code"
+    status: conceived
+    priority: high
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0005"]
+    tags: [cli, agents, portability]
+    notes: "e.g., 'af spawn -p 0009 --cli gemini' or 'af spawn -p 0009 --cli codex'. Each CLI has different flags: Claude (-p, --append-system-prompt), Gemini (--yolo), Codex (TBD). May need CLI-specific prompt formatting."
+
 ## Next Available Number
 
-**0019** - Reserve this number for your next project
+**0022** - Reserve this number for your next project
 
 ---
 

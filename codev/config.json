@@ -1,7 +1,7 @@
 {
   "shell": {
-    "architect": "claude --model opus",
-    "builder": "claude --model sonnet",
+    "architect": "claude --dangerously-skip-permissions",
+    "builder": "claude --dangerously-skip-permissions",
     "shell": "bash"
   },
   "templates": {

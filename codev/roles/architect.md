@@ -58,6 +58,7 @@ The Architect follows the SPIDER protocol but modifies the Implementation phase 
    ```bash
    af spawn --project XXXX
    ```
+   **Important:** Update the project status to `implementing` in `codev/projectlist.md` when spawning a builder.
 
 2. **Delegate** - Spawn a Builder agent for each worktree
    - Pass the specific spec

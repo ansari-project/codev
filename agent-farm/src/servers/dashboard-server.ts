@@ -202,13 +202,21 @@ function spawnTmuxWithTtyd(
 
     // Start ttyd to attach to the tmux session
     // Using simple theme arg to avoid shell escaping issues
+    // Use custom index.html for file path click-to-open functionality
+    const customIndexPath = path.join(projectRoot, 'codev/templates/ttyd-index.html');
     const ttydArgs = [
       '-W',
       '-p', String(ttydPort),
       '-t', 'theme={"background":"#000000"}',
       '-t', 'fontSize=14',
-      'tmux', 'attach-session', '-t', sessionName,
     ];
+
+    // Add custom index if it exists
+    if (fs.existsSync(customIndexPath)) {
+      ttydArgs.push('-I', customIndexPath);
+    }
+
+    ttydArgs.push('tmux', 'attach-session', '-t', sessionName);
 
     const pid = spawnDetached('ttyd', ttydArgs, cwd);
     return pid;
@@ -640,6 +648,99 @@ const server = http.createServer(async (req, res) => {
 
       // Exit after a short delay
       setTimeout(() => process.exit(0), 500);
+      return;
+    }
+
+    // Open file route - handles file clicks from terminal
+    // Returns a small HTML page that messages the dashboard via BroadcastChannel
+    if (req.method === 'GET' && url.pathname === '/open-file') {
+      const filePath = url.searchParams.get('path');
+      const line = url.searchParams.get('line');
+
+      if (!filePath) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Missing path parameter');
+        return;
+      }
+
+      // Validate path is within project
+      const fullPath = validatePathWithinProject(filePath);
+      if (!fullPath) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Path must be within project directory');
+        return;
+      }
+
+      // Check file exists
+      if (!fs.existsSync(fullPath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end(`File not found: ${filePath}`);
+        return;
+      }
+
+      // Serve a small HTML page that communicates back to dashboard
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Opening file...</title>
+  <style>
+    body {
+      font-family: system-ui;
+      background: #1a1a1a;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .message { text-align: center; }
+    .path { color: #3b82f6; font-family: monospace; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="message">
+    <p>Opening file...</p>
+    <p class="path">${filePath}${line ? ':' + line : ''}</p>
+  </div>
+  <script>
+    (async function() {
+      const path = ${JSON.stringify(fullPath)};
+      const line = ${line ? parseInt(line, 10) : 'null'};
+
+      // Use BroadcastChannel to message the dashboard
+      const channel = new BroadcastChannel('agent-farm');
+      channel.postMessage({
+        type: 'openFile',
+        path: path,
+        line: line
+      });
+
+      // Also call the API to ensure file tab is created
+      try {
+        await fetch('/api/tabs/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: path })
+        });
+      } catch (e) {
+        console.error('Failed to open file via API:', e);
+      }
+
+      // Close this window/tab after a short delay
+      setTimeout(() => {
+        window.close();
+        // If window.close() doesn't work (wasn't opened by script),
+        // show success message
+        document.body.innerHTML = '<div class="message"><p>File opened in dashboard</p><p class="path">You can close this tab</p></div>';
+      }, 500);
+    })();
+  </script>
+</body>
+</html>`;
+
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
       return;
     }
 

@@ -3,7 +3,7 @@
 ## Metadata
 - **Spec**: [0009-terminal-file-click.md](../specs/0009-terminal-file-click.md)
 - **Protocol**: TICK
-- **Status**: planned
+- **Status**: implemented
 - **Created**: 2025-12-03
 
 ## Overview
@@ -128,8 +128,8 @@ function openAnnotationTab(filePath, lineNumber) {
 
 ## Exit Criteria
 
-- [ ] File paths in terminal are visually distinct
-- [ ] Clicking opens annotation viewer with correct file
-- [ ] Line numbers scroll to correct position
-- [ ] Works in Architect and Builder terminals
-- [ ] No performance degradation
+- [x] File paths in terminal are visually distinct (xterm.js link provider adds underline on hover)
+- [x] Clicking opens annotation viewer with correct file (via BroadcastChannel + /open-file route)
+- [x] Line numbers scroll to correct position (line param passed through the chain)
+- [x] Works in Architect and Builder terminals (ttyd-index.html loaded via -I flag)
+- [x] No performance degradation (link detection only runs on-demand per line)

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terminal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.3.0/css/xterm.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    #terminal {
+      height: 100%;
+      width: 100%;
+    }
+    /* Style for file links */
+    .xterm-link {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    /* Tooltip for file paths */
+    .file-tooltip {
+      position: fixed;
+      background: #333;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+  <div class="file-tooltip" id="tooltip"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.8.0/lib/addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.9.0/lib/addon-web-links.min.js"></script>
+  <script>
+    // Configuration - matches ttyd's expected behavior
+    const DASHBOARD_PORT = 4200;
+
+    // File path patterns for link detection
+    const FILE_PATH_PATTERNS = [
+      // Relative paths with extensions: ./foo.ts, src/bar.js, dir/file.py
+      /(?:^|[\s'"(\[{])(\.\/?[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss|go|rs|rb|java|c|cpp|h|hpp))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+      // src/ or codev/ paths: src/index.ts, codev/specs/0001.md
+      /(?:^|[\s'"(\[{])((?:src|lib|codev|agent-farm|tests?)\/[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+      // Absolute paths: /Users/foo/bar.ts
+      /(?:^|[\s'"(\[{])(\/[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss|go|rs))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+    ];
+
+    // Extract file path matches from text
+    function findFilePaths(text) {
+      const matches = [];
+      const seen = new Set();
+
+      for (const pattern of FILE_PATH_PATTERNS) {
+        // Reset lastIndex for global regex
+        pattern.lastIndex = 0;
+        let match;
+
+        while ((match = pattern.exec(text)) !== null) {
+          const fullMatch = match[0];
+          const path = match[1];
+          const line = match[2] ? parseInt(match[2], 10) : undefined;
+          const col = match[3] ? parseInt(match[3], 10) : undefined;
+
+          // Find the actual start position of the path within the full match
+          const pathStart = match.index + fullMatch.indexOf(path);
+          const pathEnd = pathStart + path.length + (match[2] ? (':' + match[2]).length : 0) + (match[3] ? (':' + match[3]).length : 0);
+
+          // Deduplicate
+          const key = `${pathStart}:${pathEnd}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          matches.push({
+            path,
+            line,
+            col,
+            start: pathStart,
+            end: pathEnd,
+            text: text.substring(pathStart, pathEnd)
+          });
+        }
+      }
+
+      return matches.sort((a, b) => a.start - b.start);
+    }
+
+    // Create xterm.js terminal
+    const term = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      theme: {
+        background: '#000000',
+        foreground: '#ffffff',
+        cursor: '#ffffff',
+        selection: 'rgba(255, 255, 255, 0.3)',
+      },
+      allowProposedApi: true, // Required for link provider
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    // Load web links addon for http/https URLs
+    const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+    term.loadAddon(webLinksAddon);
+
+    // Custom link provider for file paths
+    const fileLinkProvider = {
+      provideLinks: (bufferLineNumber, callback) => {
+        const line = term.buffer.active.getLine(bufferLineNumber - 1);
+        if (!line) {
+          callback(undefined);
+          return;
+        }
+
+        const lineText = line.translateToString();
+        const matches = findFilePaths(lineText);
+
+        if (matches.length === 0) {
+          callback(undefined);
+          return;
+        }
+
+        const links = matches.map(match => ({
+          range: {
+            start: { x: match.start + 1, y: bufferLineNumber },
+            end: { x: match.end + 1, y: bufferLineNumber }
+          },
+          text: match.text,
+          activate: () => {
+            openFileInDashboard(match.path, match.line);
+          },
+          hover: (event, text) => {
+            showTooltip(event, `Click to open: ${text}`);
+          },
+          leave: () => {
+            hideTooltip();
+          }
+        }));
+
+        callback(links);
+      }
+    };
+
+    term.registerLinkProvider(fileLinkProvider);
+
+    // Tooltip handling
+    const tooltip = document.getElementById('tooltip');
+
+    function showTooltip(event, text) {
+      tooltip.textContent = text;
+      tooltip.style.left = (event.clientX + 10) + 'px';
+      tooltip.style.top = (event.clientY + 10) + 'px';
+      tooltip.style.display = 'block';
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+    }
+
+    // Open file in dashboard
+    function openFileInDashboard(filePath, lineNumber) {
+      // Build URL for the dashboard's open-file endpoint
+      let url = `http://localhost:${DASHBOARD_PORT}/open-file?path=${encodeURIComponent(filePath)}`;
+      if (lineNumber) {
+        url += `&line=${lineNumber}`;
+      }
+
+      // Open in new tab/window - the page will communicate back to dashboard
+      window.open(url, '_blank');
+    }
+
+    // Open terminal
+    term.open(document.getElementById('terminal'));
+    fitAddon.fit();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      fitAddon.fit();
+      sendSize();
+    });
+
+    // WebSocket connection to ttyd
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    let ws;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 10;
+
+    function connect() {
+      ws = new WebSocket(wsUrl);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => {
+        console.log('Connected to terminal');
+        reconnectAttempts = 0;
+        sendSize();
+      };
+
+      ws.onmessage = (event) => {
+        const data = event.data;
+
+        if (typeof data === 'string') {
+          // JSON message from ttyd (resize confirmation, etc.)
+          try {
+            const msg = JSON.parse(data);
+            if (msg.type === 'title') {
+              document.title = msg.title || 'Terminal';
+            }
+          } catch {
+            // Not JSON, write as text
+            term.write(data);
+          }
+        } else {
+          // Binary data - terminal output
+          const arr = new Uint8Array(data);
+          if (arr.length > 0) {
+            // First byte is message type in ttyd protocol
+            const msgType = arr[0];
+            const payload = arr.slice(1);
+
+            switch (msgType) {
+              case 0: // Output
+                term.write(payload);
+                break;
+              case 1: // Set title
+                const title = new TextDecoder().decode(payload);
+                document.title = title || 'Terminal';
+                break;
+              case 2: // Set preferences
+                // Ignore for now
+                break;
+            }
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('Disconnected from terminal');
+        if (reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          setTimeout(connect, 1000 * reconnectAttempts);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+      };
+    }
+
+    // Send terminal size to ttyd
+    function sendSize() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const msg = JSON.stringify({
+          type: 'resize',
+          cols: term.cols,
+          rows: term.rows
+        });
+        // ttyd expects resize as: 1 byte type (1 = resize) + JSON
+        const encoder = new TextEncoder();
+        const data = encoder.encode(msg);
+        const buf = new Uint8Array(data.length + 1);
+        buf[0] = 1; // resize message type
+        buf.set(data, 1);
+        ws.send(buf);
+      }
+    }
+
+    // Send input to terminal
+    term.onData((data) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        // ttyd expects input as: 1 byte type (0 = input) + data
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(data);
+        const buf = new Uint8Array(encoded.length + 1);
+        buf[0] = 0; // input message type
+        buf.set(encoded, 1);
+        ws.send(buf);
+      }
+    });
+
+    // Connect
+    connect();
+  </script>
+</body>
+</html>

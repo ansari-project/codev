@@ -115,13 +115,104 @@ Implemented clickable file paths in terminal output that open files in the annot
 - [ ] (Optional) Extend regex for more file types
 
 ## Conclusion
-The core implementation achieves the spec's goals - file paths are clickable and open in the annotation viewer. Multi-agent consultation revealed critical issues with port configuration and builder path resolution that were immediately addressed. TICK was appropriate for this task size, and the end-only consultation effectively caught issues that would have caused problems in production use.
 
-All critical issues identified by consultation have been fixed:
-- Dashboard port is now derived dynamically from current port
-- Builder worktree paths are resolved correctly via sourcePort lookup
-- Duplicate API calls removed
-- HTML escaping added for security
-- noopener added to window.open
+~~The core implementation achieves the spec's goals~~
 
-**Recommendation**: Ready for merge.
+**UPDATE 2025-12-03: THIS IMPLEMENTATION IS BROKEN**
+
+### Post-Merge Failure Analysis
+
+The PR was merged (PR #28) but **never actually tested end-to-end**. The implementation is fundamentally broken:
+
+**Root Cause**: xterm.js v5 (`@xterm/xterm@5.3.0`) does not export `Terminal` as a global when loaded via `<script>` tags. It uses ES modules and requires either:
+1. Bundling with webpack/rollup/esbuild
+2. Using `<script type="module">` with proper imports
+3. Using xterm v4 which had UMD builds
+
+**What the code does**:
+```html
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script>
+  const term = new Terminal({...}); // ERROR: Terminal is not defined
+</script>
+```
+
+**Why it wasn't caught**:
+1. Review said "TypeScript build succeeds" - but this is frontend HTML/JS, not TypeScript
+2. Manual tests listed don't include actually loading the page and using it
+3. No actual end-to-end testing was done before merge
+
+### Lessons Learned (Integration Attempt 2025-12-03)
+
+When attempting to integrate 0009:
+1. **Didn't check PR 28 existed first** - started rewriting from scratch
+2. **Tried multiple CDN/module approaches** without understanding the underlying problem
+3. **Ignored user feedback** about overcomplication for 60+ minutes
+4. **Consulted external models too late** - should have been first resort, not last
+5. **Spec assumptions were wrong** - "ttyd exposes xterm.js instance" is false when using `-I`
+
+### Actual Status
+
+- **Status**: BROKEN - needs complete rewrite
+- **Current state**: Custom ttyd-index.html disabled, using ttyd default (no file click)
+- **Files affected**: `codev/templates/ttyd-index.html.broken`
+
+### Required Fix
+
+Options:
+1. **Bundle xterm.js** - Use esbuild/rollup to create a single bundle with proper exports
+2. **Use xterm v4** - Has UMD builds that work with script tags, but is deprecated
+3. **Match ttyd's approach** - Check how ttyd itself bundles xterm.js and replicate
+4. **OSC 8 hyperlinks** - Have shell output file paths as terminal hyperlinks (different approach entirely)
+
+**Recommendation**: Do NOT merge anything until it's actually tested in a browser.
+
+---
+
+## Addendum: Working Solution (2025-12-03)
+
+### The Simple Fix
+
+The entire custom xterm.js approach was unnecessary. **ttyd's default xterm.js client already handles `http://` links natively** - they're clickable and open in a new tab.
+
+**Solution**: Use ttyd's built-in link handling with standard HTTP URLs:
+- Links like `http://localhost:4200/open-file?path=src/foo.ts` are automatically clickable in ttyd
+- The dashboard's `/open-file` route handles the request and opens the annotation viewer
+- No custom xterm.js, no bundling, no module system issues
+
+### What Was Changed
+
+1. **Deleted broken custom templates**:
+   - `codev/templates/ttyd-index.html.broken`
+   - `codev-skeleton/templates/ttyd-index.html`
+   - ttyd now uses its default client (which handles http links)
+
+2. **Fixed annotation server startup timeout**:
+   - Added `waitForPortReady()` function to `dashboard-server.ts`
+   - `/api/tabs/file` now waits (up to 5 seconds) for the annotation server to be accepting connections before returning
+   - This prevents the "refresh needed" issue where the iframe loaded before the server was ready
+
+### Files Modified
+- `agent-farm/src/servers/dashboard-server.ts` - Added port readiness check
+
+### Files Deleted
+- `codev/templates/ttyd-index.html.broken`
+- `codev-skeleton/templates/ttyd-index.html`
+
+### How It Works Now
+
+1. Terminal output includes links like `http://localhost:4200/open-file?path=foo.ts`
+2. ttyd's default xterm.js makes these clickable (no custom code needed)
+3. User clicks link → browser opens `/open-file` route
+4. Dashboard serves small HTML page that sends BroadcastChannel message
+5. Dashboard JavaScript receives message, calls `/api/tabs/file`
+6. API spawns annotation server and **waits for it to be ready**
+7. API returns, dashboard creates tab and loads iframe
+8. Annotation viewer displays immediately (no timeout/refresh needed)
+
+### Lessons Reinforced
+
+1. **Check what already works** - ttyd's built-in link handling was the solution all along
+2. **Test end-to-end** - The original custom xterm.js code was never actually tested in a browser
+3. **Simpler is better** - 300+ lines of custom xterm.js code replaced by zero lines
+4. **Understand the stack** - Knowing that ttyd uses xterm.js internally (and handles links) would have saved hours

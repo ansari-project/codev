@@ -98,6 +98,45 @@ async function findAvailablePort(startPort: number): Promise<number> {
   });
 }
 
+// Wait for a port to be accepting connections (server ready)
+async function waitForPortReady(port: number, timeoutMs: number = 5000): Promise<boolean> {
+  const startTime = Date.now();
+  const pollInterval = 100; // Check every 100ms
+
+  while (Date.now() - startTime < timeoutMs) {
+    const isReady = await new Promise<boolean>((resolve) => {
+      const socket = new net.Socket();
+      socket.setTimeout(pollInterval);
+
+      socket.on('connect', () => {
+        socket.destroy();
+        resolve(true);
+      });
+
+      socket.on('error', () => {
+        socket.destroy();
+        resolve(false);
+      });
+
+      socket.on('timeout', () => {
+        socket.destroy();
+        resolve(false);
+      });
+
+      socket.connect(port, '127.0.0.1');
+    });
+
+    if (isReady) {
+      return true;
+    }
+
+    // Wait before next poll
+    await new Promise((resolve) => setTimeout(resolve, pollInterval));
+  }
+
+  return false;
+}
+
 // Kill tmux session
 function killTmuxSession(sessionName: string): void {
   try {
@@ -464,6 +503,20 @@ const server = http.createServer(async (req, res) => {
       if (!pid) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Failed to start annotation server');
+        return;
+      }
+
+      // Wait for annotation server to be ready (accepting connections)
+      const serverReady = await waitForPortReady(annotatePort, 5000);
+      if (!serverReady) {
+        // Server didn't start in time - kill it and report error
+        try {
+          process.kill(pid);
+        } catch {
+          // Process may have already died
+        }
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Annotation server failed to start (timeout)');
         return;
       }
 

@@ -88,6 +88,7 @@ export async function util(options: UtilOptions = {}): Promise<void> {
 
   // Start ttyd
   const ttydArgs = [
+    '-W',
     '-p', String(port),
     '-t', `titleFixed=${name}`,
     '-t', 'fontSize=14',

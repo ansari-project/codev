@@ -413,6 +413,69 @@ When the user requests "Consult" or "consultation" (including variations like "u
 4. **Create atomic commits** for each phase completion
 5. **Maintain >90% test coverage** where possible
 
+## 🚨 CRITICAL: Before Starting ANY Task
+
+### ALWAYS Check for Existing Work First
+
+**BEFORE writing ANY code, run these checks:**
+
+```bash
+# Check if there's already a PR for this
+gh pr list --search "XXXX"
+
+# Check projectlist for status
+cat codev/projectlist.md | grep -A5 "XXXX"
+
+# Check if implementation already exists
+git log --oneline --all | grep -i "feature-name"
+```
+
+**If existing work exists:**
+1. READ the PR/commits first
+2. TEST if it actually works
+3. IDENTIFY specific bugs - don't rewrite from scratch
+4. FIX the bugs minimally
+
+### When Stuck: STOP After 15 Minutes
+
+**If you've been debugging the same issue for 15+ minutes:**
+1. **STOP coding immediately**
+2. **Consult external models** (GPT-5, Gemini) with specific questions
+3. **Ask the user** if you're on the right path
+4. **Consider simpler approaches** - you're probably overcomplicating it
+
+**Warning signs you're in a rathole:**
+- Making incremental fixes that don't work
+- User telling you you're overcomplicating it (LISTEN TO THEM)
+- Trying multiple CDNs/versions/approaches without understanding why
+- Not understanding the underlying technology (protocol, module system, etc.)
+
+### Understand Before Coding
+
+**Before implementing, you MUST understand:**
+1. **The protocol/API** - Read docs, don't guess
+2. **The module system** - ESM vs CommonJS vs UMD vs globals
+3. **What already exists** - Check the codebase and git history
+4. **The spec's assumptions** - Verify they're actually true
+
+**Example of what NOT to do (Spec 0009 disaster):**
+- Started coding without checking PR 28 existed
+- PR 28 was merged but never tested (xterm v5 doesn't export globals)
+- Spent 90 minutes trying different CDNs instead of understanding the problem
+- Ignored user's repeated feedback about overcomplication
+- Consulted external models only after an hour of failure
+
+**What SHOULD have happened:**
+```
+1. Check projectlist.md → "0009 is committed, needs integration"
+2. Check PR 28 → See what was implemented
+3. Test PR 28 → Find it doesn't work
+4. Identify ROOT CAUSE → xterm v5 module system issue
+5. Research → How does ttyd load xterm?
+6. Minimal fix → Match ttyd's approach
+7. Total time: 20 minutes
+```
+
 ## Lessons Learned from Test Infrastructure (Spec 0001)
 
 ### Critical Requirements

@@ -192,93 +192,93 @@ projects:
   - id: "0009"
     title: "Terminal File Click to Annotate"
     summary: "Click on file paths in terminal output to open them in the annotation viewer"
-    status: committed
+    status: integrated
     priority: medium
     files:
       spec: codev/specs/0009-terminal-file-click.md
       plan: codev/plans/0009-terminal-file-click.md
-      review: null
+      review: codev/reviews/0009-terminal-file-click.md
     dependencies: ["0007"]
     tags: [ui, dashboard, dx]
-    notes: "TICK protocol. Uses postMessage between ttyd iframe and dashboard for link handling"
+    notes: "Uses ttyd's native http link handling. Fixed annotation server startup wait. Deleted broken custom xterm.js templates."
 
   - id: "0010"
     title: "Annotation Editor"
     summary: "Add edit button to annotation viewer with basic inline editing capabilities"
-    status: conceived
+    status: specified
     priority: medium
     files:
-      spec: null
+      spec: codev/specs/0010-annotation-editor.md
       plan: null
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, editing]
-    notes: "Basic text editing within annotation viewer"
+    notes: "TICK protocol. Textarea swap approach. Backend /save endpoint already exists. Consulted GPT-5 and Gemini Pro."
 
   - id: "0011"
     title: "Multi-Instance Support"
     summary: "Better support for running multiple agent-farm instances with directory-aware titles and meta-dashboard"
-    status: conceived
+    status: specified
     priority: medium
     files:
-      spec: null
+      spec: codev/specs/0011-multi-instance-support.md
       plan: null
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, multi-project]
-    notes: "Include directory name in dashboard title, create meta-dashboard showing all running architects and their states"
+    notes: "TICK protocol. Directory name in title. Handle long path truncation. Consulted GPT-5 and Gemini Pro."
 
   - id: "0012"
     title: "Hide tmux Status Bar"
     summary: "Cleaner dashboard UI by removing the tmux status bar from embedded terminals"
-    status: conceived
+    status: specified
     priority: low
     files:
-      spec: null
+      spec: codev/specs/0012-hide-tmux-status-bar.md
       plan: null
       review: null
     dependencies: []
     tags: [ui, dashboard]
-    notes: "tmux status bar adds visual noise, hide it for cleaner look"
+    notes: "TICK protocol. tmux set-option status off. Add toggle for debugging. Consulted GPT-5 and Gemini Pro."
 
   - id: "0013"
     title: "Document OS Dependencies"
     summary: "Clarify and document all operating system dependencies required to run agent-farm"
-    status: conceived
+    status: specified
     priority: medium
     files:
-      spec: null
+      spec: codev/specs/0013-document-os-dependencies.md
       plan: null
       review: null
     dependencies: []
     tags: [documentation, installation]
-    notes: "Need tmux, ttyd, and what else? Make requirements clear in README/INSTALL"
+    notes: "TICK protocol. Document tmux, ttyd, node, git with versions. Add check-env script. Consulted GPT-5 and Gemini Pro."
 
   - id: "0014"
     title: "Flexible Builder Spawning"
     summary: "Generalize spawn command to accept natural language instructions, not just project specs"
-    status: conceived
+    status: specified
     priority: high
     files:
-      spec: null
+      spec: codev/specs/0014-flexible-builder-spawning.md
       plan: null
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, architecture]
-    notes: "Rename to 'af spawn'. Support: (1) natural language tasks, (2) random Claude sessions, (3) protocol invocation (e.g., 'af spawn --protocol cleanup'). See codev/resources/conceptual-model.md"
+    notes: "Supports: spec mode, task mode (with --files), protocol mode (with --args), shell mode. Consulted GPT-5 and Gemini Pro."
 
   - id: "0015"
     title: "Cleanup Protocol"
     summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
-    status: conceived
+    status: specified
     priority: medium
     files:
-      spec: null
+      spec: codev/specs/0015-cleanup-protocol.md
       plan: null
       review: null
     dependencies: []
     tags: [protocols, maintenance]
-    notes: "See codev/resources/conceptual-model.md for why this is a Protocol not a Role. Phases: dead code audit, pruning, migration validation, doc sync (architecture-documenter + CLAUDE.md↔AGENTS.md)"
+    notes: "SPIDER protocol. CRITICAL: Needs dry-run mode and soft delete. High data loss risk if careless. Consulted GPT-5 and Gemini Pro."
 
   - id: "0016"
     title: "Clarify Builder Role Definition"
@@ -296,15 +296,15 @@ projects:
   - id: "0017"
     title: "Platform Portability Layer"
     summary: "Implement transpilation from .codev/ source to platform-specific configs (CLAUDE.md, GEMINI.md, AGENTS.md)"
-    status: conceived
+    status: specified
     priority: low
     files:
-      spec: null
+      spec: codev/specs/0017-platform-portability-layer.md
       plan: null
       review: null
     dependencies: []
     tags: [architecture, portability]
-    notes: "Enable codev to work across Claude Code, Gemini CLI, and Codex CLI. See codev/resources/conceptual-model.md for architecture."
+    notes: "SPIDER protocol. HIGH COMPLEXITY WARNING: May be premature (YAGNI). One-way transpilation. Consulted GPT-5 and Gemini Pro."
 
   - id: "0018"
     title: "Annotation Server Reliability"
@@ -322,41 +322,41 @@ projects:
   - id: "0019"
     title: "Tab Bar Status Indicators"
     summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
-    status: conceived
+    status: specified
     priority: medium
     files:
-      spec: null
+      spec: codev/specs/0019-tab-bar-status-indicators.md
       plan: null
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard]
-    notes: "Visual status indicators in tab headers so you can see builder state without switching tabs"
+    notes: "TICK protocol. Color dots with accessibility (shapes/tooltips for colorblind). Consulted GPT-5 and Gemini Pro."
 
   - id: "0020"
     title: "Send Instructions to Builder"
     summary: "Allow architect to send follow-up instructions to running builders via agent-farm CLI or dashboard"
-    status: conceived
+    status: specified
     priority: high
     files:
-      spec: null
+      spec: codev/specs/0020-send-instructions-to-builder.md
       plan: null
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, communication]
-    notes: "e.g., 'af send 0009 PR review complete, address the concerns' or dashboard text input. Could use tmux send-keys to inject text into builder terminal."
+    notes: "Uses tmux load-buffer + paste-buffer (not send-keys). Structured message format. Consulted GPT-5 and Gemini Pro."
 
   - id: "0021"
     title: "Multi-CLI Builder Support"
     summary: "Support spawning builders with Gemini CLI or Codex CLI in addition to Claude Code"
-    status: conceived
+    status: specified
     priority: high
     files:
-      spec: null
+      spec: codev/specs/0021-multi-cli-builder-support.md
       plan: null
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, portability]
-    notes: "e.g., 'af spawn -p 0009 --cli gemini' or 'af spawn -p 0009 --cli codex'. Each CLI has different flags: Claude (-p, --append-system-prompt), Gemini (--yolo), Codex (TBD). May need CLI-specific prompt formatting."
+    notes: "CLI Adapter pattern. CRITICAL: Must validate agentic capabilities - many CLIs are text-only. Consider adding Aider. Consulted GPT-5 and Gemini Pro."
 
 ## Next Available Number
 

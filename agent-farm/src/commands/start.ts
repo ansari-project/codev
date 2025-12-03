@@ -65,9 +65,13 @@ export async function start(options: StartOptions = {}): Promise<void> {
   if (!options.noRole) {
     const role = loadRolePrompt(config, 'architect');
     if (role) {
-      // Escape the prompt for shell and append to command
-      const escapedPrompt = role.content.replace(/'/g, "'\\''");
-      cmd = `${cmd} --append-system-prompt '${escapedPrompt}'`;
+      // Pass the prompt as a positional argument (not -p which exits after response)
+      // This starts an interactive session with the prompt as the first message
+      // Use double quotes since this will be wrapped in single quotes for tmux
+      const rolePath = role.source === 'local'
+        ? 'codev/roles/architect.md'
+        : resolve(config.bundledRolesDir, 'architect.md');
+      cmd = `${cmd} "You are the architect. Your role and responsibilities are described in ${rolePath}. Please read that file to understand your role."`;
       logger.info(`Loaded architect role (${role.source})`);
     }
   }

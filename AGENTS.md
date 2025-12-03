@@ -44,6 +44,16 @@ Key locations:
 - Plans go in: `codev/plans/`
 - Reviews go in: `codev/reviews/`
 
+### Project Tracking
+
+**`codev/projectlist.md` is the canonical source of truth for all project information.**
+
+When asked about project status, incomplete work, or what to work on next:
+1. Read `codev/projectlist.md` first
+2. It contains status, priority, dependencies, and notes for every project
+3. Update it when project status changes (e.g., implementing → integrated)
+4. Reserve project numbers there BEFORE creating spec files
+
 ## Protocol Selection Guide
 
 ### Use TICK for:

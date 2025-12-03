@@ -170,7 +170,18 @@ function spawnDetached(command: string, args: string[], cwd: string): number | n
   }
 }
 
+// Check if tmux session exists
+function tmuxSessionExists(sessionName: string): boolean {
+  try {
+    execSync(`tmux has-session -t "${sessionName}" 2>/dev/null`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Create a persistent tmux session and attach ttyd to it
+// Idempotent: if session exists, just spawn ttyd to attach to it
 function spawnTmuxWithTtyd(
   sessionName: string,
   shellCommand: string,
@@ -178,14 +189,17 @@ function spawnTmuxWithTtyd(
   cwd: string
 ): number | null {
   try {
-    // Create tmux session with the shell command
-    execSync(
-      `tmux new-session -d -s "${sessionName}" -x 200 -y 50 "${shellCommand}"`,
-      { cwd, stdio: 'ignore' }
-    );
+    // Only create session if it doesn't exist (idempotent)
+    if (!tmuxSessionExists(sessionName)) {
+      // Create tmux session with the shell command
+      execSync(
+        `tmux new-session -d -s "${sessionName}" -x 200 -y 50 "${shellCommand}"`,
+        { cwd, stdio: 'ignore' }
+      );
 
-    // Enable mouse support in the session
-    execSync(`tmux set-option -t "${sessionName}" -g mouse on`, { stdio: 'ignore' });
+      // Enable mouse support in the session
+      execSync(`tmux set-option -t "${sessionName}" -g mouse on`, { stdio: 'ignore' });
+    }
 
     // Start ttyd to attach to the tmux session
     // Using simple theme arg to avoid shell escaping issues

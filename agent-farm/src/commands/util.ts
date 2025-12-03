@@ -1,15 +1,55 @@
 /**
  * Util command - spawns a utility terminal
+ *
+ * When the dashboard is running, this creates a tab in the dashboard.
+ * When the dashboard is not running, it spawns the terminal directly.
  */
 
 import type { UtilTerminal } from '../types.js';
 import { getConfig } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
-import { spawnDetached, commandExists, findAvailablePort } from '../utils/shell.js';
+import { spawnDetached, commandExists, findAvailablePort, openBrowser } from '../utils/shell.js';
 import { loadState, addUtil } from '../state.js';
 
 interface UtilOptions {
   name?: string;
+}
+
+/**
+ * Try to create a shell tab via the dashboard API
+ * Returns true if successful, false if dashboard not available
+ */
+async function tryDashboardApi(name?: string): Promise<boolean> {
+  const state = await loadState();
+
+  // Dashboard runs on architectPort + 1
+  if (!state.architect) {
+    return false;
+  }
+
+  const config = getConfig();
+  const dashboardPort = config.architectPort + 1;
+
+  try {
+    const response = await fetch(`http://localhost:${dashboardPort}/api/tabs/shell`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+
+    if (response.ok) {
+      const result = await response.json() as { name: string; port: number };
+      logger.success(`Shell opened in dashboard tab`);
+      logger.kv('Name', result.name);
+      return true;
+    }
+
+    // Dashboard returned an error, fall through to direct spawn
+    return false;
+  } catch {
+    // Dashboard not available
+    return false;
+  }
 }
 
 /**
@@ -18,6 +58,13 @@ interface UtilOptions {
 export async function util(options: UtilOptions = {}): Promise<void> {
   const config = getConfig();
 
+  // Try to use dashboard API first (if dashboard is running)
+  const dashboardOpened = await tryDashboardApi(options.name);
+  if (dashboardOpened) {
+    return;
+  }
+
+  // Fall back to direct spawn
   // Check for ttyd
   if (!(await commandExists('ttyd'))) {
     fatal('ttyd not found. Install with: brew install ttyd');
@@ -67,6 +114,10 @@ export async function util(options: UtilOptions = {}): Promise<void> {
   logger.blank();
   logger.success(`Utility terminal spawned!`);
   logger.kv('Terminal', `http://localhost:${port}`);
+
+  // Open in browser if not using dashboard
+  const url = `http://localhost:${port}`;
+  await openBrowser(url);
 }
 
 /**

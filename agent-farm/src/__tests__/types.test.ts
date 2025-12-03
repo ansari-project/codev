@@ -133,14 +133,16 @@ describe('Type Definitions', () => {
         stateDir: '/path/to/project/.agent-farm',
         templatesDir: '/path/to/templates',
         serversDir: '/path/to/servers',
-        architectPort: 7680,
-        builderPortRange: [7681, 7699],
-        utilPortRange: [7700, 7719],
-        annotatePortRange: [8080, 8099],
+        dashboardPort: 4200,
+        architectPort: 4201,
+        builderPortRange: [4210, 4229],
+        utilPortRange: [4230, 4249],
+        annotatePortRange: [4250, 4269],
       };
 
-      expect(config.architectPort).toBe(7680);
-      expect(config.builderPortRange).toEqual([7681, 7699]);
+      expect(config.dashboardPort).toBe(4200);
+      expect(config.architectPort).toBe(4201);
+      expect(config.builderPortRange).toEqual([4210, 4229]);
     });
   });
 

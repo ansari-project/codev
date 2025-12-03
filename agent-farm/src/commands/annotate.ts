@@ -1,5 +1,8 @@
 /**
  * Annotate command - opens file annotation viewer
+ *
+ * When the dashboard is running, this creates a tab in the dashboard.
+ * When the dashboard is not running, it opens the annotation viewer directly.
  */
 
 import { resolve, basename } from 'node:path';
@@ -8,10 +11,50 @@ import type { Annotation } from '../types.js';
 import { getConfig } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
 import { spawnDetached, findAvailablePort, openBrowser } from '../utils/shell.js';
-import { addAnnotation } from '../state.js';
+import { addAnnotation, loadState } from '../state.js';
 
 interface AnnotateOptions {
   file: string;
+}
+
+/**
+ * Try to create a file tab via the dashboard API
+ * Returns true if successful, false if dashboard not available
+ */
+async function tryDashboardApi(filePath: string): Promise<boolean> {
+  const state = await loadState();
+
+  // Dashboard runs on architectPort + 1
+  if (!state.architect) {
+    return false;
+  }
+
+  const config = getConfig();
+  const dashboardPort = config.architectPort + 1;
+
+  try {
+    const response = await fetch(`http://localhost:${dashboardPort}/api/tabs/file`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath }),
+    });
+
+    if (response.ok) {
+      const result = (await response.json()) as { existing?: boolean };
+      logger.success(`Opened in dashboard tab`);
+      logger.kv('File', filePath);
+      if (result.existing) {
+        logger.info('(File was already open)');
+      }
+      return true;
+    }
+
+    // Dashboard returned an error, fall through to direct open
+    return false;
+  } catch {
+    // Dashboard not available
+    return false;
+  }
 }
 
 /**
@@ -33,14 +76,22 @@ export async function annotate(options: AnnotateOptions): Promise<void> {
     fatal(`File not found: ${filePath}`);
   }
 
+  // Try to use dashboard API first (if dashboard is running)
+  const dashboardOpened = await tryDashboardApi(filePath);
+  if (dashboardOpened) {
+    return;
+  }
+
+  // Fall back to direct open
+  logger.header('Opening Annotation Viewer');
+  logger.kv('File', filePath);
+
   // Generate ID
   const id = generateAnnotationId();
 
   // Find available port
   const port = await findAvailablePort(config.annotatePortRange[0]);
 
-  logger.header('Opening Annotation Viewer');
-  logger.kv('File', filePath);
   logger.kv('Port', port);
 
   // Find annotation server script (compiled TypeScript)

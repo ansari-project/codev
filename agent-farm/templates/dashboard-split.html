@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Farm Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2a2a2a;
+      --border: #333;
+      --text-primary: #fff;
+      --text-secondary: #ccc;
+      --text-muted: #666;
+      --accent: #3b82f6;
+      --tab-active: #333;
+      --tab-hover: #2a2a2a;
+      --status-idle: #22c55e;
+      --status-working: #eab308;
+      --status-error: #ef4444;
+      --status-spawning: #3b82f6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn:hover {
+      background: var(--tab-active);
+    }
+
+    .btn-danger {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Main content area */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left pane - Architect */
+    .left-pane {
+      width: 50%;
+      min-width: 20%;
+      max-width: 80%;
+      resize: horizontal;
+      overflow: auto;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pane-header {
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pane-header .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-idle);
+    }
+
+    .pane-header .status-dot.inactive {
+      background: var(--text-muted);
+    }
+
+    .left-pane iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .architect-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 16px;
+    }
+
+    .architect-placeholder code {
+      background: var(--bg-tertiary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    /* Right pane - Tabs */
+    .right-pane {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Tab bar */
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      min-height: 40px;
+      overflow: hidden;
+    }
+
+    .tabs-scroll {
+      display: flex;
+      overflow-x: auto;
+      flex: 1;
+      scrollbar-width: none;
+    }
+
+    .tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .tab:hover {
+      background: var(--tab-hover);
+    }
+
+    .tab.active {
+      background: var(--tab-active);
+    }
+
+    .tab.new-tab {
+      animation: tab-pulse 0.5s ease-out;
+    }
+
+    @keyframes tab-pulse {
+      0% { background: var(--accent); }
+      100% { background: var(--tab-active); }
+    }
+
+    .tab .icon {
+      font-size: 14px;
+    }
+
+    .tab .name {
+      font-size: 13px;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-secondary);
+    }
+
+    .tab.active .name {
+      color: var(--text-primary);
+    }
+
+    .tab .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .tab .close {
+      opacity: 0;
+      margin-left: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+
+    .tab:hover .close {
+      opacity: 0.6;
+    }
+
+    .tab .close:hover {
+      opacity: 1;
+      background: var(--bg-tertiary);
+    }
+
+    /* Add buttons */
+    .add-buttons {
+      display: flex;
+      gap: 4px;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    .add-btn {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .add-btn:hover {
+      border-style: solid;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+    }
+
+    /* Tab content */
+    .tab-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-content iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 12px;
+    }
+
+    .empty-state .hint {
+      font-size: 13px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    /* Status bar */
+    .status-bar {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Dialogs */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .dialog-overlay.hidden {
+      display: none;
+    }
+
+    .dialog {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      min-width: 320px;
+      max-width: 90%;
+    }
+
+    .dialog h3 {
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .dialog input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .dialog input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .quick-paths {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .quick-path {
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .quick-path:hover {
+      background: var(--tab-hover);
+      border-color: var(--accent);
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 60px;
+      right: 16px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toast-in 0.3s ease-out;
+    }
+
+    .toast.error {
+      border-color: #ef4444;
+    }
+
+    .toast.success {
+      border-color: #22c55e;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Context menu */
+    .context-menu {
+      position: fixed;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 0;
+      min-width: 150px;
+      z-index: 1000;
+    }
+
+    .context-menu.hidden {
+      display: none;
+    }
+
+    .context-menu-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .context-menu-item:hover {
+      background: var(--tab-hover);
+    }
+
+    .context-menu-item.danger {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Agent Farm Dashboard</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="refresh()">Refresh</button>
+      <button class="btn btn-danger" onclick="stopAll()">Stop All</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Left pane: Architect terminal -->
+    <div class="left-pane">
+      <div class="pane-header">
+        <span class="status-dot" id="architect-status"></span>
+        <span>Architect</span>
+      </div>
+      <div id="architect-content"></div>
+    </div>
+
+    <!-- Right pane: Tabbed interface -->
+    <div class="right-pane">
+      <div class="tab-bar">
+        <div class="tabs-scroll" id="tabs-container"></div>
+        <div class="add-buttons">
+          <button class="add-btn" onclick="showFileDialog()" title="Open file">+ 📄</button>
+          <button class="add-btn" onclick="showBuilderDialog()" title="Spawn builder">+ 🔨</button>
+          <button class="add-btn" onclick="spawnShell()" title="New shell">+ >_</button>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-content"></div>
+    </div>
+  </main>
+
+  <footer class="status-bar">
+    <div class="status-item" id="status-architect">
+      <span class="dot" style="background: var(--text-muted)"></span>
+      <span>Architect: stopped</span>
+    </div>
+    <div class="status-item" id="status-builders">
+      <span>0 builders</span>
+    </div>
+    <div class="status-item" id="status-shells">
+      <span>0 shells</span>
+    </div>
+    <div class="status-item" id="status-files">
+      <span>0 files</span>
+    </div>
+  </footer>
+
+  <!-- File picker dialog -->
+  <div class="dialog-overlay hidden" id="file-dialog">
+    <div class="dialog">
+      <h3>Open File</h3>
+      <div class="quick-paths">
+        <button class="quick-path" onclick="setFilePath('codev/specs/')">codev/specs/</button>
+        <button class="quick-path" onclick="setFilePath('codev/plans/')">codev/plans/</button>
+        <button class="quick-path" onclick="setFilePath('codev/reviews/')">codev/reviews/</button>
+      </div>
+      <input type="text" id="file-path-input" placeholder="Enter file path..." />
+      <div class="dialog-actions">
+        <button class="btn" onclick="hideFileDialog()">Cancel</button>
+        <button class="btn" onclick="openFile()">Open</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Builder dialog -->
+  <div class="dialog-overlay hidden" id="builder-dialog">
+    <div class="dialog">
+      <h3>Spawn Builder</h3>
+      <input type="text" id="project-id-input" placeholder="Enter project ID (e.g., 0003)..." />
+      <div class="dialog-actions">
+        <button class="btn" onclick="hideBuilderDialog()">Cancel</button>
+        <button class="btn" onclick="spawnBuilder()">Spawn</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Close confirmation dialog -->
+  <div class="dialog-overlay hidden" id="close-dialog">
+    <div class="dialog">
+      <h3 id="close-dialog-title">Close tab?</h3>
+      <p id="close-dialog-message" style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;"></p>
+      <div class="dialog-actions">
+        <button class="btn" onclick="hideCloseDialog()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmClose()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div class="context-menu hidden" id="context-menu">
+    <div class="context-menu-item" onclick="closeActiveTab()">Close</div>
+    <div class="context-menu-item" onclick="closeOtherTabs()">Close Others</div>
+    <div class="context-menu-item danger" onclick="closeAllTabs()">Close All</div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // STATE_INJECTION_POINT
+
+    // State management
+    const state = window.INITIAL_STATE || {
+      architect: null,
+      builders: [],
+      utils: [],
+      annotations: []
+    };
+
+    // Tab state
+    let tabs = [];
+    let activeTabId = null;
+    let pendingCloseTabId = null;
+    let contextMenuTabId = null;
+
+    // Initialize
+    function init() {
+      buildTabsFromState();
+      renderArchitect();
+      renderTabs();
+      renderTabContent();
+      updateStatusBar();
+      startPolling();
+    }
+
+    // Build tabs from initial state
+    function buildTabsFromState() {
+      tabs = [];
+
+      // Add file tabs from annotations
+      for (const annotation of state.annotations || []) {
+        tabs.push({
+          id: `file-${annotation.id}`,
+          type: 'file',
+          name: getFileName(annotation.file),
+          path: annotation.file,
+          port: annotation.port,
+          annotationId: annotation.id
+        });
+      }
+
+      // Add builder tabs
+      for (const builder of state.builders || []) {
+        tabs.push({
+          id: `builder-${builder.id}`,
+          type: 'builder',
+          name: builder.id,
+          projectId: builder.id,
+          port: builder.port,
+          status: builder.status
+        });
+      }
+
+      // Add shell tabs
+      for (const util of state.utils || []) {
+        tabs.push({
+          id: `shell-${util.id}`,
+          type: 'shell',
+          name: util.name,
+          port: util.port,
+          utilId: util.id
+        });
+      }
+
+      // Set active tab to first one if any exist
+      if (tabs.length > 0 && !activeTabId) {
+        activeTabId = tabs[0].id;
+      }
+    }
+
+    // Get filename from path
+    function getFileName(path) {
+      const parts = path.split('/');
+      const name = parts[parts.length - 1];
+      // Remove extension for display
+      return name.replace(/\.(md|txt|ts|js|py|html|css|json)$/, '');
+    }
+
+    // Render architect pane
+    function renderArchitect() {
+      const content = document.getElementById('architect-content');
+      const statusDot = document.getElementById('architect-status');
+
+      if (state.architect && state.architect.port) {
+        statusDot.classList.remove('inactive');
+        content.innerHTML = `<iframe src="http://localhost:${state.architect.port}" title="Architect Terminal"></iframe>`;
+      } else {
+        statusDot.classList.add('inactive');
+        content.innerHTML = `
+          <div class="architect-placeholder">
+            <p>Architect not running</p>
+            <p>Run <code>agent-farm start</code> to begin</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render tabs
+    function renderTabs() {
+      const container = document.getElementById('tabs-container');
+
+      if (tabs.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = tabs.map(tab => {
+        const isActive = tab.id === activeTabId;
+        const icon = getTabIcon(tab.type);
+        const statusDot = tab.type === 'builder' ? getStatusDot(tab.status) : '';
+
+        return `
+          <div class="tab ${isActive ? 'active' : ''}"
+               onclick="selectTab('${tab.id}')"
+               oncontextmenu="showContextMenu(event, '${tab.id}')"
+               data-tab-id="${tab.id}">
+            <span class="icon">${icon}</span>
+            <span class="name">${tab.name}</span>
+            ${statusDot}
+            <span class="close" onclick="event.stopPropagation(); closeTab('${tab.id}', event)">&times;</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Get tab icon
+    function getTabIcon(type) {
+      switch (type) {
+        case 'file': return '📄';
+        case 'builder': return '🔨';
+        case 'shell': return '>_';
+        default: return '?';
+      }
+    }
+
+    // Get status dot HTML
+    function getStatusDot(status) {
+      const colors = {
+        'spawning': 'var(--status-spawning)',
+        'implementing': 'var(--status-working)',
+        'blocked': 'var(--status-error)',
+        'pr-ready': 'var(--status-idle)',
+        'complete': 'var(--status-idle)'
+      };
+      const color = colors[status] || 'var(--text-muted)';
+      return `<span class="status-dot" style="background: ${color}"></span>`;
+    }
+
+    // Render tab content
+    function renderTabContent() {
+      const content = document.getElementById('tab-content');
+
+      if (!activeTabId || tabs.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <p>No tabs open</p>
+            <p class="hint">Click the + buttons above or ask the architect to open files/builders</p>
+          </div>
+        `;
+        return;
+      }
+
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (!tab) {
+        content.innerHTML = '<div class="empty-state"><p>Tab not found</p></div>';
+        return;
+      }
+
+      content.innerHTML = `<iframe src="http://localhost:${tab.port}" title="${tab.name}"></iframe>`;
+    }
+
+    // Update status bar
+    function updateStatusBar() {
+      // Architect status
+      const archStatus = document.getElementById('status-architect');
+      if (state.architect) {
+        archStatus.innerHTML = `
+          <span class="dot" style="background: var(--status-idle)"></span>
+          <span>Architect: running</span>
+        `;
+      } else {
+        archStatus.innerHTML = `
+          <span class="dot" style="background: var(--text-muted)"></span>
+          <span>Architect: stopped</span>
+        `;
+      }
+
+      // Counts
+      const builderCount = (state.builders || []).length;
+      const shellCount = (state.utils || []).length;
+      const fileCount = (state.annotations || []).length;
+
+      document.getElementById('status-builders').innerHTML = `<span>${builderCount} builder${builderCount !== 1 ? 's' : ''}</span>`;
+      document.getElementById('status-shells').innerHTML = `<span>${shellCount} shell${shellCount !== 1 ? 's' : ''}</span>`;
+      document.getElementById('status-files').innerHTML = `<span>${fileCount} file${fileCount !== 1 ? 's' : ''}</span>`;
+    }
+
+    // Select tab
+    function selectTab(tabId) {
+      activeTabId = tabId;
+      renderTabs();
+      renderTabContent();
+    }
+
+    // Close tab
+    function closeTab(tabId, event) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (!tab) return;
+
+      // Shift+click bypasses confirmation
+      if (event && event.shiftKey) {
+        doCloseTab(tabId);
+        return;
+      }
+
+      // Files don't need confirmation
+      if (tab.type === 'file') {
+        doCloseTab(tabId);
+        return;
+      }
+
+      // Show confirmation for builders and shells
+      pendingCloseTabId = tabId;
+      const dialog = document.getElementById('close-dialog');
+      const title = document.getElementById('close-dialog-title');
+      const message = document.getElementById('close-dialog-message');
+
+      if (tab.type === 'builder') {
+        title.textContent = `Stop builder ${tab.name}?`;
+        message.textContent = 'This will terminate the builder process.';
+      } else {
+        title.textContent = `Close shell ${tab.name}?`;
+        message.textContent = 'This will terminate the shell process.';
+      }
+
+      dialog.classList.remove('hidden');
+    }
+
+    // Actually close the tab
+    async function doCloseTab(tabId) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (!tab) return;
+
+      try {
+        // Call API to close the tab
+        await fetch(`/api/tabs/${encodeURIComponent(tabId)}`, { method: 'DELETE' });
+
+        // Remove from local state
+        tabs = tabs.filter(t => t.id !== tabId);
+
+        // If closing active tab, switch to another
+        if (activeTabId === tabId) {
+          activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
+        }
+
+        renderTabs();
+        renderTabContent();
+        showToast('Tab closed', 'success');
+      } catch (err) {
+        showToast('Failed to close tab: ' + err.message, 'error');
+      }
+    }
+
+    // Confirm close from dialog
+    function confirmClose() {
+      if (pendingCloseTabId) {
+        doCloseTab(pendingCloseTabId);
+        hideCloseDialog();
+      }
+    }
+
+    function hideCloseDialog() {
+      document.getElementById('close-dialog').classList.add('hidden');
+      pendingCloseTabId = null;
+    }
+
+    // Context menu
+    function showContextMenu(event, tabId) {
+      event.preventDefault();
+      contextMenuTabId = tabId;
+
+      const menu = document.getElementById('context-menu');
+      menu.style.left = event.clientX + 'px';
+      menu.style.top = event.clientY + 'px';
+      menu.classList.remove('hidden');
+
+      // Close on click outside
+      setTimeout(() => {
+        document.addEventListener('click', hideContextMenu, { once: true });
+      }, 0);
+    }
+
+    function hideContextMenu() {
+      document.getElementById('context-menu').classList.add('hidden');
+      contextMenuTabId = null;
+    }
+
+    function closeActiveTab() {
+      if (contextMenuTabId) {
+        closeTab(contextMenuTabId);
+      }
+      hideContextMenu();
+    }
+
+    function closeOtherTabs() {
+      if (contextMenuTabId) {
+        const otherTabs = tabs.filter(t => t.id !== contextMenuTabId);
+        otherTabs.forEach(t => doCloseTab(t.id));
+      }
+      hideContextMenu();
+    }
+
+    function closeAllTabs() {
+      tabs.forEach(t => doCloseTab(t.id));
+      hideContextMenu();
+    }
+
+    // File dialog
+    function showFileDialog() {
+      document.getElementById('file-dialog').classList.remove('hidden');
+      document.getElementById('file-path-input').focus();
+    }
+
+    function hideFileDialog() {
+      document.getElementById('file-dialog').classList.add('hidden');
+      document.getElementById('file-path-input').value = '';
+    }
+
+    function setFilePath(path) {
+      document.getElementById('file-path-input').value = path;
+      document.getElementById('file-path-input').focus();
+    }
+
+    async function openFile() {
+      const path = document.getElementById('file-path-input').value.trim();
+      if (!path) return;
+
+      try {
+        const response = await fetch('/api/tabs/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path })
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        hideFileDialog();
+        await refresh();
+        showToast(`Opened ${path}`, 'success');
+      } catch (err) {
+        showToast('Failed to open file: ' + err.message, 'error');
+      }
+    }
+
+    // Builder dialog
+    function showBuilderDialog() {
+      document.getElementById('builder-dialog').classList.remove('hidden');
+      document.getElementById('project-id-input').focus();
+    }
+
+    function hideBuilderDialog() {
+      document.getElementById('builder-dialog').classList.add('hidden');
+      document.getElementById('project-id-input').value = '';
+    }
+
+    async function spawnBuilder() {
+      const projectId = document.getElementById('project-id-input').value.trim();
+      if (!projectId) return;
+
+      try {
+        const response = await fetch('/api/tabs/builder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId })
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        hideBuilderDialog();
+        await refresh();
+        showToast(`Builder ${projectId} spawned`, 'success');
+      } catch (err) {
+        showToast('Failed to spawn builder: ' + err.message, 'error');
+      }
+    }
+
+    // Spawn shell
+    async function spawnShell() {
+      try {
+        const response = await fetch('/api/tabs/shell', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        await refresh();
+        showToast('Shell spawned', 'success');
+      } catch (err) {
+        showToast('Failed to spawn shell: ' + err.message, 'error');
+      }
+    }
+
+    // Refresh state from API
+    async function refresh() {
+      try {
+        const response = await fetch('/api/state');
+        if (!response.ok) throw new Error('Failed to fetch state');
+
+        const newState = await response.json();
+        Object.assign(state, newState);
+
+        buildTabsFromState();
+        renderArchitect();
+        renderTabs();
+        renderTabContent();
+        updateStatusBar();
+      } catch (err) {
+        console.error('Refresh error:', err);
+      }
+    }
+
+    // Stop all
+    async function stopAll() {
+      if (!confirm('Stop all agent farm processes?')) return;
+
+      try {
+        const response = await fetch('/api/stop', { method: 'POST' });
+        if (response.ok) {
+          showToast('All processes stopped', 'success');
+          setTimeout(() => window.location.reload(), 500);
+        }
+      } catch (err) {
+        showToast('Failed to stop: ' + err.message, 'error');
+      }
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Polling for state updates
+    let pollInterval = null;
+
+    function startPolling() {
+      pollInterval = setInterval(refresh, 1000);
+    }
+
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Escape to close dialogs
+      if (e.key === 'Escape') {
+        hideFileDialog();
+        hideBuilderDialog();
+        hideCloseDialog();
+        hideContextMenu();
+      }
+
+      // Enter in dialogs
+      if (e.key === 'Enter') {
+        if (!document.getElementById('file-dialog').classList.contains('hidden')) {
+          openFile();
+        } else if (!document.getElementById('builder-dialog').classList.contains('hidden')) {
+          spawnBuilder();
+        }
+      }
+
+      // Ctrl+Tab / Ctrl+Shift+Tab to switch tabs
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault();
+        if (tabs.length < 2) return;
+
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+        let newIndex;
+
+        if (e.shiftKey) {
+          newIndex = currentIndex <= 0 ? tabs.length - 1 : currentIndex - 1;
+        } else {
+          newIndex = currentIndex >= tabs.length - 1 ? 0 : currentIndex + 1;
+        }
+
+        selectTab(tabs[newIndex].id);
+      }
+
+      // Ctrl+W to close current tab
+      if (e.ctrlKey && e.key === 'w') {
+        e.preventDefault();
+        if (activeTabId) {
+          closeTab(activeTabId, e);
+        }
+      }
+    });
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

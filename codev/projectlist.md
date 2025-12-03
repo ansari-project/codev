@@ -306,9 +306,22 @@ projects:
     tags: [architecture, portability]
     notes: "Enable codev to work across Claude Code, Gemini CLI, and Codex CLI. See codev/resources/conceptual-model.md for architecture."
 
+  - id: "0018"
+    title: "Annotation Server Reliability"
+    summary: "Fix template path and stale process detection in annotation server"
+    status: integrated
+    priority: medium
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0008"]
+    tags: [bugfix, dashboard]
+    notes: "Fixed: (1) Template path now looks in codev/templates/ instead of deleted agent-farm/templates/, (2) Dashboard API now verifies annotation processes are alive before returning 'existing' entries, cleans up stale state automatically."
+
 ## Next Available Number
 
-**0018** - Reserve this number for your next project
+**0019** - Reserve this number for your next project
 
 ---
 

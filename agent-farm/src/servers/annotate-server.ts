@@ -29,8 +29,24 @@ if (!filePath) {
 const fullFilePath = filePath;
 const displayPath = path.basename(filePath);
 
-// Find template - relative to script (in dist/servers, template in templates/)
-const templatePath = path.join(__dirname, '../../templates/annotate.html');
+// Find project root by looking for .agent-farm directory
+function findProjectRoot(): string {
+  let dir = process.cwd();
+  while (dir !== '/') {
+    if (fs.existsSync(path.join(dir, '.agent-farm'))) {
+      return dir;
+    }
+    if (fs.existsSync(path.join(dir, 'codev'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return process.cwd();
+}
+
+// Find template in codev/templates/
+const projectRoot = findProjectRoot();
+const templatePath = path.join(projectRoot, 'codev/templates/annotate.html');
 
 // Validate file exists
 if (!fs.existsSync(fullFilePath)) {

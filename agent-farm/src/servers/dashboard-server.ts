@@ -107,6 +107,17 @@ function killTmuxSession(sessionName: string): void {
   }
 }
 
+// Check if a process is running
+function isProcessRunning(pid: number): boolean {
+  try {
+    // Signal 0 doesn't kill, just checks if process exists
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Graceful process termination with two-phase shutdown
 async function killProcessGracefully(pid: number, tmuxSession?: string): Promise<void> {
   // First kill tmux session if provided
@@ -413,9 +424,16 @@ const server = http.createServer(async (req, res) => {
       const state = loadState();
       const existing = state.annotations.find((a) => a.file === fullPath);
       if (existing) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ id: existing.id, port: existing.port, existing: true }));
-        return;
+        // Verify the process is still running
+        if (isProcessRunning(existing.pid)) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ id: existing.id, port: existing.port, existing: true }));
+          return;
+        }
+        // Process is dead - clean up stale entry and spawn new one
+        console.log(`Cleaning up stale annotation for ${fullPath} (pid ${existing.pid} dead)`);
+        state.annotations = state.annotations.filter((a) => a.id !== existing.id);
+        saveState(state);
       }
 
       // DoS protection: check tab limit

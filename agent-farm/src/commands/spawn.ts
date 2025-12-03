@@ -47,8 +47,9 @@ export async function spawn(options: SpawnOptions): Promise<void> {
   // Use the project ID as the builder ID for clarity (e.g., "0007" instead of "VEFV6JJD")
   const builderId = projectId;
   // Sanitize spec name for git branch (allow only alphanumeric, dash, underscore)
+  // Note: specName already includes the ID (e.g., "0009-terminal-file-click")
   const safeName = specName.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-');
-  const branchName = `builder/${builderId}-${safeName}`;
+  const branchName = `builder/${safeName}`;
   const worktreePath = resolve(config.buildersDir, builderId);
 
   logger.header(`Spawning Builder ${builderId}`);

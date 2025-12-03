@@ -133,6 +133,7 @@ describe('Type Definitions', () => {
         stateDir: '/path/to/project/.agent-farm',
         templatesDir: '/path/to/templates',
         serversDir: '/path/to/servers',
+        bundledRolesDir: '/path/to/roles',
         dashboardPort: 4200,
         architectPort: 4201,
         builderPortRange: [4210, 4229],

@@ -54,6 +54,7 @@ export interface Config {
   stateDir: string;
   templatesDir: string;
   serversDir: string;
+  bundledRolesDir: string;
   dashboardPort: number;
   architectPort: number;
   builderPortRange: [number, number];
@@ -70,8 +71,10 @@ export interface TmuxSession {
 export interface StartOptions {
   cmd?: string;
   port?: number;
+  noRole?: boolean;
 }
 
 export interface SpawnOptions {
   project: string;
+  noRole?: boolean;
 }

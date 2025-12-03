@@ -62,6 +62,20 @@ function getServersDir(): string {
 }
 
 /**
+ * Get the bundled roles directory
+ */
+function getBundledRolesDir(): string {
+  // In development, roles are in agent-farm/roles
+  const devPath = resolve(__dirname, '../../roles');
+  if (existsSync(devPath)) {
+    return devPath;
+  }
+
+  // Fallback to package location
+  return resolve(__dirname, '../roles');
+}
+
+/**
  * Build configuration for the current project
  */
 export function getConfig(): Config {
@@ -75,6 +89,7 @@ export function getConfig(): Config {
     stateDir: resolve(projectRoot, '.agent-farm'),
     templatesDir: getTemplatesDir(),
     serversDir: getServersDir(),
+    bundledRolesDir: getBundledRolesDir(),
     // New port scheme (42xx range)
     dashboardPort: 4200,
     architectPort: 4201,

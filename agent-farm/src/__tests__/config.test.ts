@@ -24,10 +24,11 @@ describe('getConfig', () => {
   it('should have correct port defaults', () => {
     const config = getConfig();
 
-    expect(config.architectPort).toBe(7680);
-    expect(config.builderPortRange).toEqual([7681, 7699]);
-    expect(config.utilPortRange).toEqual([7700, 7719]);
-    expect(config.annotatePortRange).toEqual([8080, 8099]);
+    expect(config.dashboardPort).toBe(4200);
+    expect(config.architectPort).toBe(4201);
+    expect(config.builderPortRange).toEqual([4210, 4229]);
+    expect(config.utilPortRange).toEqual([4230, 4249]);
+    expect(config.annotatePortRange).toEqual([4250, 4269]);
   });
 
   it('should derive paths from projectRoot', () => {

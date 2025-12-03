@@ -3,13 +3,32 @@
  */
 
 import { resolve, basename } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
-import type { SpawnOptions, Builder } from '../types.js';
+import type { SpawnOptions, Builder, Config } from '../types.js';
 import { getConfig, ensureDirectories } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
 import { run, spawnDetached, commandExists, findAvailablePort } from '../utils/shell.js';
 import { loadState, upsertBuilder } from '../state.js';
+
+/**
+ * Find and load a role file - tries local codev/roles/ first, falls back to bundled
+ */
+function loadRolePrompt(config: Config, roleName: string): { content: string; source: string } | null {
+  // Try local project first
+  const localPath = resolve(config.codevDir, 'roles', `${roleName}.md`);
+  if (existsSync(localPath)) {
+    return { content: readFileSync(localPath, 'utf-8'), source: 'local' };
+  }
+
+  // Fall back to bundled
+  const bundledPath = resolve(config.bundledRolesDir, `${roleName}.md`);
+  if (existsSync(bundledPath)) {
+    return { content: readFileSync(bundledPath, 'utf-8'), source: 'bundled' };
+  }
+
+  return null;
+}
 
 /**
  * Spawn a new builder for a project
@@ -25,7 +44,8 @@ export async function spawn(options: SpawnOptions): Promise<void> {
   }
 
   const specName = basename(specFile, '.md');
-  const builderId = generateBuilderId();
+  // Use the project ID as the builder ID for clarity (e.g., "0007" instead of "VEFV6JJD")
+  const builderId = projectId;
   // Sanitize spec name for git branch (allow only alphanumeric, dash, underscore)
   const safeName = specName.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-');
   const branchName = `builder/${builderId}-${safeName}`;
@@ -69,17 +89,56 @@ export async function spawn(options: SpawnOptions): Promise<void> {
   // Find available port
   const port = await findAvailablePort(config.builderPortRange[0]);
 
-  // Get architect command from state
+  // Get base command from state (without architect role)
   const state = await loadState();
-  const cmd = state.architect?.cmd || 'claude';
+  let baseCmd = state.architect?.cmd || 'claude';
 
-  // Start ttyd for builder
+  // Strip any existing --append-system-prompt from architect cmd
+  // We want the base command, not the architect's role
+  baseCmd = baseCmd.split(' --append-system-prompt')[0];
+
+  // Build the command with builder role
+  // Create tmux session for persistence through browser reloads
+  const sessionName = `builder-${builderId}`;
+  logger.info('Creating tmux session...');
+
+  try {
+    const { writeFileSync, chmodSync } = await import('node:fs');
+
+    // Write role to a file to avoid shell escaping issues
+    let roleFile: string | null = null;
+    if (!options.noRole) {
+      const role = loadRolePrompt(config, 'builder');
+      if (role) {
+        roleFile = resolve(worktreePath, '.builder-role.md');
+        writeFileSync(roleFile, role.content);
+        logger.info(`Loaded builder role (${role.source})`);
+      }
+    }
+
+    // Build the start script
+    const scriptPath = resolve(worktreePath, '.builder-start.sh');
+    const roleArg = roleFile ? `--append-system-prompt "$(cat '${roleFile}')"` : '';
+    writeFileSync(scriptPath, `#!/bin/bash\nexec ${baseCmd} ${roleArg}\n`);
+    chmodSync(scriptPath, '755');
+
+    // Create tmux session running the script
+    await run(`tmux new-session -d -s "${sessionName}" -x 200 -y 50 -c "${worktreePath}" "${scriptPath}"`);
+  } catch (error) {
+    fatal(`Failed to create tmux session: ${error}`);
+  }
+
+  // Enable mouse scrolling in tmux
+  await run('tmux set -g mouse on');
+
+  // Start ttyd connecting to the tmux session
+  // -W = writable mode (allows input)
   logger.info('Starting builder terminal...');
   const ttydArgs = [
+    '-W',
     '-p', String(port),
-    '-t', `titleFixed=Builder ${builderId}`,
-    '-t', 'fontSize=14',
-    ...cmd.split(' '),
+    '-t', 'theme={"background":"#000000"}',
+    'tmux', 'attach-session', '-t', sessionName,
   ];
 
   const ttydProcess = spawnDetached('ttyd', ttydArgs, {
@@ -143,11 +202,3 @@ async function findSpecFile(codevDir: string, projectId: string): Promise<string
   return null;
 }
 
-/**
- * Generate a unique builder ID
- */
-function generateBuilderId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 6);
-  return `${timestamp.slice(-4)}${random}`.toUpperCase();
-}

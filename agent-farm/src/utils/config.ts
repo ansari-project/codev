@@ -75,10 +75,12 @@ export function getConfig(): Config {
     stateDir: resolve(projectRoot, '.agent-farm'),
     templatesDir: getTemplatesDir(),
     serversDir: getServersDir(),
-    architectPort: 7680,
-    builderPortRange: [7681, 7699],
-    utilPortRange: [7700, 7719],
-    annotatePortRange: [8080, 8099],
+    // New port scheme (42xx range)
+    dashboardPort: 4200,
+    architectPort: 4201,
+    builderPortRange: [4210, 4229] as [number, number],
+    utilPortRange: [4230, 4249] as [number, number],
+    annotatePortRange: [4250, 4269] as [number, number],
   };
 }
 

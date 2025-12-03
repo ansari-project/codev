@@ -11,7 +11,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { DashboardState, Annotation, UtilTerminal, Builder } from '../types.js';
@@ -19,8 +19,18 @@ import type { DashboardState, Annotation, UtilTerminal, Builder } from '../types
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Parse arguments
-const port = parseInt(process.argv[2] || '7681', 10);
+// Configuration - new port scheme (42xx range)
+const CONFIG = {
+  dashboardPort: 4200,
+  architectPort: 4201,
+  builderPortStart: 4210,
+  utilPortStart: 4230,
+  annotatePortStart: 4250,
+  maxTabs: 20, // DoS protection: max concurrent tabs
+};
+
+// Parse arguments (override default port if provided)
+const port = parseInt(process.argv[2] || String(CONFIG.dashboardPort), 10);
 
 // Find template (in dist/servers, template in templates/)
 const templatePath = path.join(__dirname, '../../templates/dashboard-split.html');
@@ -89,8 +99,22 @@ async function findAvailablePort(startPort: number): Promise<number> {
   });
 }
 
+// Kill tmux session
+function killTmuxSession(sessionName: string): void {
+  try {
+    execSync(`tmux kill-session -t "${sessionName}" 2>/dev/null`, { stdio: 'ignore' });
+  } catch {
+    // Session may not exist
+  }
+}
+
 // Graceful process termination with two-phase shutdown
-async function killProcessGracefully(pid: number): Promise<void> {
+async function killProcessGracefully(pid: number, tmuxSession?: string): Promise<void> {
+  // First kill tmux session if provided
+  if (tmuxSession) {
+    killTmuxSession(tmuxSession);
+  }
+
   try {
     // First try SIGTERM
     process.kill(pid, 'SIGTERM');
@@ -146,6 +170,43 @@ function spawnDetached(command: string, args: string[], cwd: string): number | n
   }
 }
 
+// Create a persistent tmux session and attach ttyd to it
+function spawnTmuxWithTtyd(
+  sessionName: string,
+  shellCommand: string,
+  ttydPort: number,
+  cwd: string
+): number | null {
+  try {
+    // Create tmux session with the shell command
+    execSync(
+      `tmux new-session -d -s "${sessionName}" -x 200 -y 50 "${shellCommand}"`,
+      { cwd, stdio: 'ignore' }
+    );
+
+    // Enable mouse support in the session
+    execSync(`tmux set-option -t "${sessionName}" -g mouse on`, { stdio: 'ignore' });
+
+    // Start ttyd to attach to the tmux session
+    // Using simple theme arg to avoid shell escaping issues
+    const ttydArgs = [
+      '-W',
+      '-p', String(ttydPort),
+      '-t', 'theme={"background":"#1a1a1a"}',
+      '-t', 'fontSize=14',
+      'tmux', 'attach-session', '-t', sessionName,
+    ];
+
+    const pid = spawnDetached('ttyd', ttydArgs, cwd);
+    return pid;
+  } catch (err) {
+    console.error(`Failed to create tmux session ${sessionName}:`, (err as Error).message);
+    // Cleanup any partial session
+    killTmuxSession(sessionName);
+    return null;
+  }
+}
+
 // Parse JSON body from request with size limit
 function parseJsonBody(req: http.IncomingMessage, maxSize = 1024 * 1024): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
@@ -175,11 +236,21 @@ function parseJsonBody(req: http.IncomingMessage, maxSize = 1024 * 1024): Promis
 }
 
 // Validate path is within project root (prevent path traversal)
+// Handles URL-encoded dots (%2e) and other encodings
 function validatePathWithinProject(filePath: string): string | null {
+  // First decode any URL encoding to catch %2e%2e (encoded ..)
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(filePath);
+  } catch {
+    // Invalid encoding
+    return null;
+  }
+
   // Resolve to absolute path
-  const resolvedPath = filePath.startsWith('/')
-    ? path.resolve(filePath)
-    : path.resolve(projectRoot, filePath);
+  const resolvedPath = decodedPath.startsWith('/')
+    ? path.resolve(decodedPath)
+    : path.resolve(projectRoot, decodedPath);
 
   // Normalize to remove any .. or . segments
   const normalizedPath = path.normalize(resolvedPath);
@@ -190,6 +261,11 @@ function validatePathWithinProject(filePath: string): string | null {
   }
 
   return normalizedPath;
+}
+
+// Count total tabs for DoS protection
+function countTotalTabs(state: DashboardState): number {
+  return state.builders.length + state.utils.length + state.annotations.length;
 }
 
 // Find annotation server script
@@ -300,8 +376,15 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // DoS protection: check tab limit
+      if (countTotalTabs(state) >= CONFIG.maxTabs) {
+        res.writeHead(429, { 'Content-Type': 'text/plain' });
+        res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
+        return;
+      }
+
       // Find available port
-      const annotatePort = await findAvailablePort(8080);
+      const annotatePort = await findAvailablePort(CONFIG.annotatePortStart);
 
       // Start annotation server
       const serverScript = getAnnotateServerPath();
@@ -347,12 +430,26 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // Validate projectId is alphanumeric (prevent command injection)
+      if (!/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid projectId format');
+        return;
+      }
+
       // Check if builder already exists
       const state = loadState();
       const existing = state.builders.find((b) => b.id === projectId);
       if (existing) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ id: existing.id, port: existing.port, existing: true }));
+        return;
+      }
+
+      // DoS protection: check tab limit
+      if (countTotalTabs(state) >= CONFIG.maxTabs) {
+        res.writeHead(429, { 'Content-Type': 'text/plain' });
+        res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
         return;
       }
 
@@ -368,24 +465,35 @@ const server = http.createServer(async (req, res) => {
       const body = await parseJsonBody(req);
       const name = (body.name as string) || undefined;
 
+      // Validate name if provided (prevent command injection)
+      if (name && !/^[a-zA-Z0-9_-]+$/.test(name)) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid name format');
+        return;
+      }
+
       const state = loadState();
+
+      // DoS protection: check tab limit
+      if (countTotalTabs(state) >= CONFIG.maxTabs) {
+        res.writeHead(429, { 'Content-Type': 'text/plain' });
+        res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
+        return;
+      }
 
       // Generate ID and name
       const id = generateId('U');
       const utilName = name || `shell-${state.utils.length + 1}`;
+      const sessionName = `af-shell-${id}`;
 
       // Find available port
-      const utilPort = await findAvailablePort(7700);
+      const utilPort = await findAvailablePort(CONFIG.utilPortStart);
 
       // Get shell command
       const shell = process.env.SHELL || '/bin/bash';
 
-      // Start ttyd
-      const pid = spawnDetached(
-        'ttyd',
-        ['-p', String(utilPort), '-t', `titleFixed=${utilName}`, '-t', 'fontSize=14', shell],
-        projectRoot
-      );
+      // Start tmux session with ttyd attached
+      const pid = spawnTmuxWithTtyd(sessionName, shell, utilPort, projectRoot);
 
       if (!pid) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -399,6 +507,7 @@ const server = http.createServer(async (req, res) => {
         name: utilName,
         port: utilPort,
         pid,
+        tmuxSession: sessionName,
       };
 
       state.utils.push(util);
@@ -442,7 +551,7 @@ const server = http.createServer(async (req, res) => {
         const utilId = tabId.replace('shell-', '');
         const util = state.utils.find((u) => u.id === utilId);
         if (util) {
-          await killProcessGracefully(util.pid);
+          await killProcessGracefully(util.pid, util.tmuxSession);
           state.utils = state.utils.filter((u) => u.id !== utilId);
           found = true;
         }
@@ -462,6 +571,17 @@ const server = http.createServer(async (req, res) => {
     // API: Stop all
     if (req.method === 'POST' && url.pathname === '/api/stop') {
       const state = loadState();
+
+      // Kill all tmux sessions first
+      for (const util of state.utils) {
+        if (util.tmuxSession) {
+          killTmuxSession(util.tmuxSession);
+        }
+      }
+
+      if (state.architect?.tmuxSession) {
+        killTmuxSession(state.architect.tmuxSession);
+      }
 
       // Kill all processes gracefully
       const pids: number[] = [];

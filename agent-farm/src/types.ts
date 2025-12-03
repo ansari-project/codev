@@ -18,6 +18,7 @@ export interface UtilTerminal {
   name: string;
   port: number;
   pid: number;
+  tmuxSession?: string;
 }
 
 export interface Annotation {
@@ -36,6 +37,7 @@ export interface ArchitectState {
   pid: number;
   cmd: string;
   startedAt: string;
+  tmuxSession?: string;
 }
 
 export interface DashboardState {
@@ -52,10 +54,17 @@ export interface Config {
   stateDir: string;
   templatesDir: string;
   serversDir: string;
+  dashboardPort: number;
   architectPort: number;
   builderPortRange: [number, number];
   utilPortRange: [number, number];
   annotatePortRange: [number, number];
+}
+
+// Session tracking for tmux
+export interface TmuxSession {
+  name: string;
+  pid: number;
 }
 
 export interface StartOptions {

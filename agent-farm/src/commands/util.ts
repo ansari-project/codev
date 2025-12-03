@@ -6,7 +6,7 @@
  */
 
 import type { UtilTerminal } from '../types.js';
-import { getConfig } from '../utils/index.js';
+import { getConfig, getResolvedCommands } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
 import { spawnDetached, commandExists, findAvailablePort, openBrowser } from '../utils/shell.js';
 import { loadState, addUtil } from '../state.js';
@@ -77,8 +77,9 @@ export async function util(options: UtilOptions = {}): Promise<void> {
   // Find available port
   const port = await findAvailablePort(config.utilPortRange[0]);
 
-  // Get shell command
-  const shell = process.env.SHELL || '/bin/bash';
+  // Get shell command from config (hierarchy: CLI > config.json > default)
+  const commands = getResolvedCommands();
+  const shell = commands.shell;
 
   logger.header(`Spawning Utility Terminal`);
   logger.kv('ID', id);

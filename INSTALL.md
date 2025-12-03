@@ -335,82 +335,124 @@ For projects with parallelizable components, Codev includes the Architect-Builde
 ### Prerequisites
 
 - **ttyd** (web-based terminal): `brew install ttyd` on macOS
-- **Node.js** (for annotation viewer)
+- **tmux** (terminal multiplexer): `brew install tmux` on macOS
+- **Node.js** 18+ (for agent-farm runtime)
 - **git** 2.5+ (with worktree support)
 
 ### Setup
 
-The architect-builder tools are available via npm or included in the codev-skeleton:
+The architect-builder tools are included in the codev installation:
 
-**Option 1: npm package (recommended)**
 ```bash
-# Install globally
-npm install -g agent-farm
+# Ensure .builders/ and .agent-farm/ are in your .gitignore
+echo ".builders/" >> .gitignore
+echo ".agent-farm/" >> .gitignore
 
-# Or use npx (no installation required)
-npx agent-farm --help
+# Build the agent-farm TypeScript
+cd agent-farm && npm install && npm run build && cd ..
+
+# Verify the agent-farm CLI is available
+./codev/bin/agent-farm --help
 ```
 
-**Option 2: Local bash script**
-```bash
-# Ensure .builders/ is in your .gitignore
-echo ".builders/" >> .gitignore
+### Shell Alias (Recommended)
 
-# Verify the architect CLI is available
-ls codev/bin/architect
+Add to your `~/.bashrc` or `~/.zshrc` for convenience:
+
+```bash
+# Agent Farm alias - run from any codev project
+alias af='./codev/bin/agent-farm'
+```
+
+Then use shorter commands:
+```bash
+af start           # Start architect dashboard
+af spawn -p 0003   # Spawn builder
+af status          # Check status
+af stop            # Stop everything
+```
+
+### Configuration
+
+Create `codev/config.json` to customize commands:
+
+```json
+{
+  "shell": {
+    "architect": "claude --model opus",
+    "builder": "claude --model sonnet",
+    "shell": "bash"
+  },
+  "templates": {
+    "dir": "codev/templates"
+  },
+  "roles": {
+    "dir": "codev/roles"
+  }
+}
+```
+
+Override via CLI:
+```bash
+./codev/bin/agent-farm start --architect-cmd "claude --model opus"
+./codev/bin/agent-farm spawn --project 0003 --builder-cmd "claude"
 ```
 
 ### Quick Start
 
-Using the npm package:
 ```bash
 # Start the architect dashboard
-npx agent-farm start
+./codev/bin/agent-farm start
 
 # Spawn a builder for a spec
-npx agent-farm spawn --project 0003
+./codev/bin/agent-farm spawn --project 0003
 
 # Check status of all builders
-npx agent-farm status
+./codev/bin/agent-farm status
 
-# Stop the architect
-npx agent-farm stop
-```
+# Open a utility shell
+./codev/bin/agent-farm util
 
-Using the local bash script:
-```bash
-# Spawn a builder for a spec
-./codev/bin/architect spawn --project 0003
+# Annotate a file for review
+./codev/bin/agent-farm annotate src/auth/login.ts
 
-# Open the web dashboard to see all builders
-./codev/bin/architect dashboard
+# Clean up a builder (checks for uncommitted changes first)
+./codev/bin/agent-farm cleanup --project 0003
 
-# Review builder's work
-./codev/bin/architect files 0003
-./codev/bin/architect diff 0003
+# Force cleanup (WARNING: may lose uncommitted work)
+./codev/bin/agent-farm cleanup --project 0003 --force
 
-# Annotate files with review comments
-./codev/bin/architect annotate 0003 src/auth/login.ts
+# Stop the architect and all builders
+./codev/bin/agent-farm stop
 
-# Clean up when done
-./codev/bin/architect cleanup 0003
+# Manage port allocations (for multi-project support)
+./codev/bin/agent-farm ports list
+./codev/bin/agent-farm ports cleanup
 ```
 
 ### How It Works
 
 1. **Architect** (you + primary AI) creates specs and plans
 2. **Builders** (autonomous AI agents) implement specs in isolated git worktrees
-3. Each builder runs in a **web terminal** (ttyd) accessible from a dashboard
+3. Each builder runs in a **tmux session** with **web terminal** (ttyd) access
 4. **Review comments** are stored directly in files using `// REVIEW:` syntax
 5. Builders create PRs when complete; architect reviews and merges
 
+### Key Features
+
+- **Multi-project support**: Each project gets its own port block (4200-4299, 4300-4399, etc.)
+- **Safe cleanup**: Refuses to delete worktrees with uncommitted changes unless `--force` is used
+- **Orphan detection**: Automatically cleans up stale tmux sessions on startup
+- **Configurable commands**: Customize architect, builder, and shell commands via `config.json`
+
 ### Key Files
 
-- `codev/builders.md` - Track active builder status
-- `codev/templates/builder-prompt.md` - Instructions given to builders
-- `codev/templates/dashboard.html` - Web dashboard for monitoring
-- `codev/templates/annotate.html` - Annotation viewer for code review
-- `codev/bin/architect` - CLI for managing builders
+- `.agent-farm/state.json` - Runtime state (builders, ports, processes)
+- `~/.agent-farm/ports.json` - Global port registry (for multi-project support)
+- `codev/config.json` - Project configuration
+- `codev/templates/` - Dashboard and annotation HTML templates
+- `codev/roles/` - Architect and builder role prompts
+- `codev/bin/agent-farm` - CLI wrapper script
 
 See `codev/specs/0002-architect-builder.md` for full documentation.
 

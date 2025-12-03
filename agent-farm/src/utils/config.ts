@@ -2,13 +2,24 @@
  * Configuration management for Agent Farm
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Config } from '../types.js';
+import type { Config, UserConfig, ResolvedCommands } from '../types.js';
+import { getProjectPorts } from './port-registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Default commands
+const DEFAULT_COMMANDS = {
+  architect: 'claude',
+  builder: 'claude',
+  shell: 'bash',
+};
+
+// CLI overrides (set via setCliOverrides)
+let cliOverrides: Partial<ResolvedCommands> = {};
 
 /**
  * Find the project root by looking for codev/ directory
@@ -33,18 +44,25 @@ function findProjectRoot(startDir: string = process.cwd()): string {
 }
 
 /**
- * Get the templates directory (bundled with package)
+ * Get the templates directory (from codev/templates/ or config override)
  */
-function getTemplatesDir(): string {
-  // In development, templates are in agent-farm/templates
-  // In production (npm), they're in the package
-  const devPath = resolve(__dirname, '../../templates');
-  if (existsSync(devPath)) {
-    return devPath;
+function getTemplatesDir(projectRoot: string, userConfig: UserConfig | null): string {
+  // Check config.json override
+  if (userConfig?.templates?.dir) {
+    const configPath = resolve(projectRoot, userConfig.templates.dir);
+    if (existsSync(configPath)) {
+      return configPath;
+    }
   }
 
-  // Fallback to package location
-  return resolve(__dirname, '../templates');
+  // Default: codev/templates/ (canonical location)
+  const templatesPath = resolve(projectRoot, 'codev/templates');
+  if (existsSync(templatesPath)) {
+    return templatesPath;
+  }
+
+  // Fail fast if templates not found
+  throw new Error(`Templates directory not found: ${templatesPath}`);
 }
 
 /**
@@ -62,40 +80,152 @@ function getServersDir(): string {
 }
 
 /**
- * Get the bundled roles directory
+ * Get the roles directory (from codev/roles/ or config override)
  */
-function getBundledRolesDir(): string {
-  // In development, roles are in agent-farm/roles
-  const devPath = resolve(__dirname, '../../roles');
-  if (existsSync(devPath)) {
-    return devPath;
+function getRolesDir(projectRoot: string, userConfig: UserConfig | null): string {
+  // Check config.json override
+  if (userConfig?.roles?.dir) {
+    const configPath = resolve(projectRoot, userConfig.roles.dir);
+    if (existsSync(configPath)) {
+      return configPath;
+    }
   }
 
-  // Fallback to package location
-  return resolve(__dirname, '../roles');
+  // Default: codev/roles/ (canonical location)
+  const rolesPath = resolve(projectRoot, 'codev/roles');
+  if (existsSync(rolesPath)) {
+    return rolesPath;
+  }
+
+  // Fail fast if roles not found
+  throw new Error(`Roles directory not found: ${rolesPath}`);
+}
+
+/**
+ * Load user config.json from project root
+ */
+function loadUserConfig(projectRoot: string): UserConfig | null {
+  const configPath = resolve(projectRoot, 'codev', 'config.json');
+  if (!existsSync(configPath)) {
+    return null;
+  }
+
+  try {
+    const content = readFileSync(configPath, 'utf-8');
+    return JSON.parse(content) as UserConfig;
+  } catch (error) {
+    throw new Error(`Failed to parse config.json: ${error}`);
+  }
+}
+
+/**
+ * Expand environment variables in a string
+ * Supports ${VAR} and $VAR syntax
+ */
+function expandEnvVars(str: string): string {
+  return str.replace(/\$\{([^}]+)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g, (match, braced, unbraced) => {
+    const varName = braced || unbraced;
+    return process.env[varName] || '';
+  });
+}
+
+/**
+ * Convert command (string or array) to string with env var expansion
+ */
+function resolveCommand(cmd: string | string[] | undefined, defaultCmd: string): string {
+  if (!cmd) {
+    return defaultCmd;
+  }
+
+  if (Array.isArray(cmd)) {
+    // Join array elements, handling escaping
+    return cmd.map(expandEnvVars).join(' ');
+  }
+
+  return expandEnvVars(cmd);
+}
+
+/**
+ * Set CLI overrides for commands
+ * These take highest priority in the hierarchy
+ */
+export function setCliOverrides(overrides: Partial<ResolvedCommands>): void {
+  cliOverrides = { ...overrides };
+}
+
+/**
+ * Get resolved commands following hierarchy: CLI > config.json > defaults
+ */
+export function getResolvedCommands(projectRoot?: string): ResolvedCommands {
+  const root = projectRoot || findProjectRoot();
+  const userConfig = loadUserConfig(root);
+
+  return {
+    architect: cliOverrides.architect ||
+               resolveCommand(userConfig?.shell?.architect, DEFAULT_COMMANDS.architect),
+    builder: cliOverrides.builder ||
+             resolveCommand(userConfig?.shell?.builder, DEFAULT_COMMANDS.builder),
+    shell: cliOverrides.shell ||
+           resolveCommand(userConfig?.shell?.shell, DEFAULT_COMMANDS.shell),
+  };
+}
+
+// Cached port allocation (set during initialization)
+let cachedPorts: {
+  dashboardPort: number;
+  architectPort: number;
+  builderPortRange: [number, number];
+  utilPortRange: [number, number];
+  annotatePortRange: [number, number];
+} | null = null;
+
+/**
+ * Initialize port allocation (must be called once at startup)
+ */
+export async function initializePorts(): Promise<void> {
+  const projectRoot = findProjectRoot();
+  const ports = await getProjectPorts(projectRoot);
+  cachedPorts = {
+    dashboardPort: ports.dashboardPort,
+    architectPort: ports.architectPort,
+    builderPortRange: ports.builderPortRange,
+    utilPortRange: ports.utilPortRange,
+    annotatePortRange: ports.annotatePortRange,
+  };
 }
 
 /**
  * Build configuration for the current project
+ * Note: initializePorts() must be called before using this function
  */
 export function getConfig(): Config {
   const projectRoot = findProjectRoot();
   const codevDir = resolve(projectRoot, 'codev');
+  const userConfig = loadUserConfig(projectRoot);
+
+  // Use cached ports or fallback to defaults if not initialized
+  const ports = cachedPorts || {
+    dashboardPort: 4200,
+    architectPort: 4201,
+    builderPortRange: [4210, 4229] as [number, number],
+    utilPortRange: [4230, 4249] as [number, number],
+    annotatePortRange: [4250, 4269] as [number, number],
+  };
 
   return {
     projectRoot,
     codevDir,
     buildersDir: resolve(projectRoot, '.builders'),
     stateDir: resolve(projectRoot, '.agent-farm'),
-    templatesDir: getTemplatesDir(),
+    templatesDir: getTemplatesDir(projectRoot, userConfig),
     serversDir: getServersDir(),
-    bundledRolesDir: getBundledRolesDir(),
-    // New port scheme (42xx range)
-    dashboardPort: 4200,
-    architectPort: 4201,
-    builderPortRange: [4210, 4229] as [number, number],
-    utilPortRange: [4230, 4249] as [number, number],
-    annotatePortRange: [4250, 4269] as [number, number],
+    bundledRolesDir: getRolesDir(projectRoot, userConfig),
+    // Ports from global registry (prevents cross-project conflicts)
+    dashboardPort: ports.dashboardPort,
+    architectPort: ports.architectPort,
+    builderPortRange: ports.builderPortRange,
+    utilPortRange: ports.utilPortRange,
+    annotatePortRange: ports.annotatePortRange,
   };
 }
 

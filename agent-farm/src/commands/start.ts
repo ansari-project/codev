@@ -7,10 +7,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import type { StartOptions, ArchitectState } from '../types.js';
 import { getConfig, ensureDirectories } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
-import { spawnDetached, commandExists, findAvailablePort, openBrowser } from '../utils/shell.js';
+import { spawnDetached, commandExists, findAvailablePort, openBrowser, run } from '../utils/shell.js';
 import { loadState, setArchitect } from '../state.js';
-
-const DEFAULT_CMD = 'claude';
+import { handleOrphanedSessions, warnAboutStaleArtifacts } from '../utils/orphan-handler.js';
 
 /**
  * Find and load a role file - tries local codev/roles/ first, falls back to bundled
@@ -37,6 +36,12 @@ function loadRolePrompt(config: { codevDir: string; bundledRolesDir: string }, r
 export async function start(options: StartOptions = {}): Promise<void> {
   const config = getConfig();
 
+  // Check for and clean up orphaned tmux sessions
+  await handleOrphanedSessions({ kill: true });
+
+  // Warn about stale artifacts from bash-era
+  warnAboutStaleArtifacts(config.codevDir);
+
   // Check if already running
   const state = await loadState();
   if (state.architect) {
@@ -53,8 +58,8 @@ export async function start(options: StartOptions = {}): Promise<void> {
     fatal('ttyd not found. Install with: brew install ttyd');
   }
 
-  // Determine base command to run (CLI option > env var > default)
-  let cmd = options.cmd || process.env.AGENT_FARM_CMD || DEFAULT_CMD;
+  // Command is passed from index.ts (already resolved via CLI > config.json > default)
+  let cmd = options.cmd || 'claude';
 
   // Load architect role if available and not disabled
   if (!options.noRole) {
@@ -88,15 +93,26 @@ export async function start(options: StartOptions = {}): Promise<void> {
   logger.kv('Command', cmd);
   logger.kv('Port', architectPort);
 
-  // Start ttyd for architect terminal
-  // -W = writable mode (allows input)
-  // Use bash -c to properly handle commands with quoted arguments
+  // Start architect in tmux session for persistence
+  const sessionName = 'af-architect';
+
+  // Kill any existing session
+  try {
+    await run(`tmux kill-session -t ${sessionName} 2>/dev/null || true`);
+  } catch {
+    // Ignore
+  }
+
+  // Create tmux session with the command
+  await run(`tmux new-session -d -s ${sessionName} -x 200 -y 50 '${cmd}'`, { cwd: config.projectRoot });
+  await run(`tmux set-option -t ${sessionName} -g mouse on`);
+
+  // Start ttyd attached to the tmux session
   const ttydArgs = [
     '-W',
     '-p', String(architectPort),
-    '-t', 'titleFixed=Architect',
-    '-t', 'fontSize=14',
-    'bash', '-c', cmd,
+    '-t', 'theme={"background":"#000000"}',
+    'tmux', 'attach-session', '-t', sessionName,
   ];
 
   const ttydProcess = spawnDetached('ttyd', ttydArgs, {
@@ -113,6 +129,7 @@ export async function start(options: StartOptions = {}): Promise<void> {
     pid: ttydProcess.pid,
     cmd,
     startedAt: new Date().toISOString(),
+    tmuxSession: sessionName,
   };
 
   await setArchitect(architectState);

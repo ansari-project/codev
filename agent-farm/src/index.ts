@@ -8,6 +8,7 @@
 import { Command } from 'commander';
 import { start, stop } from './commands/index.js';
 import { logger } from './utils/logger.js';
+import { getConfig, setCliOverrides, getResolvedCommands, initializePorts } from './utils/config.js';
 
 const program = new Command();
 
@@ -16,17 +17,44 @@ program
   .description('Multi-agent orchestration for software development')
   .version('0.1.0');
 
+// Global options for command overrides
+program
+  .option('--architect-cmd <command>', 'Override architect command (takes precedence over config.json)')
+  .option('--builder-cmd <command>', 'Override builder command (takes precedence over config.json)')
+  .option('--shell-cmd <command>', 'Override shell command (takes precedence over config.json)');
+
+// Process global options before commands
+program.hook('preAction', async (thisCommand) => {
+  const opts = thisCommand.opts();
+  const overrides: Record<string, string> = {};
+
+  if (opts.architectCmd) overrides.architect = opts.architectCmd;
+  if (opts.builderCmd) overrides.builder = opts.builderCmd;
+  if (opts.shellCmd) overrides.shell = opts.shellCmd;
+
+  if (Object.keys(overrides).length > 0) {
+    setCliOverrides(overrides);
+  }
+
+  // Initialize port allocation for this project
+  await initializePorts();
+});
+
 // Start command
 program
   .command('start')
   .description('Start the architect dashboard')
-  .option('-c, --cmd <command>', 'Command to run in architect terminal', 'claude')
-  .option('-p, --port <port>', 'Port for architect terminal', '7680')
+  .option('-c, --cmd <command>', 'Command to run in architect terminal (shorthand for --architect-cmd)')
+  .option('-p, --port <port>', 'Port for architect terminal')
+  .option('--no-role', 'Skip loading architect role prompt')
   .action(async (options) => {
     try {
+      // -c flag overrides config if provided (for backward compatibility)
+      const commands = getResolvedCommands();
       await start({
-        cmd: options.cmd,
-        port: parseInt(options.port, 10),
+        cmd: options.cmd || commands.architect,
+        port: options.port ? parseInt(options.port, 10) : undefined,
+        noRole: !options.role,
       });
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
@@ -61,15 +89,16 @@ program
     }
   });
 
-// Spawn command (placeholder)
+// Spawn command
 program
   .command('spawn')
   .description('Spawn a new builder for a project')
   .requiredOption('-p, --project <id>', 'Project/spec ID to work on')
+  .option('-i, --instruction <text>', 'Initial instruction to send to builder')
   .action(async (options) => {
     const { spawn } = await import('./commands/spawn.js');
     try {
-      await spawn({ project: options.project });
+      await spawn({ project: options.project, instruction: options.instruction });
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
       process.exit(1);
@@ -120,6 +149,48 @@ program
       logger.error(error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
+  });
+
+// Ports command - manage global port registry
+const portsCmd = program
+  .command('ports')
+  .description('Manage global port registry');
+
+portsCmd
+  .command('list')
+  .description('List all port allocations')
+  .action(async () => {
+    const { listAllocations } = await import('./utils/port-registry.js');
+    const allocations = listAllocations();
+
+    if (allocations.length === 0) {
+      logger.info('No port allocations found.');
+      return;
+    }
+
+    logger.header('Port Allocations');
+    for (const alloc of allocations) {
+      const status = alloc.exists ? '' : ' (missing)';
+      logger.info(`${alloc.basePort}-${alloc.basePort + 99}: ${alloc.path}${status}`);
+    }
+  });
+
+portsCmd
+  .command('cleanup')
+  .description('Remove stale port allocations (deleted projects)')
+  .action(async () => {
+    const { cleanupStaleEntries } = await import('./utils/port-registry.js');
+    const result = await cleanupStaleEntries();
+
+    if (result.removed.length === 0) {
+      logger.info('No stale entries found.');
+    } else {
+      logger.success(`Removed ${result.removed.length} stale entries:`);
+      for (const path of result.removed) {
+        logger.info(`  - ${path}`);
+      }
+    }
+    logger.info(`Remaining allocations: ${result.remaining}`);
   });
 
 program.parse();

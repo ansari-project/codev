@@ -1,6 +1,6 @@
 # Codev Project Instructions for AI Agents
 
-> **Note**: This file follows the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. For Claude Code users, an identical [CLAUDE.md](CLAUDE.md) file is maintained for native support. Both files contain the same content and should be kept synchronized.
+> **Note**: This file is specific to Claude Code. An identical [AGENTS.md](AGENTS.md) file is also maintained following the [AGENTS.md standard](https://agents.md/) for cross-tool compatibility with Cursor, GitHub Copilot, and other AI coding assistants. Both files contain the same content and should be kept synchronized.
 
 ## Project Context
 
@@ -100,14 +100,15 @@ project-root/
 │   ├── specs/              # Feature specifications (WHAT to build)
 │   ├── plans/              # Implementation plans (HOW to build)
 │   ├── reviews/            # Reviews and lessons learned from each feature
-│   ├── resources/          # Reference materials
-│   │   └── arch.md         # Architecture documentation (maintained by agent)
-│   └── agents/             # AI agent definitions (universal location)
+│   └── resources/          # Reference materials
+│       └── arch.md         # Architecture documentation (maintained by agent)
+├── .claude/
+│   └── agents/             # AI agent definitions
 │       ├── spider-protocol-updater.md
 │       ├── architecture-documenter.md
 │       └── codev-updater.md
-├── AGENTS.md              # This file (universal AI agent instructions)
-├── CLAUDE.md              # Claude Code-specific (identical to AGENTS.md)
+├── AGENTS.md              # Universal AI agent instructions (AGENTS.md standard)
+├── CLAUDE.md              # This file (Claude Code-specific, identical to AGENTS.md)
 └── [project code]
 ```
 
@@ -161,7 +162,7 @@ The `spider-protocol-updater` agent helps evolve the SPIDER protocol by analyzin
 4. Classifies improvements as Universal, Domain-specific, Experimental, or Anti-pattern
 5. Recommends specific protocol updates with justification
 
-**Agent location**: `codev/agents/spider-protocol-updater.md`
+**Agent location**: `.claude/agents/spider-protocol-updater.md`
 
 ## Architecture Documenter Agent
 
@@ -190,7 +191,7 @@ The `architecture-documenter` agent maintains comprehensive architecture documen
    - Technology stack details
 4. Ensures documentation matches actual codebase state
 
-**Agent location**: `codev/agents/architecture-documenter.md`
+**Agent location**: `.claude/agents/architecture-documenter.md`
 
 ## Codev Updater Agent
 
@@ -227,7 +228,7 @@ The `codev-updater` agent keeps your Codev installation current with the latest 
 - Provides clear rollback instructions if needed
 - Verifies successful update before completing
 
-**Agent location**: `codev/agents/codev-updater.md`
+**Agent location**: `.claude/agents/codev-updater.md`
 
 ## Architect-Builder Pattern
 
@@ -238,35 +239,56 @@ The Architect-Builder pattern enables parallel AI-assisted development by separa
 ### Prerequisites
 
 - **ttyd**: `brew install ttyd` (web-based terminal)
-- **Node.js**: For the annotation viewer
+- **tmux**: `brew install tmux` (terminal multiplexer)
+- **Node.js 18+**: For agent-farm runtime
 - **git 2.5+**: With worktree support
 
 ### CLI Commands
 
 ```bash
+# Start the architect dashboard
+./codev/bin/agent-farm start
+
 # Spawn a builder for a spec
-./codev/bin/architect spawn --project 0003
+./codev/bin/agent-farm spawn --project 0003
 
 # Check status of all builders
-./codev/bin/architect status
+./codev/bin/agent-farm status
 
-# Open web dashboard showing all builder terminals
-./codev/bin/architect dashboard
-
-# Review builder's changes
-./codev/bin/architect files 0003      # List changed files
-./codev/bin/architect diff 0003       # Show unified diff
-./codev/bin/architect review 0003     # Summary with stats
+# Open a utility shell
+./codev/bin/agent-farm util
 
 # Annotate files with review comments
-./codev/bin/architect annotate 0003 src/auth/login.ts
+./codev/bin/agent-farm annotate src/auth/login.ts
 
-# List files with REVIEW comments
-./codev/bin/architect annotations 0003
+# Clean up a builder (checks for uncommitted work first)
+./codev/bin/agent-farm cleanup --project 0003
 
-# Clean up when done
-./codev/bin/architect cleanup 0003
+# Force cleanup (WARNING: may lose uncommitted work)
+./codev/bin/agent-farm cleanup --project 0003 --force
+
+# Stop all agent-farm processes
+./codev/bin/agent-farm stop
+
+# Manage port allocations (for multi-project support)
+./codev/bin/agent-farm ports list
+./codev/bin/agent-farm ports cleanup
 ```
+
+### Configuration
+
+Customize commands via `codev/config.json`:
+```json
+{
+  "shell": {
+    "architect": "claude --model opus",
+    "builder": "claude --model sonnet",
+    "shell": "bash"
+  }
+}
+```
+
+Override via CLI: `--architect-cmd`, `--builder-cmd`, `--shell-cmd`
 
 ### Review Comments
 
@@ -285,13 +307,21 @@ Comments are stored directly in files using language-appropriate syntax:
 <!-- REVIEW: Clarify this requirement -->
 ```
 
+### Key Features
+
+- **Multi-project support**: Each project gets its own port block (4200-4299, etc.)
+- **Safe cleanup**: Refuses to delete worktrees with uncommitted changes
+- **Orphan detection**: Cleans up stale tmux sessions on startup
+- **Configurable commands**: Customize via `config.json` or CLI flags
+
 ### Key Files
 
-- `codev/builders.md` - Active builder status tracking
-- `codev/templates/builder-prompt.md` - Instructions for builders
-- `codev/templates/dashboard.html` - Web dashboard
-- `codev/templates/annotate.html` - Annotation viewer
-- `codev/bin/architect` - CLI script
+- `.agent-farm/state.json` - Runtime state (builders, ports, processes)
+- `~/.agent-farm/ports.json` - Global port registry
+- `codev/config.json` - Project configuration
+- `codev/templates/` - Dashboard and annotation templates
+- `codev/roles/` - Architect and builder role prompts
+- `codev/bin/agent-farm` - CLI wrapper script
 
 See `codev/specs/0002-architect-builder.md` for full documentation.
 
@@ -388,7 +418,7 @@ When the user requests "Consult" or "consultation" (including variations like "u
    - Gracefully handle missing dependencies
 
 5. **Review Phase Requirements**:
-   - Update ALL documentation (README, CLAUDE.md, specs, plans)
+   - Update ALL documentation (README, AGENTS.md/CLAUDE.md, specs, plans)
    - Review for systematic issues across the project
    - Update protocol documents based on lessons learned
    - Create comprehensive lessons learned document

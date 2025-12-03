@@ -1,0 +1,13 @@
+{
+  "shell": {
+    "architect": "claude --model opus",
+    "builder": "claude --model sonnet",
+    "shell": "bash"
+  },
+  "templates": {
+    "dir": "codev/templates"
+  },
+  "roles": {
+    "dir": "codev/roles"
+  }
+}

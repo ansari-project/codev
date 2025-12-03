@@ -6,7 +6,7 @@ import { resolve, basename } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import type { SpawnOptions, Builder, Config } from '../types.js';
-import { getConfig, ensureDirectories } from '../utils/index.js';
+import { getConfig, ensureDirectories, getResolvedCommands } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
 import { run, spawnDetached, commandExists, findAvailablePort } from '../utils/shell.js';
 import { loadState, upsertBuilder } from '../state.js';
@@ -89,13 +89,9 @@ export async function spawn(options: SpawnOptions): Promise<void> {
   // Find available port
   const port = await findAvailablePort(config.builderPortRange[0]);
 
-  // Get base command from state (without architect role)
-  const state = await loadState();
-  let baseCmd = state.architect?.cmd || 'claude';
-
-  // Strip any existing --append-system-prompt from architect cmd
-  // We want the base command, not the architect's role
-  baseCmd = baseCmd.split(' --append-system-prompt')[0];
+  // Get builder command from config (hierarchy: CLI > config.json > default)
+  const commands = getResolvedCommands();
+  const baseCmd = commands.builder;
 
   // Build the command with builder role
   // Create tmux session for persistence through browser reloads
@@ -159,6 +155,7 @@ export async function spawn(options: SpawnOptions): Promise<void> {
     phase: 'init',
     worktree: worktreePath,
     branch: branchName,
+    tmuxSession: sessionName,
   };
 
   await upsertBuilder(builder);

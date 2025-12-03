@@ -32,10 +32,6 @@ const CONFIG = {
 // Parse arguments (override default port if provided)
 const port = parseInt(process.argv[2] || String(CONFIG.dashboardPort), 10);
 
-// Find template (in dist/servers, template in templates/)
-const templatePath = path.join(__dirname, '../../templates/dashboard-split.html');
-const legacyTemplatePath = path.join(__dirname, '../../templates/dashboard.html');
-
 // Find project root by looking for .agent-farm directory
 function findProjectRoot(): string {
   let dir = process.cwd();
@@ -51,7 +47,10 @@ function findProjectRoot(): string {
   return process.cwd();
 }
 
+// Find template (in codev/templates/)
 const projectRoot = findProjectRoot();
+const templatePath = path.join(projectRoot, 'codev/templates/dashboard-split.html');
+const legacyTemplatePath = path.join(projectRoot, 'codev/templates/dashboard.html');
 const stateFile = path.join(projectRoot, '.agent-farm', 'state.json');
 
 // Load state
@@ -206,7 +205,7 @@ function spawnTmuxWithTtyd(
     const ttydArgs = [
       '-W',
       '-p', String(ttydPort),
-      '-t', 'theme={"background":"#1a1a1a"}',
+      '-t', 'theme={"background":"#000000"}',
       '-t', 'fontSize=14',
       'tmux', 'attach-session', '-t', sessionName,
     ];
@@ -282,9 +281,15 @@ function countTotalTabs(state: DashboardState): number {
   return state.builders.length + state.utils.length + state.annotations.length;
 }
 
-// Find annotation server script
-function getAnnotateServerPath(): string {
-  return path.join(__dirname, 'annotate-server.js');
+// Find annotation server script (prefer .ts for dev, .js for compiled)
+function getAnnotateServerPath(): { script: string; useTsx: boolean } {
+  const tsPath = path.join(__dirname, 'annotate-server.ts');
+  const jsPath = path.join(__dirname, 'annotate-server.js');
+
+  if (fs.existsSync(tsPath)) {
+    return { script: tsPath, useTsx: true };
+  }
+  return { script: jsPath, useTsx: false };
 }
 
 // Validate template exists (prefer split, fallback to legacy)
@@ -401,14 +406,19 @@ const server = http.createServer(async (req, res) => {
       const annotatePort = await findAvailablePort(CONFIG.annotatePortStart);
 
       // Start annotation server
-      const serverScript = getAnnotateServerPath();
+      const { script: serverScript, useTsx } = getAnnotateServerPath();
       if (!fs.existsSync(serverScript)) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Annotation server not found');
         return;
       }
 
-      const pid = spawnDetached('node', [serverScript, String(annotatePort), fullPath], projectRoot);
+      // Use tsx for TypeScript files, node for compiled JavaScript
+      const cmd = useTsx ? 'npx' : 'node';
+      const args = useTsx
+        ? ['tsx', serverScript, String(annotatePort), fullPath]
+        : [serverScript, String(annotatePort), fullPath];
+      const pid = spawnDetached(cmd, args, projectRoot);
 
       if (!pid) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -514,6 +524,9 @@ const server = http.createServer(async (req, res) => {
         res.end('Failed to start shell');
         return;
       }
+
+      // Wait for ttyd to be ready
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Create util record
       const util: UtilTerminal = {

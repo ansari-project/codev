@@ -24,13 +24,13 @@ interface AnnotateOptions {
 async function tryDashboardApi(filePath: string): Promise<boolean> {
   const state = await loadState();
 
-  // Dashboard runs on architectPort + 1
+  // Dashboard runs on dashboardPort (not architectPort + 1)
   if (!state.architect) {
     return false;
   }
 
   const config = getConfig();
-  const dashboardPort = config.architectPort + 1;
+  const dashboardPort = config.dashboardPort;
 
   try {
     const response = await fetch(`http://localhost:${dashboardPort}/api/tabs/file`, {

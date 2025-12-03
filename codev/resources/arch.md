@@ -7,21 +7,32 @@ Codev is a context-driven development methodology framework that treats natural 
 ## Technology Stack
 
 ### Core Technologies
-- **Shell/Bash**: Primary scripting language for installation and testing
+- **TypeScript/Node.js**: Primary language for agent-farm orchestration CLI
+- **Shell/Bash**: Thin wrappers and installation scripting
 - **Markdown**: Documentation format for specs, plans, reviews, and agent definitions
-- **Git**: Version control with explicit commit strategy for each protocol phase
+- **Git**: Version control with worktree support for isolated builder environments
 - **YAML**: Configuration format for protocol manifests
+- **JSON**: Configuration format for agent-farm (`config.json`) and state management
+
+### Agent-Farm CLI (TypeScript)
+- **commander.js**: CLI argument parsing and command structure
+- **proper-lockfile**: File locking for concurrent access safety
+- **tree-kill**: Process cleanup and termination
+- **tmux**: Session persistence for builder terminals
+- **ttyd**: Web-based terminal interface
 
 ### Testing Framework
 - **bats-core**: Bash Automated Testing System (vendored in `tests/lib/`)
 - **bats-support**: Helper functions for bats tests
 - **bats-assert**: Assertion helpers for test validation
 - **bats-file**: File system assertion helpers
+- **Jest**: TypeScript unit testing for agent-farm
 
 ### Supported Platforms
 - macOS (Darwin)
 - Linux (GNU/Linux)
-- Requires: Bash 4.0+, Git, standard Unix utilities
+- Requires: Node.js 18+, Bash 4.0+, Git 2.5+ (worktree support), standard Unix utilities
+- Optional: tmux (session persistence), ttyd (web terminals)
 
 ## Repository Dual Nature
 
@@ -38,6 +49,10 @@ This is where the Codev project uses Codev to develop itself:
   - `resources/` - Reference materials (this file, llms.txt, etc.)
   - `protocols/` - Working copies of protocols for development
   - `agents/` - Agent definitions (canonical location)
+  - `roles/` - Role definitions for architect-builder pattern
+  - `templates/` - HTML templates for dashboard and annotation viewer
+  - `config.json` - Shell command configuration for agent-farm
+  - `bin/agent-farm` - Thin wrapper script to invoke TypeScript CLI
 
 **Example**: `codev/specs/0001-test-infrastructure.md` documents the test infrastructure feature we built for Codev.
 
@@ -52,101 +67,129 @@ This is what gets distributed to users when they install Codev:
   - `reviews/` - Empty directory (users create their own)
   - `resources/` - Empty directory (users add their own)
   - `agents/` - Agent definitions (copied during installation)
+  - `roles/` - Role definitions for architect and builder
+  - `templates/` - HTML templates for dashboard UI
+  - `config.json` - Default shell command configuration
+  - `bin/agent-farm` - Thin wrapper script
 
 **Key Distinction**: Skeleton directories are empty placeholders; codev/ contains our actual work.
+
+### 3. `agent-farm/` - The Orchestration Engine
+This is the canonical TypeScript implementation of the architect-builder system:
+- **Location**: `/Users/mwk/Development/ansari-project/codev/agent-farm/`
+- **Purpose**: Multi-agent orchestration CLI and dashboard server
+- **Contains**:
+  - `src/` - TypeScript source code
+  - `dist/` - Compiled JavaScript (entry point: `dist/index.js`)
+  - `package.json` - Node.js dependencies (NOT published to npm)
+  - `protocols/` - Communication protocol definitions
+
+**Key Distinction**: agent-farm is the engine; codev/ and codev-skeleton/ provide templates and configuration.
 
 ## Complete Directory Structure
 
 ```
-codev/                                  # Project root
+codev/                                  # Project root (git repository)
+├── agent-farm/                         # TypeScript orchestration engine
+│   ├── src/                            # Source code
+│   │   ├── index.ts                    # CLI entry point
+│   │   ├── types.ts                    # Type definitions
+│   │   ├── state.ts                    # State management
+│   │   ├── commands/                   # CLI commands
+│   │   │   ├── start.ts                # Start architect dashboard
+│   │   │   ├── stop.ts                 # Stop all processes
+│   │   │   ├── spawn.ts                # Spawn builder
+│   │   │   ├── status.ts               # Show status
+│   │   │   ├── cleanup.ts              # Clean up builder
+│   │   │   ├── util.ts                 # Utility shell
+│   │   │   └── annotate.ts             # File annotation
+│   │   ├── utils/                      # Utilities
+│   │   │   ├── config.ts               # Configuration management
+│   │   │   ├── port-registry.ts        # Global port allocation
+│   │   │   ├── logger.ts               # Console logging
+│   │   │   └── tmux.ts                 # tmux session management
+│   │   ├── servers/                    # Web servers
+│   │   │   ├── dashboard-server.ts     # Dashboard HTTP server
+│   │   │   └── annotation-server.ts    # Annotation viewer server
+│   │   └── __tests__/                  # Jest unit tests
+│   ├── dist/                           # Compiled JavaScript
+│   │   └── index.js                    # Entry point (node invocation)
+│   ├── protocols/                      # Communication protocols
+│   ├── package.json                    # Dependencies (NOT published to npm)
+│   └── tsconfig.json                   # TypeScript configuration
 ├── codev/                              # Our self-hosted instance
+│   ├── bin/                            # CLI wrapper scripts
+│   │   └── agent-farm                  # Thin wrapper → node agent-farm/dist/index.js
+│   ├── config.json                     # Shell command configuration
+│   ├── roles/                          # Role definitions
+│   │   ├── architect.md                # Architect role and commands
+│   │   └── builder.md                  # Builder role and status lifecycle
+│   ├── templates/                      # HTML templates
+│   │   ├── dashboard.html              # Basic dashboard
+│   │   ├── dashboard-split.html        # Split-pane tabbed dashboard
+│   │   └── annotate.html               # File annotation viewer
 │   ├── protocols/                      # Working copies for development
 │   │   ├── spider/                     # Multi-phase with consultation
-│   │   │   ├── protocol.md             # SPIDER protocol definition
-│   │   │   ├── templates/              # Document templates
-│   │   │   │   ├── spec.md
-│   │   │   │   ├── plan.md
-│   │   │   │   └── review.md
-│   │   │   └── manifest.yaml           # Protocol metadata
-│   │   ├── spider-solo/                # Single-agent variant
-│   │   │   ├── protocol.md             # SPIDER-SOLO protocol
-│   │   │   ├── templates/              # Simplified templates
-│   │   │   │   ├── spec.md
-│   │   │   │   ├── plan.md
-│   │   │   │   └── review.md
+│   │   │   ├── protocol.md
+│   │   │   ├── templates/
 │   │   │   └── manifest.yaml
+│   │   ├── spider-solo/                # Single-agent variant
 │   │   └── tick/                       # Fast autonomous protocol
-│   │       ├── protocol.md             # TICK protocol definition
-│   │       ├── templates/              # Lightweight templates
-│   │       │   ├── spec.md
-│   │       │   ├── plan.md
-│   │       │   └── review.md
-│   │       └── manifest.yaml
 │   ├── specs/                          # Our feature specifications
-│   │   └── 0001-test-infrastructure.md # Test suite specification
 │   ├── plans/                          # Our implementation plans
-│   │   └── 0001-test-infrastructure.md # Test suite plan
 │   ├── reviews/                        # Our lessons learned
-│   │   └── 0001-test-infrastructure.md # Test suite review
-│   ├── resources/                      # Our reference materials
+│   ├── resources/                      # Reference materials
 │   │   ├── arch.md                     # This file
 │   │   └── llms.txt                    # LLM-friendly documentation
-│   └── agents/                         # Agent definitions (canonical)
-│       ├── spider-protocol-updater.md  # Protocol evolution agent
-│       ├── architecture-documenter.md  # Architecture documentation agent
-│       └── codev-updater.md            # Framework update agent
+│   ├── agents/                         # Agent definitions (canonical)
+│   │   ├── spider-protocol-updater.md
+│   │   ├── architecture-documenter.md
+│   │   └── codev-updater.md
+│   └── projectlist.md                  # Master project tracking
 ├── codev-skeleton/                     # Template for distribution
-│   ├── protocols/                      # Same structure as codev/protocols/
+│   ├── bin/                            # CLI wrapper
+│   │   └── agent-farm                  # Thin wrapper script
+│   ├── config.json                     # Default configuration
+│   ├── roles/                          # Role definitions
+│   │   ├── architect.md
+│   │   └── builder.md
+│   ├── templates/                      # HTML templates
+│   │   ├── dashboard.html
+│   │   ├── dashboard-split.html
+│   │   └── annotate.html
+│   ├── protocols/                      # Protocol definitions
 │   │   ├── spider/
 │   │   ├── spider-solo/
 │   │   └── tick/
-│   ├── specs/                          # Empty (placeholder with .gitkeep)
-│   │   └── .gitkeep                    # Ensures directory is tracked in git
+│   ├── specs/                          # Empty (placeholder)
 │   ├── plans/                          # Empty (placeholder)
 │   ├── reviews/                        # Empty (placeholder)
 │   ├── resources/                      # Empty (placeholder)
-│   └── agents/                         # Agent templates for installation
-│       ├── spider-protocol-updater.md
-│       ├── architecture-documenter.md
-│       └── codev-updater.md
-├── .claude/                            # Claude Code-specific directory (self-hosted only)
-│   └── agents/                         # Agents for Claude Code (installed from codev/agents/)
-│       ├── spider-protocol-updater.md  # Protocol evolution agent
-│       ├── architecture-documenter.md  # Architecture documentation agent
-│       └── codev-updater.md            # Framework update agent
+│   ├── agents/                         # Agent templates
+│   └── projectlist.md                  # Template project list
+├── .agent-farm/                        # Project-scoped state (gitignored)
+│   └── state.json                      # Current architect/builder/util status
+├── ~/.agent-farm/                      # Global registry (user home)
+│   ├── ports.json                      # Cross-project port allocations
+│   └── ports.lock                      # Lock file for concurrent access
+├── .claude/                            # Claude Code-specific directory
+│   └── agents/                         # Agents for Claude Code
 ├── tests/                              # Test infrastructure
-│   ├── lib/                            # Vendored test frameworks
-│   │   ├── bats-core/                  # Core test runner
-│   │   ├── bats-support/               # Helper functions
-│   │   ├── bats-assert/                # Assertions
-│   │   └── bats-file/                  # File assertions
+│   ├── lib/                            # Vendored bats frameworks
 │   ├── helpers/                        # Test utilities
-│   │   ├── common.bash                 # Setup, teardown, assertions
-│   │   └── mock_mcp.bash               # MCP simulation
 │   ├── fixtures/                       # Test data
-│   ├── 00_framework.bats               # Framework validation
-│   ├── 01_framework_validation.bats    # Core framework tests
-│   ├── 02_runner_behavior.bats         # Test runner behavior
-│   ├── 03_test_helpers.bats            # Helper function tests
-│   ├── 10_fresh_spider.bats            # SPIDER installation tests
-│   ├── 11_fresh_spider_solo.bats       # SPIDER-SOLO installation tests
-│   ├── 12_existing_claude_md.bats      # CLAUDE.md preservation tests
-│   ├── 20_claude_execution.bats        # Claude CLI integration tests
-│   ├── 20_codev_updater.bats           # Updater agent tests
-│   └── README.md                       # Test documentation
+│   └── *.bats                          # Test files
 ├── scripts/                            # Utility scripts
-│   ├── run-tests.sh                    # Fast tests (no integration)
-│   ├── run-integration-tests.sh        # All tests including Claude CLI
-│   └── install-hooks.sh                # Install git pre-commit hooks
+│   ├── run-tests.sh                    # Fast tests
+│   ├── run-integration-tests.sh        # All tests
+│   └── install-hooks.sh                # Install git hooks
 ├── hooks/                              # Git hook templates
-│   └── pre-commit                      # Pre-commit hook (runs test suite)
+│   └── pre-commit                      # Pre-commit hook
 ├── examples/                           # Example projects
-│   └── todo-manager/                   # Demo Todo Manager app
 ├── docs/                               # Additional documentation
-│   └── why.md                          # Background and rationale
 ├── AGENTS.md                           # Universal AI agent instructions
-├── CLAUDE.md                           # Claude Code-specific (identical to AGENTS.md)
-├── INSTALL.md                          # Installation instructions for agents
+├── CLAUDE.md                           # Claude Code-specific
+├── INSTALL.md                          # Installation instructions
 ├── README.md                           # Project overview
 └── LICENSE                             # MIT license
 ```
@@ -312,7 +355,145 @@ fi
 - Clear rollback procedures
 - Verification before completion
 
-### 3. Test Infrastructure
+### 3. Agent-Farm CLI (Orchestration Engine)
+
+**Location**: `agent-farm/`
+
+**Purpose**: TypeScript-based multi-agent orchestration for the architect-builder pattern
+
+**Architecture**:
+- **Single canonical implementation** - All bash scripts deleted, TypeScript is the source of truth
+- **Thin wrapper invocation** - `codev/bin/agent-farm` calls `node agent-farm/dist/index.js`
+- **Project-scoped state** - `.agent-farm/state.json` tracks current session
+- **Global port registry** - `~/.agent-farm/ports.json` prevents cross-project port conflicts
+
+#### CLI Commands
+
+```bash
+# Recommended: set up alias
+alias af='./codev/bin/agent-farm'
+
+# Starting/stopping
+af start                      # Start architect dashboard
+af stop                       # Stop all agent-farm processes
+
+# Managing builders
+af spawn --project 0003       # Spawn a builder for spec 0003
+af spawn -p 0003              # Short form
+af status                     # Check all agent status
+af cleanup --project 0003     # Clean up builder (checks for uncommitted work)
+af cleanup -p 0003 --force    # Force cleanup (lose uncommitted work)
+
+# Utilities
+af util                       # Open a utility shell terminal
+af shell                      # Alias for util
+af annotate src/file.ts       # Open file annotation viewer
+
+# Port management (multi-project support)
+af ports list                 # List port allocations
+af ports cleanup              # Remove stale allocations
+
+# Command overrides
+af start --architect-cmd "claude --model opus"
+af spawn -p 0003 --builder-cmd "claude --model sonnet"
+```
+
+#### Configuration (`codev/config.json`)
+
+```json
+{
+  "shell": {
+    "architect": "claude --model opus",
+    "builder": ["claude", "--model", "sonnet"],
+    "shell": "bash"
+  },
+  "templates": {
+    "dir": "codev/templates"
+  },
+  "roles": {
+    "dir": "codev/roles"
+  }
+}
+```
+
+**Configuration Hierarchy**: CLI args > config.json > Defaults
+
+**Features**:
+- Commands can be strings OR arrays (arrays avoid shell-escaping issues)
+- Environment variables expanded at runtime (`${VAR}` and `$VAR` syntax)
+- CLI overrides: `--architect-cmd`, `--builder-cmd`, `--shell-cmd`
+- Early validation: on startup, verify commands exist and directories resolve
+
+#### Global Port Registry (`~/.agent-farm/ports.json`)
+
+**Purpose**: Prevent port conflicts when running multiple architects across different repos
+
+**Port Block Allocation**:
+- First repo gets port block 4200-4299
+- Second repo gets 4300-4399
+- Each block provides 100 ports per project:
+  - Dashboard: base+0 (e.g., 4200)
+  - Architect: base+1 (e.g., 4201)
+  - Builders: base+10 to base+29 (20 slots)
+  - Utilities: base+30 to base+49 (20 slots)
+  - Annotations: base+50 to base+69 (20 slots)
+
+**Registry Structure**:
+```json
+{
+  "version": 1,
+  "entries": {
+    "/Users/me/project-a": {
+      "basePort": 4200,
+      "registered": "2024-12-02T...",
+      "lastUsed": "2024-12-03T...",
+      "pid": 12345
+    }
+  }
+}
+```
+
+**Safety Features**:
+- File locking with stale lock detection (30-second timeout)
+- Schema versioning for future compatibility
+- PID tracking for process ownership
+- Automatic cleanup of stale entries (deleted projects)
+
+#### Role Files
+
+**Location**: `codev/roles/`
+
+**architect.md** - Comprehensive architect role:
+- Responsibilities: decompose work, spawn builders, monitor progress, review and integrate
+- Execution strategy: Modified SPIDER with delegation
+- Communication patterns with builders
+- Full `af` command reference
+
+**builder.md** - Builder role with status lifecycle:
+- Status definitions: spawning, implementing, blocked, pr-ready, complete
+- Working in isolated git worktrees
+- When and how to report blocked status
+- Deliverables and constraints
+
+#### Thin Wrapper Script
+
+**Location**: `codev/bin/agent-farm`
+
+```bash
+#!/bin/bash
+# Thin wrapper - forwards all commands to agent-farm TypeScript
+SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+exec node "$PROJECT_ROOT/agent-farm/dist/index.js" "$@"
+```
+
+**Features**:
+- Symlink-safe (uses `readlink -f` with fallbacks)
+- Portable across macOS and Linux
+- No npm distribution required
+
+### 4. Test Infrastructure
 
 **Location**: `tests/`
 
@@ -688,6 +869,61 @@ Codev itself follows test-driven development practices:
 - Clear feedback on pass/fail
 - Instructions for bypassing when necessary
 
+### 12. Single Canonical Implementation (TypeScript agent-farm)
+**Decision**: Delete all bash architect scripts; TypeScript agent-farm is the single source of truth
+
+**Rationale**:
+- **Eliminate brittleness** - Triple implementation (bash + duplicate bash + TypeScript) caused divergent behavior
+- **Single maintenance point** - Bug fixes only needed once
+- **Type safety** - TypeScript catches errors at compile time
+- **Rich features** - Easier to implement complex features (port registry, state locking)
+- **Thin wrapper pattern** - Bash wrappers just call `node agent-farm/dist/index.js`
+
+**What was deleted**:
+- `codev/bin/architect` (713-line bash script)
+- `codev-skeleton/bin/architect` (duplicate)
+- `agent-farm/templates/` (now uses codev/templates/)
+- `codev/builders.md` (legacy state file)
+
+### 13. Global Port Registry for Multi-Architect Support
+**Decision**: Use `~/.agent-farm/ports.json` to allocate deterministic port blocks per repository
+
+**Rationale**:
+- **Cross-project coordination** - Multiple repos can run architects simultaneously
+- **Deterministic allocation** - Port assignments stable across restarts
+- **100-port blocks** - Ample room for dashboard, architect, 20 builders, utilities, annotations
+- **File locking** - Prevents race conditions during concurrent registration
+- **Stale cleanup** - Automatically removes entries for deleted projects
+
+**Port Block Layout**:
+```
+base+0:     Dashboard
+base+1:     Architect terminal
+base+10-29: Builder terminals (20 slots)
+base+30-49: Utility terminals (20 slots)
+base+50-69: Annotation viewers (20 slots)
+base+70-99: Reserved for future use
+```
+
+### 14. config.json for Shell Command Customization
+**Decision**: Replace bash wrapper customization with JSON configuration file
+
+**Rationale**:
+- **Declarative configuration** - Easy to understand and modify
+- **Array-form commands** - Avoids shell escaping issues
+- **Environment variable expansion** - `${VAR}` syntax for secrets
+- **Configuration hierarchy** - CLI args > config.json > defaults
+- **Early validation** - Fail fast if commands or directories invalid
+
+### 15. Clean Slate with Safety Checks
+**Decision**: When consolidating, nuke old state but protect uncommitted work
+
+**Rationale**:
+- **No migration complexity** - Delete old artifacts rather than migrating
+- **Dirty worktree protection** - Refuse to delete worktrees with uncommitted changes
+- **Force flag requirement** - `--force` required to override safety checks
+- **Orphaned session handling** - Detect and handle stale tmux sessions on startup
+
 ## Integration Points
 
 ### External Services
@@ -705,10 +941,16 @@ Codev itself follows test-driven development practices:
 - **Zen MCP Server**: Optional for multi-agent features
 
 ### Internal Dependencies
-- **Git**: Version control and history
-- **Bash**: Shell scripting and installation
+- **Git**: Version control, worktrees for builder isolation
+- **Node.js**: Runtime for agent-farm TypeScript CLI
+- **Bash**: Thin wrapper scripts and test infrastructure
 - **Markdown**: All documentation format
 - **YAML**: Protocol configuration
+- **JSON**: State management and configuration
+
+### Optional Dependencies (Agent-Farm)
+- **tmux**: Session persistence for builder terminals (recommended)
+- **ttyd**: Web-based terminal interface (required for dashboard)
 
 ## Development Patterns
 
@@ -1091,41 +1333,106 @@ A well-maintained Codev architecture should enable:
 
 ---
 
-## Recent Infrastructure Changes (2025-10-20)
+## Recent Infrastructure Changes (2024-12-03)
 
-### Test Infrastructure Completion
-- **Total tests increased** from 52 to 64 (64/64 passing)
-- **Test code expanded** from ~1500 to ~2000 lines
-- **Full coverage** of framework, protocols, agents, and updater functionality
+### Architecture Consolidation (Spec 0008)
 
-### Agent Installation Refactoring
-- **Implemented tool-agnostic installation** with conditional logic
-- **Claude Code detection** via `command -v claude` check
-- **Dual installation paths** - `.claude/agents/` (Claude Code) or `codev/agents/` (universal)
-- **Test helpers updated** to mirror production installation behavior
-- **Self-hosted restoration** - `.claude/agents/` now present in main repo for our use
+The architect-builder system was consolidated to eliminate brittleness from triple implementation.
 
-### Pre-Commit Hook Infrastructure
-- **Added `hooks/pre-commit`** - Runs test suite before commits
-- **Added `scripts/install-hooks.sh`** - Installation script for git hooks
-- **Quality assurance** - Catches regressions before they reach repository
-- **Fast feedback** - Uses fast test suite (<30 seconds)
-- **Optional installation** - Respects developer choice
+#### Agent-Farm TypeScript CLI
+- **Single canonical implementation** in `agent-farm/src/`
+- **Thin bash wrappers** at `codev/bin/agent-farm` and `codev-skeleton/bin/agent-farm`
+- **CLI commands**: start, stop, status, spawn, util, annotate, cleanup, ports
+- **Alias recommended**: `alias af='./codev/bin/agent-farm'`
 
-### Directory Structure Updates
-- **`codev-skeleton/specs/.gitkeep`** - Ensures empty specs directory is tracked
-- **`hooks/` directory** - Contains pre-commit hook template
-- **`scripts/install-hooks.sh`** - Hook installation automation
-- **`.claude/agents/`** - Restored for self-hosted development
+#### Global Port Registry
+- **Location**: `~/.agent-farm/ports.json`
+- **Purpose**: Cross-project port coordination for multiple simultaneous architects
+- **Port blocks**: 100 ports per project (4200-4299, 4300-4399, etc.)
+- **Features**:
+  - File locking with 30-second stale lock detection
+  - Schema versioning (version: 1)
+  - PID tracking for process ownership
+  - Stale entry cleanup for deleted projects
 
-### Key Design Improvements
-- **Environment-aware installation** - Detects and adapts to tooling
-- **Improved test isolation** - Conditional agent installation in tests
-- **Better developer experience** - Pre-commit hooks for continuous quality
-- **Enhanced maintainability** - Clear separation of hook template and installed hook
+**Registry Structure**:
+```json
+{
+  "version": 1,
+  "entries": {
+    "/path/to/project": {
+      "basePort": 4200,
+      "registered": "2024-12-03T...",
+      "lastUsed": "2024-12-03T...",
+      "pid": 12345
+    }
+  }
+}
+```
+
+**Port Allocation per Project**:
+- Dashboard: base+0 (e.g., 4200)
+- Architect: base+1 (e.g., 4201)
+- Builders: base+10 to base+29 (20 slots)
+- Utilities: base+30 to base+49 (20 slots)
+- Annotations: base+50 to base+69 (20 slots)
+
+#### config.json Configuration
+- **Location**: `codev/config.json`
+- **Purpose**: Shell command customization without modifying scripts
+- **Hierarchy**: CLI args > config.json > defaults
+
+**Structure**:
+```json
+{
+  "shell": {
+    "architect": "claude --model opus",
+    "builder": ["claude", "--model", "sonnet"],
+    "shell": "bash"
+  },
+  "templates": { "dir": "codev/templates" },
+  "roles": { "dir": "codev/roles" }
+}
+```
+
+**Features**:
+- String or array command formats
+- Environment variable expansion (`${VAR}` and `$VAR`)
+- CLI overrides: `--architect-cmd`, `--builder-cmd`, `--shell-cmd`
+
+#### Deleted Duplicates
+- **Removed**: `codev/bin/architect` (713-line bash script)
+- **Removed**: `codev-skeleton/bin/architect`
+- **Removed**: `agent-farm/templates/` (uses codev/templates/)
+- **Removed**: `codev/builders.md` (legacy state file)
+
+#### Role Files Created
+- **`codev/roles/architect.md`** - Comprehensive architect role with af commands
+- **`codev/roles/builder.md`** - Builder role with status management
+- **Synced to**: `codev-skeleton/roles/`
+
+#### Clean Slate Safety
+- **Dirty worktree detection** before deletion
+- **`--force` flag** required for uncommitted changes
+- **Orphaned tmux session** detection on startup
+- **Stale artifact warnings** for legacy files
+
+### Previous Changes (2025-10-20)
+
+#### Test Infrastructure Completion
+- **Total tests**: 31 passing (agent-farm TypeScript tests)
+- **Framework**: Vitest for TypeScript, bats-core for shell
+
+#### Agent Installation
+- **Tool-agnostic installation** with conditional logic
+- **Dual paths**: `.claude/agents/` (Claude Code) or `codev/agents/` (universal)
+
+#### Pre-Commit Hooks
+- **`hooks/pre-commit`** - Runs test suite before commits
+- **`scripts/install-hooks.sh`** - Installation script
 
 ---
 
-**Last Updated**: 2025-10-20 (via architecture-documenter agent)
-**Version**: Post-test-infrastructure completion (Spec 0001)
-**Next Review**: After next significant feature implementation or protocol update
+**Last Updated**: 2024-12-03 (Spec 0008 completion)
+**Version**: Post-architecture-consolidation
+**Next Review**: After next significant feature implementation

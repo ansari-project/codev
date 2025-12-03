@@ -16,6 +16,34 @@ export interface CleanupOptions {
 }
 
 /**
+ * Check if a worktree has uncommitted changes
+ */
+async function hasUncommittedChanges(worktreePath: string): Promise<{ dirty: boolean; details: string }> {
+  if (!existsSync(worktreePath)) {
+    return { dirty: false, details: '' };
+  }
+
+  try {
+    // Check for uncommitted changes (staged and unstaged)
+    const result = await run('git status --porcelain', { cwd: worktreePath });
+
+    if (result.stdout.trim()) {
+      // Count changed files
+      const lines = result.stdout.trim().split('\n').filter(Boolean);
+      return {
+        dirty: true,
+        details: `${lines.length} uncommitted file(s)`,
+      };
+    }
+
+    return { dirty: false, details: '' };
+  } catch {
+    // If git status fails, assume dirty to be safe
+    return { dirty: true, details: 'Unable to check status' };
+  }
+}
+
+/**
  * Cleanup a builder's worktree and branch
  */
 export async function cleanup(options: CleanupOptions): Promise<void> {
@@ -45,6 +73,19 @@ async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> 
   logger.kv('Name', builder.name);
   logger.kv('Worktree', builder.worktree);
   logger.kv('Branch', builder.branch);
+
+  // Check for uncommitted changes before cleanup
+  const { dirty, details } = await hasUncommittedChanges(builder.worktree);
+  if (dirty && !force) {
+    logger.error(`Worktree has uncommitted changes: ${details}`);
+    logger.error('Use --force to delete anyway (WARNING: changes will be lost!)');
+    fatal('Cleanup aborted to prevent data loss.');
+  }
+
+  if (dirty && force) {
+    logger.warn(`Worktree has uncommitted changes: ${details}`);
+    logger.warn('Proceeding with --force (changes will be lost!)');
+  }
 
   // Kill ttyd process if running
   if (builder.pid) {

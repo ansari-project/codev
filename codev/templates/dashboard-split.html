@@ -124,6 +124,12 @@
       background: var(--text-muted);
     }
 
+    #architect-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     .left-pane iframe {
       flex: 1;
       width: 100%;
@@ -655,6 +661,9 @@
       return name.replace(/\.(md|txt|ts|js|py|html|css|json)$/, '');
     }
 
+    // Track current architect port to avoid re-rendering iframe unnecessarily
+    let currentArchitectPort = null;
+
     // Render architect pane
     function renderArchitect() {
       const content = document.getElementById('architect-content');
@@ -662,15 +671,22 @@
 
       if (state.architect && state.architect.port) {
         statusDot.classList.remove('inactive');
-        content.innerHTML = `<iframe src="http://localhost:${state.architect.port}" title="Architect Terminal"></iframe>`;
+        // Only update iframe if port changed (avoid flashing on poll)
+        if (currentArchitectPort !== state.architect.port) {
+          currentArchitectPort = state.architect.port;
+          content.innerHTML = `<iframe src="http://localhost:${state.architect.port}" title="Architect Terminal"></iframe>`;
+        }
       } else {
+        if (currentArchitectPort !== null) {
+          currentArchitectPort = null;
+          content.innerHTML = `
+            <div class="architect-placeholder">
+              <p>Architect not running</p>
+              <p>Run <code>agent-farm start</code> to begin</p>
+            </div>
+          `;
+        }
         statusDot.classList.add('inactive');
-        content.innerHTML = `
-          <div class="architect-placeholder">
-            <p>Architect not running</p>
-            <p>Run <code>agent-farm start</code> to begin</p>
-          </div>
-        `;
       }
     }
 
@@ -725,27 +741,40 @@
       return `<span class="status-dot" style="background: ${color}"></span>`;
     }
 
+    // Track current tab content to avoid re-rendering iframe unnecessarily
+    let currentTabPort = null;
+
     // Render tab content
     function renderTabContent() {
       const content = document.getElementById('tab-content');
 
       if (!activeTabId || tabs.length === 0) {
-        content.innerHTML = `
-          <div class="empty-state">
-            <p>No tabs open</p>
-            <p class="hint">Click the + buttons above or ask the architect to open files/builders</p>
-          </div>
-        `;
+        if (currentTabPort !== null) {
+          currentTabPort = null;
+          content.innerHTML = `
+            <div class="empty-state">
+              <p>No tabs open</p>
+              <p class="hint">Click the + buttons above or ask the architect to open files/builders</p>
+            </div>
+          `;
+        }
         return;
       }
 
       const tab = tabs.find(t => t.id === activeTabId);
       if (!tab) {
-        content.innerHTML = '<div class="empty-state"><p>Tab not found</p></div>';
+        if (currentTabPort !== null) {
+          currentTabPort = null;
+          content.innerHTML = '<div class="empty-state"><p>Tab not found</p></div>';
+        }
         return;
       }
 
-      content.innerHTML = `<iframe src="http://localhost:${tab.port}" title="${tab.name}"></iframe>`;
+      // Only update iframe if port changed (avoid flashing on poll)
+      if (currentTabPort !== tab.port) {
+        currentTabPort = tab.port;
+        content.innerHTML = `<iframe src="http://localhost:${tab.port}" title="${tab.name}"></iframe>`;
+      }
     }
 
     // Update status bar
@@ -980,7 +1009,31 @@
           throw new Error(await response.text());
         }
 
-        await refresh();
+        const result = await response.json();
+
+        // Add to local tabs and select it
+        const newTab = {
+          id: `shell-${result.id}`,
+          type: 'shell',
+          name: result.name,
+          port: result.port,
+          utilId: result.id,
+          pendingLoad: true  // Mark as pending to delay iframe
+        };
+        tabs.push(newTab);
+        activeTabId = newTab.id;
+        renderTabs();
+
+        // Show loading state, then load iframe after delay
+        const content = document.getElementById('tab-content');
+        content.innerHTML = '<div class="empty-state"><p>Starting shell...</p></div>';
+
+        setTimeout(() => {
+          delete newTab.pendingLoad;
+          currentTabPort = null;  // Force re-render
+          renderTabContent();
+        }, 800);
+
         showToast('Shell spawned', 'success');
       } catch (err) {
         showToast('Failed to spawn shell: ' + err.message, 'error');

@@ -11,6 +11,7 @@ export interface Builder {
   phase: string;
   worktree: string;
   branch: string;
+  tmuxSession?: string;
 }
 
 export interface UtilTerminal {
@@ -77,4 +78,31 @@ export interface StartOptions {
 export interface SpawnOptions {
   project: string;
   noRole?: boolean;
+  instruction?: string;
+}
+
+/**
+ * User-facing config.json structure
+ */
+export interface UserConfig {
+  shell?: {
+    architect?: string | string[];
+    builder?: string | string[];
+    shell?: string | string[];
+  };
+  templates?: {
+    dir?: string;
+  };
+  roles?: {
+    dir?: string;
+  };
+}
+
+/**
+ * Resolved shell commands (after processing config hierarchy)
+ */
+export interface ResolvedCommands {
+  architect: string;
+  builder: string;
+  shell: string;
 }

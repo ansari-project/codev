@@ -315,6 +315,48 @@ Example repositories to monitor:
 - `ansari-project/todo-manager-spider` - SPIDER implementation with lessons
 - Your own SPIDER projects with discovered patterns
 
+## Architect-Builder Pattern
+
+For parallel AI-assisted development, Codev includes the Architect-Builder pattern:
+
+- **Architect** (you + primary AI): Creates specs and plans, reviews work
+- **Builders** (autonomous AI agents): Implement specs in isolated git worktrees
+
+### Quick Start
+
+```bash
+# Build agent-farm (first time only)
+cd agent-farm && npm install && npm run build && cd ..
+
+# Start the architect dashboard
+./codev/bin/agent-farm start
+
+# Spawn a builder for a spec
+./codev/bin/agent-farm spawn --project 0003
+
+# Check status
+./codev/bin/agent-farm status
+```
+
+### Shell Alias (Recommended)
+
+Add to your `~/.bashrc` or `~/.zshrc` for convenience:
+
+```bash
+# Agent Farm alias - run from any codev project
+alias af='./codev/bin/agent-farm'
+```
+
+Then use:
+```bash
+af start           # Start architect dashboard
+af spawn -p 0003   # Spawn builder
+af status          # Check status
+af stop            # Stop everything
+```
+
+See [INSTALL.md](INSTALL.md#architect-builder-pattern-optional) for full documentation.
+
 ## Contributing
 
 We welcome contributions! Please help us improve Codev:

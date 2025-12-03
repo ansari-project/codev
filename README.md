@@ -315,6 +315,23 @@ Example repositories to monitor:
 - `ansari-project/todo-manager-spider` - SPIDER implementation with lessons
 - Your own SPIDER projects with discovered patterns
 
+## Agent Farm (Optional)
+
+Agent Farm is an optional companion tool for Codev that provides a web-based dashboard for managing multiple AI agents working in parallel. **You can use Codev without Agent Farm** - all protocols (SPIDER, TICK, etc.) work perfectly in any AI coding assistant.
+
+**Why use Agent Farm?**
+- **Web dashboard** for monitoring multiple builders at once
+- **Protocol-aware** - knows about specs, plans, and Codev conventions
+- **Git worktree management** - isolates each builder's changes
+- **Automatic prompting** - builders start with instructions to implement their assigned spec
+
+**Current limitations:**
+- Currently optimized for **Claude Code** (uses `-p` flag, `--append-system-prompt`, etc.)
+- Requires **ttyd** and **tmux** for terminal embedding
+- macOS-focused (should work on Linux but less tested)
+
+Support for other AI CLIs (Gemini CLI, Codex CLI) is planned for future releases.
+
 ## Architect-Builder Pattern
 
 For parallel AI-assisted development, Codev includes the Architect-Builder pattern:

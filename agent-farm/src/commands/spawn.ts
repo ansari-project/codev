@@ -52,6 +52,10 @@ export async function spawn(options: SpawnOptions): Promise<void> {
   const branchName = `builder/${safeName}`;
   const worktreePath = resolve(config.buildersDir, builderId);
 
+  // Check for corresponding plan file
+  const planFile = resolve(config.codevDir, 'plans', `${specName}.md`);
+  const hasPlan = existsSync(planFile);
+
   logger.header(`Spawning Builder ${builderId}`);
   logger.kv('Spec', specFile);
   logger.kv('Branch', branchName);
@@ -113,10 +117,24 @@ export async function spawn(options: SpawnOptions): Promise<void> {
       }
     }
 
+    // Build the initial prompt for the builder
+    const specRelPath = `codev/specs/${specName}.md`;
+    const planRelPath = `codev/plans/${specName}.md`;
+    let initialPrompt = `Implement the feature specified in ${specRelPath}.`;
+    if (hasPlan) {
+      initialPrompt += ` Follow the implementation plan in ${planRelPath}.`;
+    }
+    initialPrompt += ` Start by reading the spec${hasPlan ? ' and plan' : ''}, then begin implementation.`;
+
+    // Write initial prompt to a file to avoid shell escaping issues
+    const promptFile = resolve(worktreePath, '.builder-prompt.txt');
+    writeFileSync(promptFile, initialPrompt);
+
     // Build the start script
     const scriptPath = resolve(worktreePath, '.builder-start.sh');
     const roleArg = roleFile ? `--append-system-prompt "$(cat '${roleFile}')"` : '';
-    writeFileSync(scriptPath, `#!/bin/bash\nexec ${baseCmd} ${roleArg}\n`);
+    const promptArg = `-p "$(cat '${promptFile}')"`;
+    writeFileSync(scriptPath, `#!/bin/bash\nexec ${baseCmd} ${roleArg} ${promptArg}\n`);
     chmodSync(scriptPath, '755');
 
     // Create tmux session running the script

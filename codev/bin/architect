@@ -370,14 +370,17 @@ cmd_review() {
 # ANNOTATION COMMANDS
 # ============================================================================
 cmd_annotate() {
-    local builder_id="$1"
-    local file_path="$2"
-    [[ -z "$builder_id" || -z "$file_path" ]] && error "Usage: architect annotate XXXX path/to/file"
+    local file_path="$1"
+    [[ -z "$file_path" ]] && error "Usage: architect annotate path/to/file"
 
-    local builder_dir=$(builder_path "$builder_id")
-    [[ ! -d "$builder_dir" ]] && error "Builder $builder_id not found"
+    # Resolve file path - support both absolute and relative paths
+    local full_path
+    if [[ "$file_path" = /* ]]; then
+        full_path="$file_path"
+    else
+        full_path="$PROJECT_ROOT/$file_path"
+    fi
 
-    local full_path="$builder_dir/$file_path"
     [[ ! -f "$full_path" ]] && error "File not found: $file_path"
 
     # Check for Node.js
@@ -392,10 +395,11 @@ cmd_annotate() {
     done
 
     info "Starting annotation server on port $port..."
+    info "File: $full_path"
 
     # Start server and open browser
     cd "$PROJECT_ROOT"
-    node "$ANNOTATE_SERVER" --builder "$builder_id" --file "$file_path" --port "$port" &
+    node "$ANNOTATE_SERVER" --file "$full_path" --port "$port" &
     local server_pid=$!
 
     sleep 1

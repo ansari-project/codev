@@ -1,6 +1,6 @@
 # Specification: Dashboard Navigation UI
 
-**Spec ID**: 0003
+**Spec ID**: 0004
 **Title**: Left Navigation Bar for Architect Dashboard
 **Status**: Draft
 **Author**: Claude (with human guidance)
@@ -25,6 +25,7 @@ The current dashboard layout:
 3. Three terminal types: Architect, Builder, Util
 4. Quick switching between terminals via nav clicks
 5. Visual indicators for terminal status in nav
+6. Annotation viewers appear as sub-items under the terminal that opened them
 
 ## Non-Goals
 
@@ -44,9 +45,11 @@ The current dashboard layout:
 │            │                                                │
 │  ARCHITECT │                                                │
 │  ● Active  │                                                │
-│            │         Selected Terminal                      │
+│    📄 spec │   ← annotation sub-item                        │
+│            │         Selected Terminal/Annotation           │
 │  BUILDERS  │         (full width iframe)                    │
 │  ○ 0003    │                                                │
+│    📄 plan │   ← annotation opened from builder 0003        │
 │  ● 0004    │                                                │
 │            │                                                │
 │  UTILS     │                                                │
@@ -85,6 +88,13 @@ The current dashboard layout:
    - Click item to view util terminal
    - No limit on number of utils
 
+4. **ANNOTATIONS** (as sub-items)
+   - Appear indented under the terminal that opened them
+   - Show abbreviated filename (e.g., "📄 0003-spec.md")
+   - Click to view annotation in main area
+   - Small × button to close annotation
+   - Can have multiple annotations per terminal
+
 ### Terminal Types
 
 | Type | Purpose | Port Range | Spawned By |
@@ -92,6 +102,7 @@ The current dashboard layout:
 | Architect | Main Claude session | 7680 | `architect start` |
 | Builder | Spec implementation | 7681-7699 | `architect spawn --project XXXX` |
 | Util | Ad-hoc commands | 7700-7719 | `architect util` or dashboard button |
+| Annotation | File review/comments | 8080-8099 | `architect annotate path/to/file` |
 
 ### Utility Terminals
 
@@ -115,6 +126,31 @@ Click "+ New Util" in nav
 - No git worktree (uses main project directory)
 - Lightweight - just a shell
 - Auto-cleanup option after idle timeout (future)
+
+### Annotation Viewers
+
+File review interface for specs, plans, and code:
+
+**Spawning**:
+```bash
+# From any terminal
+architect annotate codev/specs/0003-dashboard-nav-ui.md
+architect annotate src/components/Button.tsx
+```
+
+**Characteristics**:
+- Works on ANY file in the project (no builder ID required)
+- Opens annotation viewer in browser
+- Tracks which terminal opened it (for nav placement)
+- Supports inline REVIEW comments (saved to file)
+- Multiple annotations can be open simultaneously
+
+**How terminal association works**:
+- When `architect annotate` runs, it detects the current terminal context
+- If run from architect terminal → annotation appears under ARCHITECT
+- If run from builder 0003 → annotation appears under that builder
+- If run from util → annotation appears under that util
+- Falls back to a standalone ANNOTATIONS section if context unknown
 
 ### Visual Design
 
@@ -181,6 +217,10 @@ const state = {
     { id: 'util-1', name: 'util-1', port: 7700 },  // name can be customized
     { id: 'util-2', name: 'test-runner', port: 7701 }  // renamed by user
   ],
+  annotations: [
+    { id: 'annot-1', file: 'codev/specs/0003-dashboard-nav-ui.md', port: 8080, parent: { type: 'architect' } },
+    { id: 'annot-2', file: 'codev/plans/0003-dashboard-nav-ui.md', port: 8081, parent: { type: 'builder', id: '0003' } }
+  ],
   selectedTerminal: { type: 'architect', id: null }
 };
 ```
@@ -189,15 +229,28 @@ const state = {
 
 ### CLI Changes
 
-**New command**:
+**New commands**:
 ```bash
 architect util          # Spawn a new utility terminal
 architect util stop N   # Stop utility terminal N
+architect annotate FILE # Open any file in annotation viewer (no builder ID required)
+```
+
+**Configurable architect command**:
+```bash
+# Set custom command for architect console
+architect start --cmd "claude --dangerously-skip-permissions"
+architect start --cmd "bash"  # Just a shell, no Claude
+
+# Or via environment variable
+ARCHITECT_CMD="claude --dangerously-skip-permissions" architect start
 ```
 
 **Updated `update_dashboard`**:
 - Include utils array in dashboard state
+- Include annotations array in dashboard state
 - Track util ports and PIDs
+- Track annotation ports and parent terminal associations
 
 ## Success Criteria
 
@@ -206,20 +259,28 @@ architect util stop N   # Stop utility terminal N
 3. **Status visible at glance**: Can see which builders are blocked without clicking
 4. **Util terminals work**: Can spawn/use/stop utility terminals
 5. **Responsive**: Nav collapses or scrolls gracefully if many items
+6. **Annotations work**: Can annotate any file, shows as sub-item under parent terminal
+7. **Configurable command**: Can customize the command run in architect console
 
 ## Implementation Notes
 
 ### Phase 1: Basic Nav UI
 - Refactor dashboard.html with nav + main layout
 - Click to switch terminals
-- No util support yet
+- Add `--cmd` flag support to `architect start`
 
 ### Phase 2: Utility Terminals
 - Add `architect util` command
 - Track utils in state
 - "+ New Util" button in dashboard
 
-### Phase 3: Polish
+### Phase 3: Annotations Integration
+- Update `architect annotate` to work on any file (no builder ID)
+- Track annotations in dashboard state
+- Show annotations as sub-items under parent terminal
+- Detect terminal context for parent association
+
+### Phase 4: Polish
 - Keyboard shortcuts (1-9 to switch terminals)
 - Auto-refresh terminal list
 - Collapse/expand nav sections
@@ -231,9 +292,14 @@ architect util stop N   # Stop utility terminal N
 | Max utils? | **No limit** - spawn as many as needed |
 | Util naming? | **Auto-increment + rename** - starts as util-1, util-2; rename button allows custom names |
 | Nav position? | **Left nav** - not top tabs |
+| Annotation placement? | **Sub-items** - appear indented under the terminal that opened them |
+| Annotation file scope? | **Any file** - no builder ID required, works on any project file |
+| Architect command? | **Configurable** - via `--cmd` flag or `ARCHITECT_CMD` env var |
 
 ## References
 
 - Current dashboard: `codev/templates/dashboard.html`
 - Architect CLI: `codev/bin/architect`
+- Annotation viewer: `codev/templates/annotate.html`
+- Annotation server: `codev/bin/annotate-server.js`
 - Spec 0002: Architect-Builder Pattern

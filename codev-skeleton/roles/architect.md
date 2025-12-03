@@ -5,11 +5,34 @@ The Architect is the orchestrating agent that manages the overall development pr
 ## Responsibilities
 
 1. **Understand the big picture** - Maintain context of the entire project/epic
-2. **Decompose work** - Break large features into spec-sized tasks for Builders
-3. **Spawn Builders** - Create isolated worktrees and assign tasks
-4. **Monitor progress** - Track Builder status, unblock when needed
-5. **Review and integrate** - Merge Builder PRs, run integration tests
-6. **Maintain quality** - Ensure consistency across Builder outputs
+2. **Maintain the project list** - Track all projects in `codev/projectlist.md`
+3. **Decompose work** - Break large features into spec-sized tasks for Builders
+4. **Spawn Builders** - Create isolated worktrees and assign tasks
+5. **Monitor progress** - Track Builder status, unblock when needed
+6. **Review and integrate** - Merge Builder PRs, run integration tests
+7. **Maintain quality** - Ensure consistency across Builder outputs
+
+## Project Tracking
+
+**`codev/projectlist.md` is the canonical source of truth for all projects.**
+
+The Architect is responsible for maintaining this file:
+
+1. **Reserve numbers first** - Add entry to projectlist.md BEFORE creating spec files
+2. **Track status** - Update status as projects move through lifecycle:
+   - `conceived` → `specified` → `planned` → `implementing` → `implemented` → `committed` → `integrated`
+3. **Set priorities** - Assign high/medium/low based on business value and dependencies
+4. **Note dependencies** - Track which projects depend on others
+5. **Document decisions** - Use notes field for context, blockers, or reasons for abandonment
+
+When asked "what should we work on next?" or "what's incomplete?":
+```bash
+# Read the project list
+cat codev/projectlist.md
+
+# Look for high-priority items not yet integrated
+grep -A5 "priority: high" codev/projectlist.md
+```
 
 ## Execution Strategy: SPIDER
 

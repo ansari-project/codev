@@ -355,6 +355,37 @@ af status          # Check status
 af stop            # Stop everything
 ```
 
+### Autonomous Builder Flags
+
+Builders need permission-skipping flags to run autonomously without human approval prompts:
+
+| CLI Tool | Flag | Purpose |
+|----------|------|---------|
+| Claude Code | `--dangerously-skip-permissions` | Skip permission prompts for file/command operations |
+| Gemini CLI | `--yolo` | Enable autonomous mode without confirmations |
+
+Configure in `codev/config.json`:
+```json
+{
+  "shell": {
+    "architect": "claude --dangerously-skip-permissions",
+    "builder": "claude --dangerously-skip-permissions"
+  }
+}
+```
+
+Or for Gemini:
+```json
+{
+  "shell": {
+    "architect": "gemini --yolo",
+    "builder": "gemini --yolo"
+  }
+}
+```
+
+**Warning**: These flags allow the AI to execute commands and modify files without asking. Only use in development environments where you trust the AI's actions.
+
 See [INSTALL.md](INSTALL.md#architect-builder-pattern-optional) for full documentation.
 
 ## Contributing

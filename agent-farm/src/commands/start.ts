@@ -108,12 +108,21 @@ export async function start(options: StartOptions = {}): Promise<void> {
   await run(`tmux set-option -t ${sessionName} -g mouse on`);
 
   // Start ttyd attached to the tmux session
+  // Use custom index.html for file path click-to-open functionality
+  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(architectPort),
     '-t', 'theme={"background":"#000000"}',
-    'tmux', 'attach-session', '-t', sessionName,
   ];
+
+  // Add custom index if it exists
+  if (existsSync(customIndexPath)) {
+    ttydArgs.push('-I', customIndexPath);
+    logger.info('Using custom terminal with file click support');
+  }
+
+  ttydArgs.push('tmux', 'attach-session', '-t', sessionName);
 
   const ttydProcess = spawnDetached('ttyd', ttydArgs, {
     cwd: config.projectRoot,

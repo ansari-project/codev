@@ -202,13 +202,21 @@ function spawnTmuxWithTtyd(
 
     // Start ttyd to attach to the tmux session
     // Using simple theme arg to avoid shell escaping issues
+    // Use custom index.html for file path click-to-open functionality
+    const customIndexPath = path.join(projectRoot, 'codev/templates/ttyd-index.html');
     const ttydArgs = [
       '-W',
       '-p', String(ttydPort),
       '-t', 'theme={"background":"#000000"}',
       '-t', 'fontSize=14',
-      'tmux', 'attach-session', '-t', sessionName,
     ];
+
+    // Add custom index if it exists
+    if (fs.existsSync(customIndexPath)) {
+      ttydArgs.push('-I', customIndexPath);
+    }
+
+    ttydArgs.push('tmux', 'attach-session', '-t', sessionName);
 
     const pid = spawnDetached('ttyd', ttydArgs, cwd);
     return pid;
@@ -249,7 +257,7 @@ function parseJsonBody(req: http.IncomingMessage, maxSize = 1024 * 1024): Promis
 }
 
 // Validate path is within project root (prevent path traversal)
-// Handles URL-encoded dots (%2e) and other encodings
+// Handles URL-encoded dots (%2e), symlinks, and other encodings
 function validatePathWithinProject(filePath: string): string | null {
   // First decode any URL encoding to catch %2e%2e (encoded ..)
   let decodedPath: string;
@@ -268,9 +276,24 @@ function validatePathWithinProject(filePath: string): string | null {
   // Normalize to remove any .. or . segments
   const normalizedPath = path.normalize(resolvedPath);
 
-  // Check if path starts with project root
+  // First check normalized path (for paths that don't exist yet)
   if (!normalizedPath.startsWith(projectRoot + path.sep) && normalizedPath !== projectRoot) {
     return null; // Path escapes project root
+  }
+
+  // If file exists, resolve symlinks to prevent symlink-based path traversal
+  // An attacker could create a symlink within the repo pointing outside
+  if (fs.existsSync(normalizedPath)) {
+    try {
+      const realPath = fs.realpathSync(normalizedPath);
+      if (!realPath.startsWith(projectRoot + path.sep) && realPath !== projectRoot) {
+        return null; // Symlink target escapes project root
+      }
+      return realPath;
+    } catch {
+      // realpathSync failed (broken symlink, permissions, etc.)
+      return null;
+    }
   }
 
   return normalizedPath;
@@ -640,6 +663,128 @@ const server = http.createServer(async (req, res) => {
 
       // Exit after a short delay
       setTimeout(() => process.exit(0), 500);
+      return;
+    }
+
+    // Open file route - handles file clicks from terminal
+    // Returns a small HTML page that messages the dashboard via BroadcastChannel
+    if (req.method === 'GET' && url.pathname === '/open-file') {
+      const filePath = url.searchParams.get('path');
+      const line = url.searchParams.get('line');
+      const sourcePort = url.searchParams.get('sourcePort');
+
+      if (!filePath) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Missing path parameter');
+        return;
+      }
+
+      // Determine base path for relative path resolution
+      // If sourcePort is provided, look up the builder/util to get its worktree
+      let basePath = projectRoot;
+      if (sourcePort) {
+        const portNum = parseInt(sourcePort, 10);
+        const state = loadState();
+
+        // Check if it's a builder terminal
+        const builder = state.builders.find((b) => b.port === portNum);
+        if (builder && builder.worktree) {
+          basePath = builder.worktree;
+        }
+
+        // Check if it's a utility terminal (they run in project root, so no change needed)
+        // Architect terminal also runs in project root
+      }
+
+      // Validate path is within project (or builder worktree)
+      // For relative paths, resolve against the determined base path
+      let fullPath: string | null;
+      if (filePath.startsWith('/')) {
+        // Absolute path - validate against project root
+        fullPath = validatePathWithinProject(filePath);
+      } else {
+        // Relative path - resolve against base path, then validate
+        const resolvedPath = path.resolve(basePath, filePath);
+        // For builder worktrees, the path is within project root (worktrees are under .builders/)
+        fullPath = validatePathWithinProject(resolvedPath);
+      }
+
+      if (!fullPath) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Path must be within project directory');
+        return;
+      }
+
+      // Check file exists
+      if (!fs.existsSync(fullPath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end(`File not found: ${filePath}`);
+        return;
+      }
+
+      // HTML-escape the file path for safe display
+      const escapeHtml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const safeFilePath = escapeHtml(filePath);
+      const safeLineDisplay = line ? ':' + escapeHtml(line) : '';
+
+      // Serve a small HTML page that communicates back to dashboard
+      // Note: We only use BroadcastChannel, not API call (dashboard handles tab creation)
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Opening file...</title>
+  <style>
+    body {
+      font-family: system-ui;
+      background: #1a1a1a;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .message { text-align: center; }
+    .path { color: #3b82f6; font-family: monospace; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="message">
+    <p>Opening file...</p>
+    <p class="path">${safeFilePath}${safeLineDisplay}</p>
+  </div>
+  <script>
+    (async function() {
+      const path = ${JSON.stringify(fullPath)};
+      const line = ${line ? parseInt(line, 10) : 'null'};
+
+      // Use BroadcastChannel to message the dashboard
+      // Dashboard will handle opening the file tab
+      const channel = new BroadcastChannel('agent-farm');
+      channel.postMessage({
+        type: 'openFile',
+        path: path,
+        line: line
+      });
+
+      // Close this window/tab after a short delay
+      setTimeout(() => {
+        window.close();
+        // If window.close() doesn't work (wasn't opened by script),
+        // show success message
+        document.body.innerHTML = '<div class="message"><p>File opened in dashboard</p><p class="path">You can close this tab</p></div>';
+      }, 500);
+    })();
+  </script>
+</body>
+</html>`;
+
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
       return;
     }
 

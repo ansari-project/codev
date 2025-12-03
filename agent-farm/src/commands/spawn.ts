@@ -148,13 +148,22 @@ export async function spawn(options: SpawnOptions): Promise<void> {
 
   // Start ttyd connecting to the tmux session
   // -W = writable mode (allows input)
+  // Use custom index.html for file path click-to-open functionality
   logger.info('Starting builder terminal...');
+  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(port),
     '-t', 'theme={"background":"#000000"}',
-    'tmux', 'attach-session', '-t', sessionName,
   ];
+
+  // Add custom index if it exists
+  if (existsSync(customIndexPath)) {
+    ttydArgs.push('-I', customIndexPath);
+    logger.info('Using custom terminal with file click support');
+  }
+
+  ttydArgs.push('tmux', 'attach-session', '-t', sessionName);
 
   const ttydProcess = spawnDetached('ttyd', ttydArgs, {
     cwd: worktreePath,

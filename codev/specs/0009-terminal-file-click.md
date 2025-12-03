@@ -3,7 +3,7 @@
 ## Metadata
 - **ID**: 0009-terminal-file-click
 - **Protocol**: TICK
-- **Status**: specified
+- **Status**: implemented
 - **Created**: 2025-12-03
 
 ## Problem Statement

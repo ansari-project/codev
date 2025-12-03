@@ -1431,8 +1431,64 @@ The architect-builder system was consolidated to eliminate brittleness from trip
 - **`hooks/pre-commit`** - Runs test suite before commits
 - **`scripts/install-hooks.sh`** - Installation script
 
+### Terminal File Click to Annotate (Spec 0009)
+
+Added clickable file paths in terminal output that open in the annotation viewer.
+
+#### Custom ttyd Index (`codev/templates/ttyd-index.html`)
+- **Purpose**: Custom xterm.js client with file path link detection
+- **Features**:
+  - Registers link provider with xterm.js for file path detection
+  - Supports patterns: relative (`./foo.ts`), src-relative (`src/bar.js:42`), absolute (`/path/to/file.ts`)
+  - Supports line numbers (`:42`) and column numbers (`:42:10`)
+  - Underlines paths on hover with tooltip
+  - Opens `/open-file` route when clicked
+
+**Supported Extensions**: `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.md`, `.json`, `.yaml`, `.yml`, `.sh`, `.bash`, `.html`, `.css`, `.scss`, `.go`, `.rs`, `.rb`, `.java`, `.c`, `.cpp`, `.h`, `.hpp`
+
+#### Dashboard `/open-file` Route
+- **Location**: `agent-farm/src/servers/dashboard-server.ts`
+- **URL**: `GET /open-file?path=<path>&line=<line>`
+- **Flow**:
+  1. Validates path is within project root (security check)
+  2. Serves small HTML page that:
+     - Uses BroadcastChannel to message dashboard
+     - Calls `/api/tabs/file` to create annotation tab
+     - Closes itself after 500ms
+
+#### BroadcastChannel Communication
+- **Channel name**: `agent-farm`
+- **Message format**: `{ type: 'openFile', path: string, line: number | null }`
+- **Dashboard listener** in `dashboard-split.html`:
+  - Receives message via `setupBroadcastChannel()`
+  - Opens file in annotation viewer via `openFileFromMessage()`
+  - Switches to the new tab
+
+#### ttyd Integration
+- **Flag**: `-I <path>` (custom index HTML)
+- **Updated files**:
+  - `agent-farm/src/commands/start.ts` - Architect terminal
+  - `agent-farm/src/commands/spawn.ts` - Builder terminals
+  - `agent-farm/src/servers/dashboard-server.ts` - Utility shells
+
+#### Known Issues (from Multi-Agent Consultation)
+1. **Hardcoded port**: `const DASHBOARD_PORT = 4200` in ttyd-index.html
+2. **Builder path resolution**: Relative paths resolve against project root, not builder worktree
+3. **Double API calls**: Both popup and dashboard POST to `/api/tabs/file`
+
+**Files Added**:
+- `codev/templates/ttyd-index.html`
+- `codev-skeleton/templates/ttyd-index.html`
+
+**Files Modified**:
+- `agent-farm/src/servers/dashboard-server.ts` (+103 lines)
+- `agent-farm/src/commands/start.ts` (+11 lines)
+- `agent-farm/src/commands/spawn.ts` (+11 lines)
+- `codev/templates/dashboard-split.html` (+54 lines)
+- `codev-skeleton/templates/dashboard-split.html` (+54 lines)
+
 ---
 
-**Last Updated**: 2024-12-03 (Spec 0008 completion)
-**Version**: Post-architecture-consolidation
+**Last Updated**: 2025-12-03 (Spec 0009 implementation)
+**Version**: Post-terminal-file-click
 **Next Review**: After next significant feature implementation

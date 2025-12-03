@@ -192,15 +192,15 @@ projects:
   - id: "0009"
     title: "Terminal File Click to Annotate"
     summary: "Click on file paths in terminal output to open them in the annotation viewer"
-    status: conceived
+    status: planned
     priority: medium
     files:
-      spec: null
-      plan: null
+      spec: codev/specs/0009-terminal-file-click.md
+      plan: codev/plans/0009-terminal-file-click.md
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, dx]
-    notes: "Detect file paths in terminal output, make them clickable"
+    notes: "TICK protocol. Uses postMessage between ttyd iframe and dashboard for link handling"
 
   - id: "0010"
     title: "Annotation Editor"
@@ -281,17 +281,17 @@ projects:
     notes: "See codev/resources/conceptual-model.md for why this is a Protocol not a Role. Phases: dead code audit, pruning, migration validation, doc sync (architecture-documenter + CLAUDE.md↔AGENTS.md)"
 
   - id: "0016"
-    title: "Rename Builder to Operator"
-    summary: "Rename the 'Builder' role to 'Operator' throughout codebase and documentation"
-    status: conceived
+    title: "Clarify Builder Role Definition"
+    summary: "Resolved: Kept 'Builder' name but clarified it encompasses remodel, repair, maintain - not just new construction"
+    status: integrated
     priority: medium
     files:
       spec: null
       plan: null
       review: null
     dependencies: []
-    tags: [refactoring, naming]
-    notes: "Builder implies only building code, but role encompasses testing, docs, cleanup, etc. See codev/resources/conceptual-model.md for rationale."
+    tags: [documentation, naming]
+    notes: "Decided to keep 'Builder' after consulting Pro and Codex. Updated codev/resources/conceptual-model.md with expanded definition. 'Building' = build, remodel, repair, extend, validate, document, maintain."
 
   - id: "0017"
     title: "Platform Portability Layer"

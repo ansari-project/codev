@@ -656,6 +656,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/open-file') {
       const filePath = url.searchParams.get('path');
       const line = url.searchParams.get('line');
+      const sourcePort = url.searchParams.get('sourcePort');
 
       if (!filePath) {
         res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -663,8 +664,36 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Validate path is within project
-      const fullPath = validatePathWithinProject(filePath);
+      // Determine base path for relative path resolution
+      // If sourcePort is provided, look up the builder/util to get its worktree
+      let basePath = projectRoot;
+      if (sourcePort) {
+        const portNum = parseInt(sourcePort, 10);
+        const state = loadState();
+
+        // Check if it's a builder terminal
+        const builder = state.builders.find((b) => b.port === portNum);
+        if (builder && builder.worktree) {
+          basePath = builder.worktree;
+        }
+
+        // Check if it's a utility terminal (they run in project root, so no change needed)
+        // Architect terminal also runs in project root
+      }
+
+      // Validate path is within project (or builder worktree)
+      // For relative paths, resolve against the determined base path
+      let fullPath: string | null;
+      if (filePath.startsWith('/')) {
+        // Absolute path - validate against project root
+        fullPath = validatePathWithinProject(filePath);
+      } else {
+        // Relative path - resolve against base path, then validate
+        const resolvedPath = path.resolve(basePath, filePath);
+        // For builder worktrees, the path is within project root (worktrees are under .builders/)
+        fullPath = validatePathWithinProject(resolvedPath);
+      }
+
       if (!fullPath) {
         res.writeHead(403, { 'Content-Type': 'text/plain' });
         res.end('Path must be within project directory');
@@ -678,7 +707,17 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // HTML-escape the file path for safe display
+      const escapeHtml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const safeFilePath = escapeHtml(filePath);
+      const safeLineDisplay = line ? ':' + escapeHtml(line) : '';
+
       // Serve a small HTML page that communicates back to dashboard
+      // Note: We only use BroadcastChannel, not API call (dashboard handles tab creation)
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -701,7 +740,7 @@ const server = http.createServer(async (req, res) => {
 <body>
   <div class="message">
     <p>Opening file...</p>
-    <p class="path">${filePath}${line ? ':' + line : ''}</p>
+    <p class="path">${safeFilePath}${safeLineDisplay}</p>
   </div>
   <script>
     (async function() {
@@ -709,23 +748,13 @@ const server = http.createServer(async (req, res) => {
       const line = ${line ? parseInt(line, 10) : 'null'};
 
       // Use BroadcastChannel to message the dashboard
+      // Dashboard will handle opening the file tab
       const channel = new BroadcastChannel('agent-farm');
       channel.postMessage({
         type: 'openFile',
         path: path,
         line: line
       });
-
-      // Also call the API to ensure file tab is created
-      try {
-        await fetch('/api/tabs/file', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: path })
-        });
-      } catch (e) {
-        console.error('Failed to open file via API:', e);
-      }
 
       // Close this window/tab after a short delay
       setTimeout(() => {

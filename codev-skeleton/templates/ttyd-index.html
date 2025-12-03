@@ -45,8 +45,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.8.0/lib/addon-fit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.9.0/lib/addon-web-links.min.js"></script>
   <script>
-    // Configuration - matches ttyd's expected behavior
-    const DASHBOARD_PORT = 4200;
+    // Configuration - derive dashboard port from current port
+    // Port layout: dashboard=base+0, architect=base+1, builders=base+10-29, utils=base+30-49
+    // So dashboard port = floor(currentPort / 100) * 100
+    const currentPort = parseInt(window.location.port, 10) || 80;
+    const DASHBOARD_PORT = Math.floor(currentPort / 100) * 100;
 
     // File path patterns for link detection
     const FILE_PATH_PATTERNS = [
@@ -175,13 +178,15 @@
     // Open file in dashboard
     function openFileInDashboard(filePath, lineNumber) {
       // Build URL for the dashboard's open-file endpoint
-      let url = `http://localhost:${DASHBOARD_PORT}/open-file?path=${encodeURIComponent(filePath)}`;
+      // Include source port so server can resolve relative paths correctly for builders
+      let url = `http://localhost:${DASHBOARD_PORT}/open-file?path=${encodeURIComponent(filePath)}&sourcePort=${currentPort}`;
       if (lineNumber) {
         url += `&line=${lineNumber}`;
       }
 
       // Open in new tab/window - the page will communicate back to dashboard
-      window.open(url, '_blank');
+      // Use noopener for security (prevents opener hijacking)
+      window.open(url, '_blank', 'noopener');
     }
 
     // Open terminal

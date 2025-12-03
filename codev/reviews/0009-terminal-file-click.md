@@ -6,7 +6,7 @@
 - **Date**: 2025-12-03
 - **Specification**: [0009-terminal-file-click.md](../specs/0009-terminal-file-click.md)
 - **Plan**: [0009-terminal-file-click.md](../plans/0009-terminal-file-click.md)
-- **Status**: needs-fixes
+- **Status**: completed
 
 ## Implementation Summary
 Implemented clickable file paths in terminal output that open files in the annotation viewer tab. The solution uses a custom xterm.js client (ttyd-index.html) with a link provider that detects file paths, communicates via BroadcastChannel to the dashboard, which then opens the file in the annotation viewer.
@@ -107,14 +107,21 @@ Implemented clickable file paths in terminal output that open files in the annot
 - **End-only consultation**: Caught significant issues (hardcoded port, builder paths) that would have been missed
 
 ## Follow-Up Actions
-- [ ] Fix hardcoded dashboard port (derive from window.location or inject)
-- [ ] Fix builder worktree path resolution (pass base path context)
-- [ ] Remove duplicate fetch call from popup
-- [ ] Add HTML escaping for filePath in /open-file response
-- [ ] Add noopener to window.open
+- [x] Fix hardcoded dashboard port (derive from window.location) - FIXED
+- [x] Fix builder worktree path resolution (pass sourcePort, lookup builder) - FIXED
+- [x] Remove duplicate fetch call from popup - FIXED
+- [x] Add HTML escaping for filePath in /open-file response - FIXED
+- [x] Add noopener to window.open - FIXED
 - [ ] (Optional) Extend regex for more file types
 
 ## Conclusion
-The core implementation achieves the spec's goals - file paths are clickable and open in the annotation viewer. However, multi-agent consultation revealed critical issues with port configuration and builder path resolution that need to be addressed before the feature works correctly in all scenarios. TICK was appropriate for this task size, and the end-only consultation effectively caught issues that would have caused problems in production use.
+The core implementation achieves the spec's goals - file paths are clickable and open in the annotation viewer. Multi-agent consultation revealed critical issues with port configuration and builder path resolution that were immediately addressed. TICK was appropriate for this task size, and the end-only consultation effectively caught issues that would have caused problems in production use.
 
-**Recommendation**: Mark as needs-fixes and address the critical issues (hardcoded port, builder path resolution) before merging.
+All critical issues identified by consultation have been fixed:
+- Dashboard port is now derived dynamically from current port
+- Builder worktree paths are resolved correctly via sourcePort lookup
+- Duplicate API calls removed
+- HTML escaping added for security
+- noopener added to window.open
+
+**Recommendation**: Ready for merge.

@@ -48,17 +48,33 @@
     // Configuration - derive dashboard port from current port
     // Port layout: dashboard=base+0, architect=base+1, builders=base+10-29, utils=base+30-49
     // So dashboard port = floor(currentPort / 100) * 100
-    const currentPort = parseInt(window.location.port, 10) || 80;
-    const DASHBOARD_PORT = Math.floor(currentPort / 100) * 100;
+    //
+    // Note: This heuristic assumes direct access to ttyd ports. If running behind a
+    // reverse proxy that changes ports, file click links may not work correctly.
+    const portString = window.location.port;
+    const currentPort = portString ? parseInt(portString, 10) : 0;
+    // If port is empty/0 (default HTTP/HTTPS) or calculation gives 0, use default 4200
+    // NaN check: NaN !== NaN is true, so (currentPort !== currentPort) detects NaN
+    const calculatedPort = (currentPort && currentPort === currentPort)
+      ? Math.floor(currentPort / 100) * 100
+      : 4200;
+    const DASHBOARD_PORT = calculatedPort || 4200;
 
     // File path patterns for link detection
+    // Note: Paths are resolved against project root (or builder worktree for builders).
+    // Shell CWD changes (e.g., after `cd src`) are NOT tracked - relative paths always
+    // resolve from the root. This is a known limitation.
+    const FILE_EXTENSIONS = 'ts|tsx|js|jsx|mjs|cjs|py|md|json|yaml|yml|sh|bash|html|css|scss|less|go|rs|rb|java|c|cpp|h|hpp|toml|xml|sql|graphql|proto';
+    const SPECIAL_FILES = 'Dockerfile|Makefile|Rakefile|Gemfile|Procfile|Brewfile|\\.gitignore|\\.gitattributes|\\.env|\\.env\\..*|\\.eslintrc|\\.prettierrc';
     const FILE_PATH_PATTERNS = [
       // Relative paths with extensions: ./foo.ts, src/bar.js, dir/file.py
-      /(?:^|[\s'"(\[{])(\.\/?[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss|go|rs|rb|java|c|cpp|h|hpp))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+      new RegExp(`(?:^|[\\s'"(\\[{])(\\.\\/?[\\w\\-./]+\\.(?:${FILE_EXTENSIONS}))(?::(\\d+)(?::(\\d+))?)?(?=[\\s'")\\\]}:,]|$)`, 'g'),
       // src/ or codev/ paths: src/index.ts, codev/specs/0001.md
-      /(?:^|[\s'"(\[{])((?:src|lib|codev|agent-farm|tests?)\/[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+      new RegExp(`(?:^|[\\s'"(\\[{])((?:src|lib|codev|agent-farm|tests?|packages?|apps?)\\/[\\w\\-./]+\\.(?:${FILE_EXTENSIONS}))(?::(\\d+)(?::(\\d+))?)?(?=[\\s'")\\\]}:,]|$)`, 'g'),
       // Absolute paths: /Users/foo/bar.ts
-      /(?:^|[\s'"(\[{])(\/[\w\-./]+\.(?:ts|tsx|js|jsx|py|md|json|yaml|yml|sh|bash|html|css|scss|go|rs))(?::(\d+)(?::(\d+))?)?(?=[\s'")\]}:,]|$)/g,
+      new RegExp(`(?:^|[\\s'"(\\[{])(\\/[\\w\\-./]+\\.(?:${FILE_EXTENSIONS}))(?::(\\d+)(?::(\\d+))?)?(?=[\\s'")\\\]}:,]|$)`, 'g'),
+      // Special files without extensions: Dockerfile, Makefile, .gitignore, etc.
+      new RegExp(`(?:^|[\\s'"(\\[{])(\\.?\\/?)?((?:[\\w\\-./]+\\/)?(?:${SPECIAL_FILES}))(?=[\\s'")\\\]}:,]|$)`, 'g'),
     ];
 
     // Extract file path matches from text

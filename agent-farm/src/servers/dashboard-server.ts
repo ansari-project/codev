@@ -257,7 +257,7 @@ function parseJsonBody(req: http.IncomingMessage, maxSize = 1024 * 1024): Promis
 }
 
 // Validate path is within project root (prevent path traversal)
-// Handles URL-encoded dots (%2e) and other encodings
+// Handles URL-encoded dots (%2e), symlinks, and other encodings
 function validatePathWithinProject(filePath: string): string | null {
   // First decode any URL encoding to catch %2e%2e (encoded ..)
   let decodedPath: string;
@@ -276,9 +276,24 @@ function validatePathWithinProject(filePath: string): string | null {
   // Normalize to remove any .. or . segments
   const normalizedPath = path.normalize(resolvedPath);
 
-  // Check if path starts with project root
+  // First check normalized path (for paths that don't exist yet)
   if (!normalizedPath.startsWith(projectRoot + path.sep) && normalizedPath !== projectRoot) {
     return null; // Path escapes project root
+  }
+
+  // If file exists, resolve symlinks to prevent symlink-based path traversal
+  // An attacker could create a symlink within the repo pointing outside
+  if (fs.existsSync(normalizedPath)) {
+    try {
+      const realPath = fs.realpathSync(normalizedPath);
+      if (!realPath.startsWith(projectRoot + path.sep) && realPath !== projectRoot) {
+        return null; // Symlink target escapes project root
+      }
+      return realPath;
+    } catch {
+      // realpathSync failed (broken symlink, permissions, etc.)
+      return null;
+    }
   }
 
   return normalizedPath;

@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""Consult tool - wrapper for gemini-cli and codex CLI.
+
+Provides a unified interface for multi-agent consultation via external AI CLIs.
+Each invocation is stateless (fresh process).
+
+Usage:
+    consult gemini "Review this design"
+    consult codex "What do you think of this API?"
+    consult pro "Review this"      # alias for gemini
+    consult gpt "Review this"      # alias for codex
+    echo "Review this" | consult pro
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+try:
+    import typer
+except ImportError:
+    print("Error: typer not installed. Run: pip install typer", file=sys.stderr)
+    sys.exit(1)
+
+app = typer.Typer(
+    help="Consult an external AI model for a second opinion.",
+    add_completion=False,
+)
+
+# Find the codev root directory (look for codev/roles/consultant.md)
+def find_codev_root() -> Path:
+    """Find the codev root directory by walking up from cwd."""
+    current = Path.cwd()
+    for parent in [current] + list(current.parents):
+        role_file = parent / "codev" / "roles" / "consultant.md"
+        if role_file.exists():
+            return parent
+    return current  # Fallback to cwd
+
+
+CODEV_ROOT = find_codev_root()
+ROLE_FILE = CODEV_ROOT / "codev" / "roles" / "consultant.md"
+LOG_DIR = CODEV_ROOT / ".consult"
+
+# Model aliases
+MODEL_MAP = {
+    "pro": "gemini",
+    "gpt": "codex",
+}
+
+
+def get_role() -> str:
+    """Read the consultant role definition."""
+    if not ROLE_FILE.exists():
+        typer.echo(f"Error: Role file not found: {ROLE_FILE}", err=True)
+        typer.echo("Are you in a codev-enabled project?", err=True)
+        raise typer.Exit(1)
+    return ROLE_FILE.read_text()
+
+
+def log_query(model: str, query: str) -> None:
+    """Log consultation to .consult/history.log."""
+    try:
+        LOG_DIR.mkdir(exist_ok=True)
+        log_file = LOG_DIR / "history.log"
+        timestamp = datetime.now().isoformat()
+        # Truncate long queries for log readability
+        query_preview = query[:100].replace("\n", " ")
+        if len(query) > 100:
+            query_preview += "..."
+        with open(log_file, "a") as f:
+            f.write(f"{timestamp} model={model} query={query_preview}\n")
+    except Exception:
+        # Logging failure should not block consultation
+        pass
+
+
+@app.command()
+def consult(
+    model: str = typer.Argument(
+        ..., help="Model: gemini, codex (or aliases: pro, gpt)"
+    ),
+    query: str = typer.Argument(
+        None, help="Query (or pipe via stdin)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-n", help="Print command without executing"
+    ),
+) -> None:
+    """Consult an external model for a second opinion.
+
+    Examples:
+        consult gemini "Review this architecture"
+        consult codex "What's wrong with this code?"
+        echo "Review this" | consult pro
+    """
+    # Handle stdin
+    if query is None:
+        if not sys.stdin.isatty():
+            query = sys.stdin.read().strip()
+            if not query:
+                typer.echo("Error: Empty input from stdin", err=True)
+                raise typer.Exit(1)
+        else:
+            typer.echo("Error: No query provided", err=True)
+            typer.echo("Usage: consult <model> <query>", err=True)
+            raise typer.Exit(1)
+
+    role = get_role()
+
+    # Resolve model aliases
+    resolved = MODEL_MAP.get(model.lower(), model.lower())
+
+    # Build command with autonomous mode flags
+    # Track temp file for cleanup
+    temp_system_file = None
+
+    if resolved == "gemini":
+        if not shutil.which("gemini"):
+            typer.echo(
+                "Error: gemini-cli not found.\n"
+                "Install: https://github.com/google-gemini/gemini-cli",
+                err=True,
+            )
+            raise typer.Exit(1)
+        # gemini-cli uses GEMINI_SYSTEM_MD env var pointing to a file
+        # Create a temp file with the role content
+        temp_system_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        )
+        temp_system_file.write(role)
+        temp_system_file.close()
+        cmd = ["gemini", "--yolo", query]
+        env = {"GEMINI_SYSTEM_MD": temp_system_file.name}
+    elif resolved == "codex":
+        if not shutil.which("codex"):
+            typer.echo(
+                "Error: codex not found.\n"
+                "Install: npm install -g @openai/codex",
+                err=True,
+            )
+            raise typer.Exit(1)
+        cmd = ["codex", "--full-auto", query]
+        env = {"CODEX_SYSTEM_PROMPT": role}
+    else:
+        typer.echo(
+            f"Unknown model: {model}\n"
+            f"Available: gemini, codex, pro, gpt",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    if dry_run:
+        typer.echo(f"Command: {' '.join(cmd)}")
+        if env:
+            for key, value in env.items():
+                # Show truncated env var for long values
+                if key == "GEMINI_SYSTEM_MD":
+                    typer.echo(f"Env: {key}=<temp file with consultant role>")
+                else:
+                    preview = value[:50] + "..." if len(value) > 50 else value
+                    typer.echo(f"Env: {key}={preview}")
+        # Clean up temp file if created
+        if temp_system_file:
+            os.unlink(temp_system_file.name)
+        raise typer.Exit(0)
+
+    log_query(resolved, query)
+
+    # Execute with passthrough stdio, handle Ctrl+C gracefully
+    full_env = {**os.environ, **(env or {})}
+    try:
+        result = subprocess.run(cmd, env=full_env)
+        raise typer.Exit(result.returncode)
+    except KeyboardInterrupt:
+        typer.echo("\nInterrupted", err=True)
+        raise typer.Exit(130)
+    finally:
+        # Clean up temp file if created
+        if temp_system_file:
+            try:
+                os.unlink(temp_system_file.name)
+            except Exception:
+                pass
+
+
+if __name__ == "__main__":
+    app()

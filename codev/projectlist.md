@@ -218,7 +218,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0013"
     title: "Document OS Dependencies"
     summary: "Clarify and document all operating system dependencies required to run agent-farm"
-    status: planned
+    status: integrated
     priority: medium
     release: "v1.0.0"
     files:
@@ -227,21 +227,21 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [documentation, installation]
-    notes: "TICK protocol. Document tmux, ttyd, node, git with versions. Add check-env script. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. codev-doctor (bash) + deps.ts (TypeScript). PR 32 merged 2025-12-04. Consulted GPT-5 and Gemini Pro."
 
   - id: "0015"
     title: "Cleanup Protocol"
-    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
-    status: specified
+    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Index"
+    status: planned
     priority: medium
     release: "v1.0.0"
     files:
       spec: codev/specs/0015-cleanup-protocol.md
-      plan: null
+      plan: codev/plans/0015-cleanup-protocol.md
       review: null
     dependencies: []
     tags: [protocols, maintenance]
-    notes: "SPIDER protocol. CRITICAL: Needs dry-run mode and soft delete. High data loss risk if careless. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. Four phases: AUDIT→PRUNE→VALIDATE→INDEX. Dry-run default, soft-delete with restore.sh, 30-day retention. Consulted GPT-5 and Gemini Pro."
 
   - id: "0019"
     title: "Tab Bar Status Indicators"
@@ -327,6 +327,34 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: ["0013"]
     tags: [infrastructure, onboarding]
     notes: "Depends on 0013 to define what goes in the container. Consider multi-stage build for size."
+
+  - id: "0026"
+    title: "Annotation Viewer Improvements"
+    summary: "UX improvements to annotation viewer: wider text boxes, triple-return to save"
+    status: conceived
+    priority: low
+    release: null
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0007"]
+    tags: [ui, dashboard]
+    notes: "Wider annotation boxes for readability. Triple-return (Enter x3) as save shortcut."
+
+  - id: "0027"
+    title: "Architecture Documenter as Protocol"
+    summary: "Evaluate whether architecture-documenter should be a protocol rather than a subagent"
+    status: conceived
+    priority: low
+    release: null
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: []
+    tags: [architecture, protocols, agents]
+    notes: "Currently a Claude Code subagent. Consider if DOCUMENT protocol would be more appropriate and portable across AI CLIs."
 ```
 
 ---
@@ -533,7 +561,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0026** - Reserve this number for your next project
+**0028** - Reserve this number for your next project
 
 ---
 

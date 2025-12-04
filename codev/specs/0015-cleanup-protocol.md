@@ -30,7 +30,7 @@ A **CLEANUP protocol** with defined phases:
 1. **AUDIT**: Identify dead code, unused deps, stale docs
 2. **PRUNE**: Remove identified cruft
 3. **VALIDATE**: Run tests, verify nothing broke
-4. **SYNC**: Update architecture docs, sync CLAUDE.md ↔ AGENTS.md
+4. **SYNC**: Update architecture docs, sync CLAUDE.md ↔ AGENTS.md ↔ README.md
 
 ## Success Criteria
 
@@ -51,13 +51,22 @@ A **CLEANUP protocol** with defined phases:
 - Identify stale documentation (references non-existent files/functions)
 - List orphaned test files
 
+- Audit test infrastructure:
+  - Do all tests pass?
+  - Are there redundant or low-ROI tests to prune?
+  - Are there orphaned test fixtures?
+
 **Subagents**: `dead-code-auditor` (new), static analysis tools
 
 **Exit Criteria**: Audit report generated listing all identified issues
 
+**Output**: Audit report saved to `codev/cleanup/audit-YYYY-MM-DD.md`
+
 ### Phase 2: PRUNE
 
 **Purpose**: Remove identified cruft
+
+**Input**: Audit report from Phase 1
 
 **Activities**:
 - Delete dead code (with confirmation)

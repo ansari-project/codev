@@ -9,11 +9,15 @@
 
 ## Problem Statement
 
-Agent-farm requires several OS-level dependencies that aren't clearly documented:
+Codev requires several OS-level dependencies that aren't clearly documented:
 - tmux (terminal multiplexer)
 - ttyd (web terminal)
 - Node.js (runtime)
 - git (worktrees)
+- Python 3 (consult tool, scripts)
+- Claude Code CLI (primary AI agent)
+- Gemini CLI (consultation)
+- Codex CLI (consultation)
 
 Users often encounter cryptic errors when dependencies are missing.
 
@@ -33,11 +37,13 @@ Users often encounter cryptic errors when dependencies are missing.
 
 ## Success Criteria
 
-- [ ] README has "Prerequisites" section with all dependencies
+- [ ] README has "Prerequisites" section with all dependencies for full codev environment
 - [ ] Installation commands for macOS (brew) and Linux (apt/dnf)
 - [ ] Version requirements documented
-- [ ] `af start` checks dependencies and shows helpful errors
-- [ ] `af doctor` command to verify installation (optional)
+- [ ] `af start` checks core dependencies (tmux, ttyd, node, git)
+- [ ] `codev doctor` command to verify full installation (af + consult + AI CLIs)
+- [ ] INSTALL.md uses `codev doctor` for verification step
+- [ ] Clear guidance on optional vs required dependencies (e.g., only need one AI CLI to start)
 
 ## Technical Approach
 
@@ -46,7 +52,9 @@ Users often encounter cryptic errors when dependencies are missing.
 ```markdown
 ## Prerequisites
 
-Agent Farm requires the following:
+Codev requires the following:
+
+### Core Dependencies (required)
 
 | Dependency | Version | macOS | Ubuntu/Debian | Purpose |
 |------------|---------|-------|---------------|---------|
@@ -54,6 +62,15 @@ Agent Farm requires the following:
 | tmux | >= 3.0 | `brew install tmux` | `apt install tmux` | Terminal sessions |
 | ttyd | >= 1.7 | `brew install ttyd` | See below | Web terminal |
 | git | >= 2.5 | (pre-installed) | `apt install git` | Worktrees |
+| Python | >= 3.10 | `brew install python` | `apt install python3` | Consult tool |
+
+### AI CLI Dependencies (at least one required)
+
+| Dependency | Installation | Purpose |
+|------------|--------------|---------|
+| Claude Code | `npm install -g @anthropic-ai/claude-code` | Primary AI agent |
+| Gemini CLI | `npm install -g @anthropic-ai/gemini-cli` | Consultation |
+| Codex CLI | `npm install -g @openai/codex` | Consultation |
 
 ### Installing ttyd on Linux
 
@@ -88,13 +105,15 @@ async function checkDependencies(): Promise<void> {
 ## Scope
 
 ### In Scope
-- README documentation
-- Dependency checks in `af start`
+- README documentation for full codev environment
+- Dependency checks in `af start` (core deps)
+- `codev doctor` command for full environment verification
+- INSTALL.md update to use `codev doctor` for verification
 
 ### Out of Scope
-- Automated installation
-- Docker container
-- Windows native support
+- Automated install script (AI agents guide users through installation)
+- Docker container (see project 0025)
+- Windows native support (WSL documented instead)
 
 ## Test Scenarios
 

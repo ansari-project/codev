@@ -218,12 +218,12 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0013"
     title: "Document OS Dependencies"
     summary: "Clarify and document all operating system dependencies required to run agent-farm"
-    status: specified
+    status: planned
     priority: medium
     release: "v1.0.0"
     files:
       spec: codev/specs/0013-document-os-dependencies.md
-      plan: null
+      plan: codev/plans/0013-document-os-dependencies.md
       review: null
     dependencies: []
     tags: [documentation, installation]
@@ -313,6 +313,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [architecture, portability]
     notes: "SPIDER protocol. HIGH COMPLEXITY WARNING: May be premature (YAGNI). One-way transpilation. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0025"
+    title: "Docker Container"
+    summary: "Provide Docker image with all codev dependencies pre-installed for easy onboarding"
+    status: conceived
+    priority: low
+    release: null
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0013"]
+    tags: [infrastructure, onboarding]
+    notes: "Depends on 0013 to define what goes in the container. Consider multi-stage build for size."
 ```
 
 ---
@@ -519,7 +533,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0025** - Reserve this number for your next project
+**0026** - Reserve this number for your next project
 
 ---
 

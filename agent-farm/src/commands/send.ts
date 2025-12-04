@@ -75,13 +75,13 @@ async function sendToBuilder(
     if (!existsSync(options.file)) {
       throw new Error(`File not found: ${options.file}`);
     }
-    const stats = readFileSync(options.file);
-    if (stats.length > MAX_FILE_SIZE) {
+    const fileBuffer = readFileSync(options.file);
+    if (fileBuffer.length > MAX_FILE_SIZE) {
       throw new Error(
-        `File too large: ${stats.length} bytes (max ${MAX_FILE_SIZE} bytes / 48KB)`
+        `File too large: ${fileBuffer.length} bytes (max ${MAX_FILE_SIZE} bytes / 48KB)`
       );
     }
-    fileContent = stats.toString('utf-8');
+    fileContent = fileBuffer.toString('utf-8');
   }
 
   // Format the message
@@ -94,8 +94,13 @@ async function sendToBuilder(
   try {
     // Load into tmux buffer and paste
     const bufferName = `architect-${builderId}`;
-    await run(`tmux load-buffer -b ${bufferName} "${tempFile}"`);
-    await run(`tmux paste-buffer -b ${bufferName} -t "${builder.tmuxSession}"`);
+    await run(`tmux load-buffer -b "${bufferName}" "${tempFile}"`);
+    await run(`tmux paste-buffer -b "${bufferName}" -t "${builder.tmuxSession}"`);
+
+    // Clean up tmux buffer
+    await run(`tmux delete-buffer -b "${bufferName}"`).catch(() => {
+      // Ignore delete-buffer errors (buffer may not exist)
+    });
 
     // Send Enter to submit (unless --no-enter)
     if (!options.noEnter) {

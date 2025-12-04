@@ -81,6 +81,16 @@ export interface SpawnOptions {
   instruction?: string;
 }
 
+export interface SendOptions {
+  builder?: string;     // Builder ID (required unless --all)
+  message?: string;     // Message to send
+  all?: boolean;        // Send to all builders
+  file?: string;        // File to include in message
+  interrupt?: boolean;  // Send Ctrl+C first to ensure prompt is ready
+  raw?: boolean;        // Skip structured formatting
+  noEnter?: boolean;    // Don't send Enter after message
+}
+
 /**
  * User-facing config.json structure
  */

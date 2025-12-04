@@ -151,6 +151,33 @@ program
     }
   });
 
+// Send command - send instructions to running builders
+program
+  .command('send [builder] [message]')
+  .description('Send instructions to a running builder')
+  .option('--all', 'Send to all builders')
+  .option('--file <path>', 'Include file content in message')
+  .option('--interrupt', 'Send Ctrl+C first to interrupt current activity')
+  .option('--raw', 'Skip structured message formatting')
+  .option('--no-enter', 'Do not send Enter after message')
+  .action(async (builder, message, options) => {
+    const { send } = await import('./commands/send.js');
+    try {
+      await send({
+        builder,
+        message,
+        all: options.all,
+        file: options.file,
+        interrupt: options.interrupt,
+        raw: options.raw,
+        noEnter: !options.enter,
+      });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 // Ports command - manage global port registry
 const portsCmd = program
   .command('ports')

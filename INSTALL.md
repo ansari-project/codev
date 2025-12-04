@@ -175,7 +175,24 @@ Key sections to verify:
 
 ### Step 5: Verify Installation
 
-**Quick Verification Checklist**:
+**Run the Doctor Command**:
+
+The easiest way to verify your installation is to run the `codev-doctor` command:
+
+```bash
+./codev/bin/codev-doctor
+```
+
+This checks:
+- **Core dependencies**: Node.js, tmux, ttyd, git, Python (with versions)
+- **AI CLI dependencies**: Claude Code, Gemini CLI, Codex CLI (at least one required)
+- **Python packages**: typer (for the consult tool)
+
+If any required dependencies are missing, the doctor will show install instructions.
+
+**Note**: If the doctor reports missing dependencies, your AI agent can guide you through installing them. Simply share the doctor output and ask for help.
+
+**Quick Codev Structure Verification**:
 ```bash
 # 1. Verify codev/ directory exists
 test -d codev && echo "✓ codev/ directory exists" || echo "✗ FAIL: codev/ directory missing"

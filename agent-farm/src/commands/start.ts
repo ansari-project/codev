@@ -8,6 +8,7 @@ import type { StartOptions, ArchitectState } from '../types.js';
 import { getConfig, ensureDirectories } from '../utils/index.js';
 import { logger, fatal } from '../utils/logger.js';
 import { spawnDetached, commandExists, findAvailablePort, openBrowser, run } from '../utils/shell.js';
+import { checkCoreDependencies } from '../utils/deps.js';
 import { loadState, setArchitect } from '../state.js';
 import { handleOrphanedSessions, warnAboutStaleArtifacts } from '../utils/orphan-handler.js';
 
@@ -53,10 +54,8 @@ export async function start(options: StartOptions = {}): Promise<void> {
   // Ensure directories exist
   await ensureDirectories(config);
 
-  // Check for ttyd
-  if (!(await commandExists('ttyd'))) {
-    fatal('ttyd not found. Install with: brew install ttyd');
-  }
+  // Check all core dependencies (node, tmux, ttyd, git)
+  await checkCoreDependencies();
 
   // Command is passed from index.ts (already resolved via CLI > config.json > default)
   let cmd = options.cmd || 'claude';

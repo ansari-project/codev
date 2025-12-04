@@ -133,16 +133,16 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0020"
     title: "Send Instructions to Builder"
     summary: "Allow architect to send follow-up instructions to running builders via agent-farm CLI or dashboard"
-    status: specified
+    status: integrated
     priority: high
     release: "v1.0.0"
     files:
       spec: codev/specs/0020-send-instructions-to-builder.md
-      plan: null
+      plan: codev/plans/0020-send-instructions-to-builder.md
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, communication]
-    notes: "Uses tmux load-buffer + paste-buffer (not send-keys). Structured message format. Consulted GPT-5 and Gemini Pro."
+    notes: "Merged PR 31. Uses tmux load-buffer + paste-buffer. Structured message format. Consulted GPT-5 and Gemini Pro."
 
   - id: "0021"
     title: "Multi-CLI Builder Support"
@@ -161,7 +161,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0022"
     title: "Consult Tool (Stateless)"
     summary: "Replace zen MCP server with a native stateless consult tool wrapping gemini-cli and codex CLI"
-    status: implementing
+    status: integrated
     priority: high
     release: "v1.0.0"
     files:
@@ -170,7 +170,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [architecture, agents, consultation]
-    notes: "Phase 1: Stateless. Python/Typer implementation. Consultant role as collaborative partner. Consulted GPT-5 and Gemini Pro."
+    notes: "Merged PR 30. Python/Typer CLI at codev/bin/consult. Consultant role as collaborative partner. Consulted GPT-5 and Gemini Pro."
 
   - id: "0024"
     title: "Builder Event Notifications"

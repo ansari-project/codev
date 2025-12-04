@@ -4,5 +4,6 @@ tmp/
 .consult/
 
 # Cleanup protocol artifacts
+# .trash/ contains soft-deleted files (bulk data, not versioned)
 codev/cleanup/.trash/
-codev/cleanup/audit-*.md
+# Note: audit-*.md reports ARE versioned for collaboration and review

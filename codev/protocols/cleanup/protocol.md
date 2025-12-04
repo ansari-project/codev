@@ -40,7 +40,7 @@ CLEANUP operates on specific **categories** of targets. Each audit run should sp
 ## Protocol Phases
 
 ```
-AUDIT ──→ PRUNE ──→ VALIDATE ──→ INDEX
+AUDIT ──→ PRUNE ──→ VALIDATE ──→ SYNC
          ↓ fail      ↓ fail
       ROLLBACK    ROLLBACK
 ```
@@ -166,37 +166,51 @@ After human approval, execute the prune:
 
 ### Soft Delete Strategy
 
-Files are moved (not deleted) to preserve the option to restore:
+**Use git for tracked files** (preferred):
+Git itself provides soft-delete - files can be restored from history at any time.
+
+```bash
+# Remove tracked files (they remain in git history)
+git rm src/utils/old-helper.ts
+git rm tests/old.test.ts
+
+# Commit the removal
+git commit -m "[Cleanup] PRUNE: Remove 2 dead code files"
+
+# If needed later, restore from history
+git checkout HEAD~1 -- src/utils/old-helper.ts
+```
+
+**Use `.trash/` for untracked files only**:
+Untracked files (build artifacts, generated files, temp files) have no git history, so move them to `.trash/` for potential recovery:
 
 ```
-Original: src/utils/old-helper.ts
-Moved to: codev/cleanup/.trash/2025-12-04-1430/src/utils/old-helper.ts
+Original: dist/old-bundle.js (untracked)
+Moved to: codev/cleanup/.trash/2025-12-04-1430/dist/old-bundle.js
 ```
 
 ### Restore Script Generation
 
-Automatically generate `restore.sh` in each trash directory:
+For untracked files moved to `.trash/`, generate `restore.sh`:
 
 ```bash
 #!/bin/bash
 # Restore script for cleanup session 2025-12-04-1430
-# Generated automatically - run from project root
+# For UNTRACKED files only - tracked files use git restore
+# Run from project root
 
 set -e
 
-echo "Restoring 3 files from cleanup session 2025-12-04-1430..."
+echo "Restoring 2 untracked files from cleanup session 2025-12-04-1430..."
 
-mkdir -p "src/utils"
-mv "codev/cleanup/.trash/2025-12-04-1430/src/utils/old-helper.ts" "src/utils/old-helper.ts"
+mkdir -p "dist"
+mv "codev/cleanup/.trash/2025-12-04-1430/dist/old-bundle.js" "dist/old-bundle.js"
 
-mkdir -p "tests"
-mv "codev/cleanup/.trash/2025-12-04-1430/tests/old.test.ts" "tests/old.test.ts"
+mkdir -p "tmp"
+mv "codev/cleanup/.trash/2025-12-04-1430/tmp/cache.json" "tmp/cache.json"
 
-mkdir -p "docs"
-mv "codev/cleanup/.trash/2025-12-04-1430/docs/deprecated.md" "docs/deprecated.md"
-
-echo "Restored 3 files successfully"
-echo "Don't forget to run tests!"
+echo "Restored 2 files successfully"
+echo "For tracked files, use: git checkout HEAD~N -- path/to/file"
 ```
 
 ### Dependency Removal
@@ -212,10 +226,10 @@ pip install -r requirements.txt
 ```
 
 ### Exit Criteria
-- [ ] All approved items moved to `.trash/`
-- [ ] Directory structure preserved in `.trash/`
-- [ ] `restore.sh` generated and executable
-- [ ] Changes committed: `[Cleanup] PRUNE: Move N files to .trash/`
+- [ ] Tracked files removed via `git rm` and committed
+- [ ] Untracked files moved to `.trash/` with directory structure preserved
+- [ ] `restore.sh` generated for untracked files (if any)
+- [ ] Changes committed: `[Cleanup] PRUNE: Remove N files`
 
 ---
 
@@ -262,18 +276,27 @@ pip install -r requirements.txt
 
 If VALIDATE fails:
 
-1. Run the restore script:
+1. **For tracked files** (most common):
+   ```bash
+   # Revert the git rm commit
+   git revert HEAD
+
+   # Or restore specific files
+   git checkout HEAD~1 -- src/utils/old-helper.ts
+   ```
+
+2. **For untracked files** (if any were moved to .trash/):
    ```bash
    ./codev/cleanup/.trash/YYYY-MM-DD-HHMM/restore.sh
    ```
 
-2. Re-run tests to confirm restoration worked
+3. Re-run tests to confirm restoration worked
 
-3. Investigate what was incorrectly identified as dead code
+4. Investigate what was incorrectly identified as dead code
 
-4. Update audit report with false positive notes
+5. Update audit report with false positive notes
 
-5. Create follow-up task to fix audit logic
+6. Create follow-up task to fix audit logic
 
 ### Exit Criteria
 - [ ] All tests pass
@@ -284,9 +307,9 @@ If VALIDATE fails:
 
 ---
 
-## Phase 4: INDEX
+## Phase 4: SYNC
 
-**Purpose**: Update documentation and tracking files to reflect current state.
+**Purpose**: Synchronize documentation and tracking files with the current codebase state.
 
 ### Entry Criteria
 - VALIDATE phase passed
@@ -319,57 +342,127 @@ If VALIDATE fails:
 - [ ] CLAUDE.md and AGENTS.md are synchronized
 - [ ] projectlist.md is accurate
 - [ ] No stale references in documentation
-- [ ] Final commit: `[Cleanup] INDEX: Update documentation`
+- [ ] Final commit: `[Cleanup] SYNC: Update documentation`
 
 ---
 
 ## Retention Policy
 
 ### .trash/ Directory
-- Contents kept for **30 days**
+- **Not version-controlled** (gitignored)
+- Contents kept locally for **30 days**
 - After 30 days, trash directories may be permanently deleted
-- Run periodic cleanup: `find codev/cleanup/.trash -mtime +30 -delete`
+- Before deleting, preview first:
+  ```bash
+  # Preview what will be deleted
+  find codev/cleanup/.trash -mtime +30 -print
+
+  # If safe, delete
+  find codev/cleanup/.trash -mtime +30 -delete
+  ```
 
 ### Audit Reports
-- Kept **indefinitely** in `codev/cleanup/`
+- **Version-controlled** (committed to git)
 - Provides historical record of cleanup activities
-- Useful for understanding past decisions
+- Enables collaboration and code review of cleanup decisions
+- Kept indefinitely in `codev/cleanup/`
 
 ---
 
 ## Rollback Strategy
 
 ### During PRUNE Phase
-If you realize something shouldn't have been moved:
+
+**For tracked files** (before commit):
+```bash
+# Unstage the git rm
+git restore --staged path/to/file
+git restore path/to/file
+```
+
+**For untracked files** (moved to .trash/):
 ```bash
 # Move individual file back
 mv "codev/cleanup/.trash/YYYY-MM-DD-HHMM/path/to/file" "path/to/file"
 ```
 
 ### After VALIDATE Fails
-```bash
-# Full restoration
-./codev/cleanup/.trash/YYYY-MM-DD-HHMM/restore.sh
 
-# Then re-run tests
-npm test
+**For tracked files** (most common):
+```bash
+# Revert the cleanup commit
+git revert HEAD
+
+# Or restore specific files from before the commit
+git checkout HEAD~1 -- path/to/file
 ```
 
-### After INDEX Phase
+**For untracked files**:
+```bash
+./codev/cleanup/.trash/YYYY-MM-DD-HHMM/restore.sh
+```
+
+### After SYNC Phase
+
 If you discover an issue after completing cleanup:
-1. Check if the file is still in `.trash/`
-2. If yes, restore it manually
-3. If no (>30 days), recover from git history:
+
+1. **Tracked files**: Always recoverable from git history
    ```bash
-   git checkout HEAD~N -- path/to/file
+   # Find the commit that removed it
+   git log --all --full-history -- path/to/file
+
+   # Restore from before deletion
+   git checkout <commit>~1 -- path/to/file
    ```
+
+2. **Untracked files**: Check if still in `.trash/` (30-day retention)
+   ```bash
+   ls codev/cleanup/.trash/*/path/to/file
+   ```
+
+---
+
+## Governance Integration
+
+### Spec/Plan/Review Requirements
+
+CLEANUP is an **operational protocol**, not a feature development protocol. It does **not** require the standard spec/plan/review trio:
+
+| Document | Required? | Notes |
+|----------|-----------|-------|
+| Spec | No | CLEANUP follows a fixed process, not a new feature design |
+| Plan | No | The **audit report** serves as the operational plan |
+| Review | No | Lessons are captured in audit report notes, not a separate review |
+| Consultation | No | Human review of audit report is sufficient |
+
+**Exception**: If CLEANUP reveals the need for refactoring or architectural changes, those should follow SPIDER with proper spec/plan/review.
+
+### projectlist.md Updates
+
+During the SYNC phase, update `codev/projectlist.md`:
+
+1. **Mark completed projects as `archived`**:
+   ```markdown
+   | 0003 | Old Feature | archived | - | Removed in cleanup 2025-12-04 |
+   ```
+
+2. **Remove orphaned entries** (projects that were never implemented)
+
+3. **Update notes** to reflect cleanup actions
+
+### Avoiding Conflicts with Active Work
+
+- **Check for open PRs** before starting CLEANUP
+- **Don't run CLEANUP** while feature branches are active
+- Both SPIDER (Review phase) and CLEANUP (SYNC phase) modify AGENTS.md
+- Coordinate with team if multiple agents are working
 
 ---
 
 ## Integration Points
 
 ### With architecture-documenter
-- Called during INDEX phase
+- Called during SYNC phase
 - Updates `codev/resources/arch.md`
 - Agent location: `.claude/agents/architecture-documenter.md`
 
@@ -392,7 +485,7 @@ Use these commit message patterns:
 [Cleanup] AUDIT: Generate cleanup audit report
 [Cleanup] PRUNE: Move N files to .trash/
 [Cleanup] VALIDATE: All tests passing after prune
-[Cleanup] INDEX: Update documentation
+[Cleanup] SYNC: Update documentation
 ```
 
 ---
@@ -406,9 +499,9 @@ Use these commit message patterns:
 - Consider if code might be used dynamically (reflection, eval)
 
 ### During PRUNE
-- Always use soft-delete (never `rm -rf`)
-- Preserve directory structure in `.trash/`
-- Group related files in the same session
+- Use `git rm` for tracked files (history preserved automatically)
+- Use `.trash/` only for untracked files
+- Group related files in the same commit
 - Don't prune and add features in the same commit
 
 ### During VALIDATE
@@ -416,7 +509,7 @@ Use these commit message patterns:
 - Check CI/CD if available
 - Do a manual smoke test for critical paths
 
-### During INDEX
+### During SYNC
 - Let architecture-documenter do heavy lifting
 - Review its changes before committing
 - Don't forget projectlist.md
@@ -429,13 +522,13 @@ Use these commit message patterns:
 
 2. **Skipping VALIDATE**: Always run tests after pruning. "It looked dead" is not validation.
 
-3. **Permanent Deletion**: Never use `rm`. Always soft-delete to `.trash/`.
+3. **Using `rm` for tracked files**: Use `git rm` so history is preserved. Never `rm -rf`.
 
-4. **Pruning During Active Development**: Don't clean up on feature branches.
+4. **Pruning During Active Development**: Don't clean up on feature branches or with pending PRs.
 
-5. **Not Preserving Paths**: The `.trash/` structure must mirror the original for easy restoration.
+5. **Ignoring False Positives**: If audit logic is wrong, fix it. Don't just skip items.
 
-6. **Ignoring False Positives**: If audit logic is wrong, fix it. Don't just skip items.
+6. **Moving tracked files to .trash/**: Use `git rm` for tracked files. Only use `.trash/` for untracked files.
 
 ---
 

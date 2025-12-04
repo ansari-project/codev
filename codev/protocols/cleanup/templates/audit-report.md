@@ -2,9 +2,10 @@
 
 ## Metadata
 - **Date**: YYYY-MM-DD
-- **Project**: [project-name]
-- **Auditor**: [human/agent name]
-- **Categories**: [dead-code, dependencies, docs, tests, temp, metadata]
+- **Project**:
+- **Auditor**:
+- **Categories**: dead-code, dependencies, docs, tests, temp, metadata
+- **Tools Used**:
 
 ## Summary
 
@@ -30,23 +31,27 @@
 
 ### Unused Exports
 
-| Approve | File | Line | Export | Reason |
-|---------|------|------|--------|--------|
-| [ ] | `src/utils/helpers.ts` | 42 | `formatDate()` | Not imported anywhere |
-| [ ] | `src/lib/old.ts` | 15 | `legacyHelper()` | Replaced by newHelper() |
+**Tool**: `npx ts-prune` / `ruff check --select F401` / other
+
+| Approve | File | Line | Export | Tool Output | Owner Decision |
+|---------|------|------|--------|-------------|----------------|
+| | | | | | |
 
 ### Unreachable Code
 
-| Approve | File | Line | Description | Reason |
-|---------|------|------|-------------|--------|
-| [ ] | `src/api/routes.ts` | 100-120 | Dead branch after early return | Condition always false |
+**Tool**: static analysis / manual review
+
+| Approve | File | Line | Description | Tool Output | Owner Decision |
+|---------|------|------|-------------|-------------|----------------|
+| | | | | | |
 
 ### Unused Files
 
-| Approve | File | Reason |
-|---------|------|--------|
-| [ ] | `src/utils/deprecated.ts` | No imports found |
-| [ ] | `src/components/OldWidget.tsx` | Feature was removed |
+**Tool**: `grep -r "import.*from"` analysis / IDE unused file detection
+
+| Approve | File | Tool Output | Owner Decision |
+|---------|------|-------------|----------------|
+| | | | |
 
 ---
 
@@ -54,25 +59,29 @@
 
 ### npm packages
 
-| Approve | Package | Version | Reason |
-|---------|---------|---------|--------|
-| [ ] | `lodash` | 4.17.21 | No imports found |
-| [ ] | `moment` | 2.29.4 | Replaced by date-fns |
+**Tool**: `npx depcheck`
+
+| Approve | Package | Version | Tool Output | Owner Decision |
+|---------|---------|---------|-------------|----------------|
+| | | | | |
 
 ### Python packages
 
-| Approve | Package | Reason |
-|---------|---------|--------|
-| [ ] | `requests` | Using httpx instead |
+**Tool**: `pip-autoremove --list` / `deptry`
+
+| Approve | Package | Tool Output | Owner Decision |
+|---------|---------|-------------|----------------|
+| | | | |
 
 ---
 
 ## Stale Documentation
 
-| Approve | File | Issue | Suggestion |
-|---------|------|-------|------------|
-| [ ] | `docs/api.md` | References deleted `/old-endpoint` | Remove section |
-| [ ] | `README.md` | Mentions removed feature X | Update description |
+**Tool**: manual review / link checker
+
+| Approve | File | Issue | Suggestion | Owner Decision |
+|---------|------|-------|------------|----------------|
+| | | | | |
 
 ---
 
@@ -84,33 +93,37 @@
 
 ### Orphaned Test Files
 
-| Approve | File | Reason |
-|---------|------|--------|
-| [ ] | `tests/old-feature.test.ts` | Tests deleted feature |
-| [ ] | `tests/deprecated.test.ts` | Feature was removed in v2.0 |
+**Tool**: cross-reference with deleted features
+
+| Approve | File | Reason | Owner Decision |
+|---------|------|--------|----------------|
+| | | | |
 
 ### Low-ROI Tests
 
-| Approve | File | Reason |
-|---------|------|--------|
-| [ ] | `tests/trivial.test.ts` | Tests obvious behavior |
-| [ ] | `tests/flaky.test.ts` | Fails intermittently, no value |
+**Tool**: test coverage analysis / flaky test detection
+
+| Approve | File | Reason | Owner Decision |
+|---------|------|--------|----------------|
+| | | | |
 
 ### Orphaned Fixtures
 
-| Approve | File | Reason |
-|---------|------|--------|
-| [ ] | `tests/fixtures/old-data.json` | Used by deleted test |
+**Tool**: grep for fixture usage
+
+| Approve | File | Reason | Owner Decision |
+|---------|------|--------|----------------|
+| | | | |
 
 ---
 
 ## Temporary Files
 
-| Approve | Path | Type | Size |
-|---------|------|------|------|
-| [ ] | `codev/cleanup/.trash/2025-01-01-*` | Old trash | 50MB |
-| [ ] | `.consult/` | Consultation logs | 10MB |
-| [ ] | `dist/` | Build artifacts | 100MB |
+**Tool**: `find` / `du -sh`
+
+| Approve | Path | Type | Size | Owner Decision |
+|---------|------|------|------|----------------|
+| | | | | |
 
 ---
 
@@ -118,39 +131,48 @@
 
 ### projectlist.md
 
-| Approve | Entry | Current Status | Suggested Action |
-|---------|-------|----------------|------------------|
-| [ ] | 0003-old-feature | implementing | Mark as archived |
-| [ ] | 0005-removed | committed | Remove entry |
+| Approve | Entry | Current Status | Suggested Action | Owner Decision |
+|---------|-------|----------------|------------------|----------------|
+| | | | | |
 
 ### AGENTS.md / CLAUDE.md
 
-| Approve | Section | Issue | Suggestion |
-|---------|---------|-------|------------|
-| [ ] | Protocol list | Missing CLEANUP | Add entry |
-| [ ] | Examples | Uses deleted function | Update example |
+| Approve | Section | Issue | Suggestion | Owner Decision |
+|---------|---------|-------|------------|----------------|
+| | | | | |
 
 ### arch.md
 
-| Approve | Section | Issue | Suggestion |
-|---------|---------|-------|------------|
-| [ ] | Directory structure | Lists deleted folder | Update tree |
+| Approve | Section | Issue | Suggestion | Owner Decision |
+|---------|---------|-------|------------|----------------|
+| | | | | |
 
 ---
 
 ## Recommendations
 
 ### High Priority (Should Remove)
-1. [List items that are clearly dead and should be removed]
+1.
 
 ### Medium Priority (Likely Safe)
-1. [List items that are probably safe but review carefully]
+1.
 
 ### Low Priority / Needs Investigation
-1. [List items that might be used dynamically or have unclear status]
+1.
 
 ### Do Not Remove
-1. [List items that were flagged but should be kept, with reason]
+1.
+
+---
+
+## Rollback Notes
+
+If VALIDATE fails, document restoration steps here:
+
+| Item | Restoration Command | Notes |
+|------|---------------------|-------|
+| Tracked files | `git revert HEAD` or `git checkout HEAD~1 -- path/to/file` | |
+| Untracked files | `./codev/cleanup/.trash/YYYY-MM-DD-HHMM/restore.sh` | |
 
 ---
 
@@ -166,4 +188,5 @@
 
 ## Notes
 
-[Add any notes about this audit, false positives encountered, or improvements to audit logic]
+<!-- Add any notes about this audit, false positives encountered, or improvements to audit logic -->
+

@@ -2,15 +2,30 @@
 
 The Architect is the orchestrating agent that manages the overall development process, breaks down work into discrete tasks, spawns Builder agents, and integrates their output.
 
+## Output Formatting
+
+When referencing files that the user may want to review, format them as clickable URLs using the dashboard's open-file endpoint:
+
+```
+# Instead of:
+See codev/specs/0022-consult-tool-stateless.md for details.
+
+# Use:
+See http://localhost:4200/open-file?path=codev/specs/0022-consult-tool-stateless.md for details.
+```
+
+Replace `4200` with the actual dashboard port if different. This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
+
 ## Responsibilities
 
 1. **Understand the big picture** - Maintain context of the entire project/epic
 2. **Maintain the project list** - Track all projects in `codev/projectlist.md`
-3. **Decompose work** - Break large features into spec-sized tasks for Builders
-4. **Spawn Builders** - Create isolated worktrees and assign tasks
-5. **Monitor progress** - Track Builder status, unblock when needed
-6. **Review and integrate** - Merge Builder PRs, run integration tests
-7. **Maintain quality** - Ensure consistency across Builder outputs
+3. **Manage releases** - Group projects into releases, track release lifecycle
+4. **Decompose work** - Break large features into spec-sized tasks for Builders
+5. **Spawn Builders** - Create isolated worktrees and assign tasks
+6. **Monitor progress** - Track Builder status, unblock when needed
+7. **Review and integrate** - Merge Builder PRs, run integration tests
+8. **Maintain quality** - Ensure consistency across Builder outputs
 
 ## Project Tracking
 
@@ -33,6 +48,40 @@ cat codev/projectlist.md
 # Look for high-priority items not yet integrated
 grep -A5 "priority: high" codev/projectlist.md
 ```
+
+## Release Management
+
+The Architect manages releases - deployable units that group related projects.
+
+### Release Lifecycle
+
+```
+planning → active → released → archived
+```
+
+- **planning**: Defining scope, assigning projects to the release
+- **active**: The current development focus (only one release should be active)
+- **released**: All projects integrated and deployed
+- **archived**: Historical, no longer maintained
+
+### Release Responsibilities
+
+1. **Create releases** - Define new releases with semantic versions (v1.0.0, v1.1.0, v2.0.0)
+2. **Assign projects** - Set each project's `release` field when scope is determined
+3. **Track progress** - Monitor which projects are complete within a release
+4. **Transition status** - Move releases through the lifecycle as work progresses
+5. **Document releases** - Add release notes summarizing the release goals
+
+### Release Guidelines
+
+- Only **one release** should be `active` at a time
+- Projects should be assigned to a release before reaching `implementing` status
+- All projects in a release must be `integrated` before the release can be marked `released`
+- **Unassigned integrated projects** - Some work (ad-hoc fixes, documentation, minor improvements) may not belong to any release. These go in the "Integrated (Unassigned)" section with `release: null`
+- Use semantic versioning:
+  - **Major** (v2.0.0): Breaking changes or major new capabilities
+  - **Minor** (v1.1.0): New features, backward compatible
+  - **Patch** (v1.0.1): Bug fixes only
 
 ## Execution Strategy: SPIDER
 

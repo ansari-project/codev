@@ -2,6 +2,16 @@
 
 Centralized tracking of all projects with status, priority, and dependencies.
 
+## Document Organization
+
+**Active projects appear first, integrated projects appear last (grouped by release).**
+
+The file is organized as:
+1. **Active Projects** (conceived → committed) - sorted by priority, then ID
+2. **Releases** (each containing its integrated projects)
+3. **Integrated (Unassigned)** - completed work not associated with any release
+4. **Terminal Projects** (abandoned, on-hold)
+
 ## Project Lifecycle
 
 Every project goes through stages. Not all projects reach completion:
@@ -19,7 +29,26 @@ Every project goes through stages. Not all projects reach completion:
 - **abandoned** - Project canceled/rejected, will not be implemented (explain reason in notes)
 - **on-hold** - Temporarily paused, may resume later (explain reason in notes)
 
-## Format
+## Release Lifecycle
+
+Releases group projects into deployable units with semantic versioning:
+
+**Release States:**
+1. **planning** - Release scope being defined, projects being assigned
+2. **active** - Release is the current development focus
+3. **released** - All projects integrated and deployed to production
+4. **archived** - Historical release, no longer actively maintained
+
+```yaml
+releases:
+  - version: "v1.0.0"           # Semantic version (required)
+    name: "Optional codename"   # Optional friendly name
+    status: planning|active|released|archived
+    target_date: "2025-Q1"      # Optional target (quarter or date)
+    notes: ""                   # Release goals or summary
+```
+
+## Project Format
 
 ```yaml
 projects:
@@ -28,6 +57,7 @@ projects:
     summary: "One-sentence description of what this project does"
     status: conceived|specified|planned|implementing|implemented|committed|integrated|abandoned|on-hold
     priority: high|medium|low
+    release: "v0.2.0"       # Which release this belongs to (null if unassigned)
     files:
       spec: codev/specs/NNNN-name.md       # Required after "specified"
       plan: codev/plans/NNNN-name.md       # Required after "planned"
@@ -80,185 +110,18 @@ Use consistent tags across projects for filtering:
 
 ---
 
-## Projects
+## Active Projects
+
+Projects currently in development (conceived through committed), sorted by priority then ID.
 
 ```yaml
-projects:
-  - id: "0001"
-    title: "Test Infrastructure"
-    summary: "BATS-based test framework for Codev installation and protocols"
-    status: integrated
-    priority: high
-    files:
-      spec: codev/specs/0001-test-infrastructure.md
-      plan: codev/plans/0001-test-infrastructure.md
-      review: codev/reviews/0001-test-infrastructure.md
-    dependencies: []
-    tags: [testing, infrastructure]
-    notes: "64 tests passing, pre-commit hook installed"
-
-  - id: "0002"
-    title: "Architect-Builder Pattern"
-    summary: "Multi-agent orchestration with git worktrees for parallel development"
-    status: integrated
-    priority: high
-    files:
-      spec: codev/specs/0002-architect-builder.md
-      plan: codev/plans/0002-architect-builder.md
-      review: null
-    dependencies: []
-    tags: [architecture, agents]
-    notes: "Bash CLI implemented, superseded by 0005 TypeScript CLI"
-
-  - id: "0003"
-    title: "End of Day Reporter"
-    summary: "Automated summary of development activity for daily standups"
-    status: on-hold
-    priority: low
-    files:
-      spec: codev/specs/0003-end-of-day-reporter.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [automation, reporting]
-    notes: "Paused per project owner"
-
-  - id: "0004"
-    title: "Dashboard Nav UI"
-    summary: "Enhanced navigation and UX for the agent-farm dashboard"
-    status: integrated
-    priority: medium
-    files:
-      spec: codev/specs/0004-dashboard-nav-ui.md
-      plan: codev/plans/0004-dashboard-nav-ui.md
-      review: null
-    dependencies: ["0005"]
-    tags: [ui, dashboard]
-    notes: "Integrated with TypeScript CLI"
-
-  - id: "0005"
-    title: "TypeScript CLI"
-    summary: "Migrate architect CLI from bash to TypeScript with npm distribution"
-    status: integrated
-    priority: high
-    files:
-      spec: codev/specs/0005-typescript-cli.md
-      plan: codev/plans/0005-typescript-cli.md
-      review: codev/reviews/0005-typescript-cli.md
-    dependencies: ["0002"]
-    tags: [cli, typescript, npm]
-    notes: "Published as agent-farm@0.1.0 to npm"
-
-  - id: "0006"
-    title: "Tutorial Mode"
-    summary: "Interactive onboarding for new Codev users"
-    status: specified
-    priority: low
-    files:
-      spec: codev/specs/0006-tutorial-mode.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [documentation, onboarding]
-    notes: ""
-```
-
-  - id: "0007"
-    title: "Split-Pane Dashboard"
-    summary: "Architect always visible on left, tabbed interface on right for files/builders/shells"
-    status: integrated
-    priority: medium
-    files:
-      spec: codev/specs/0007-split-pane-dashboard.md
-      plan: codev/plans/0007-split-pane-dashboard.md
-      review: null
-    dependencies: ["0005"]
-    tags: [ui, dashboard]
-    notes: "Supersedes 0004 left-nav approach"
-
-  - id: "0008"
-    title: "Architecture Consolidation"
-    summary: "Eliminate brittleness by consolidating triple implementation to single TypeScript source"
-    status: integrated
-    priority: high
-    files:
-      spec: codev/specs/0008-architecture-consolidation.md
-      plan: codev/plans/0008-architecture-consolidation.md
-      review: codev/reviews/0008-architecture-consolidation.md
-    dependencies: ["0005"]
-    tags: [architecture, cli, refactoring]
-    notes: "Completed 2025-12-03. Single TypeScript CLI, config.json, global port registry with file locking"
-
-  - id: "0009"
-    title: "Terminal File Click to Annotate"
-    summary: "Click on file paths in terminal output to open them in the annotation viewer"
-    status: integrated
-    priority: medium
-    files:
-      spec: codev/specs/0009-terminal-file-click.md
-      plan: codev/plans/0009-terminal-file-click.md
-      review: codev/reviews/0009-terminal-file-click.md
-    dependencies: ["0007"]
-    tags: [ui, dashboard, dx]
-    notes: "Uses ttyd's native http link handling. Fixed annotation server startup wait. Deleted broken custom xterm.js templates."
-
-  - id: "0010"
-    title: "Annotation Editor"
-    summary: "Add edit button to annotation viewer with basic inline editing capabilities"
-    status: specified
-    priority: medium
-    files:
-      spec: codev/specs/0010-annotation-editor.md
-      plan: null
-      review: null
-    dependencies: ["0007"]
-    tags: [ui, dashboard, editing]
-    notes: "TICK protocol. Textarea swap approach. Backend /save endpoint already exists. Consulted GPT-5 and Gemini Pro."
-
-  - id: "0011"
-    title: "Multi-Instance Support"
-    summary: "Better support for running multiple agent-farm instances with directory-aware titles and meta-dashboard"
-    status: specified
-    priority: medium
-    files:
-      spec: codev/specs/0011-multi-instance-support.md
-      plan: null
-      review: null
-    dependencies: ["0007"]
-    tags: [ui, dashboard, multi-project]
-    notes: "TICK protocol. Directory name in title. Handle long path truncation. Consulted GPT-5 and Gemini Pro."
-
-  - id: "0012"
-    title: "Hide tmux Status Bar"
-    summary: "Cleaner dashboard UI by removing the tmux status bar from embedded terminals"
-    status: specified
-    priority: low
-    files:
-      spec: codev/specs/0012-hide-tmux-status-bar.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [ui, dashboard]
-    notes: "TICK protocol. tmux set-option status off. Add toggle for debugging. Consulted GPT-5 and Gemini Pro."
-
-  - id: "0013"
-    title: "Document OS Dependencies"
-    summary: "Clarify and document all operating system dependencies required to run agent-farm"
-    status: specified
-    priority: medium
-    files:
-      spec: codev/specs/0013-document-os-dependencies.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [documentation, installation]
-    notes: "TICK protocol. Document tmux, ttyd, node, git with versions. Add check-env script. Consulted GPT-5 and Gemini Pro."
-
+# High Priority
   - id: "0014"
     title: "Flexible Builder Spawning"
     summary: "Generalize spawn command to accept natural language instructions, not just project specs"
     status: specified
     priority: high
+    release: "v1.0.0"
     files:
       spec: codev/specs/0014-flexible-builder-spawning.md
       plan: null
@@ -267,76 +130,12 @@ projects:
     tags: [cli, agents, architecture]
     notes: "Supports: spec mode, task mode (with --files), protocol mode (with --args), shell mode. Consulted GPT-5 and Gemini Pro."
 
-  - id: "0015"
-    title: "Cleanup Protocol"
-    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
-    status: specified
-    priority: medium
-    files:
-      spec: codev/specs/0015-cleanup-protocol.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [protocols, maintenance]
-    notes: "SPIDER protocol. CRITICAL: Needs dry-run mode and soft delete. High data loss risk if careless. Consulted GPT-5 and Gemini Pro."
-
-  - id: "0016"
-    title: "Clarify Builder Role Definition"
-    summary: "Resolved: Kept 'Builder' name but clarified it encompasses remodel, repair, maintain - not just new construction"
-    status: integrated
-    priority: medium
-    files:
-      spec: null
-      plan: null
-      review: null
-    dependencies: []
-    tags: [documentation, naming]
-    notes: "Decided to keep 'Builder' after consulting Pro and Codex. Updated codev/resources/conceptual-model.md with expanded definition. 'Building' = build, remodel, repair, extend, validate, document, maintain."
-
-  - id: "0017"
-    title: "Platform Portability Layer"
-    summary: "Implement transpilation from .codev/ source to platform-specific configs (CLAUDE.md, GEMINI.md, AGENTS.md)"
-    status: specified
-    priority: low
-    files:
-      spec: codev/specs/0017-platform-portability-layer.md
-      plan: null
-      review: null
-    dependencies: []
-    tags: [architecture, portability]
-    notes: "SPIDER protocol. HIGH COMPLEXITY WARNING: May be premature (YAGNI). One-way transpilation. Consulted GPT-5 and Gemini Pro."
-
-  - id: "0018"
-    title: "Annotation Server Reliability"
-    summary: "Fix template path and stale process detection in annotation server"
-    status: integrated
-    priority: medium
-    files:
-      spec: null
-      plan: null
-      review: null
-    dependencies: ["0008"]
-    tags: [bugfix, dashboard]
-    notes: "Fixed: (1) Template path now looks in codev/templates/ instead of deleted agent-farm/templates/, (2) Dashboard API now verifies annotation processes are alive before returning 'existing' entries, cleans up stale state automatically."
-
-  - id: "0019"
-    title: "Tab Bar Status Indicators"
-    summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
-    status: specified
-    priority: medium
-    files:
-      spec: codev/specs/0019-tab-bar-status-indicators.md
-      plan: null
-      review: null
-    dependencies: ["0007"]
-    tags: [ui, dashboard]
-    notes: "TICK protocol. Color dots with accessibility (shapes/tooltips for colorblind). Consulted GPT-5 and Gemini Pro."
-
   - id: "0020"
     title: "Send Instructions to Builder"
     summary: "Allow architect to send follow-up instructions to running builders via agent-farm CLI or dashboard"
     status: specified
     priority: high
+    release: "v1.0.0"
     files:
       spec: codev/specs/0020-send-instructions-to-builder.md
       plan: null
@@ -350,6 +149,7 @@ projects:
     summary: "Support spawning builders with Gemini CLI or Codex CLI in addition to Claude Code"
     status: specified
     priority: high
+    release: null
     files:
       spec: codev/specs/0021-multi-cli-builder-support.md
       plan: null
@@ -358,9 +158,368 @@ projects:
     tags: [cli, agents, portability]
     notes: "CLI Adapter pattern. CRITICAL: Must validate agentic capabilities - many CLIs are text-only. Consider adding Aider. Consulted GPT-5 and Gemini Pro."
 
+  - id: "0022"
+    title: "Consult Tool (Stateless)"
+    summary: "Replace zen MCP server with a native stateless consult tool wrapping gemini-cli and codex CLI"
+    status: implementing
+    priority: high
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0022-consult-tool-stateless.md
+      plan: codev/plans/0022-consult-tool-stateless.md
+      review: null
+    dependencies: []
+    tags: [architecture, agents, consultation]
+    notes: "Phase 1: Stateless. Python/Typer implementation. Consultant role as collaborative partner. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0024"
+    title: "Builder Event Notifications"
+    summary: "Notify builders via tmux send-keys when events occur (PR review completed, file changes, etc.)"
+    status: conceived
+    priority: high
+    release: "v1.0.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0005"]
+    tags: [cli, agents, communication]
+    notes: "Use tmux send-keys to notify builders of events. Example: architect completes PR review → builder gets notified. Complements 0020 (instructions) with event-driven notifications."
+
+# Medium Priority
+  - id: "0010"
+    title: "Annotation Editor"
+    summary: "Add edit button to annotation viewer with basic inline editing capabilities"
+    status: specified
+    priority: medium
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0010-annotation-editor.md
+      plan: null
+      review: null
+    dependencies: ["0007"]
+    tags: [ui, dashboard, editing]
+    notes: "TICK protocol. Textarea swap approach. Backend /save endpoint already exists. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0011"
+    title: "Multi-Instance Support"
+    summary: "Better support for running multiple agent-farm instances with directory-aware titles and meta-dashboard"
+    status: specified
+    priority: medium
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0011-multi-instance-support.md
+      plan: null
+      review: null
+    dependencies: ["0007"]
+    tags: [ui, dashboard, multi-project]
+    notes: "TICK protocol. Directory name in title. Handle long path truncation. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0013"
+    title: "Document OS Dependencies"
+    summary: "Clarify and document all operating system dependencies required to run agent-farm"
+    status: specified
+    priority: medium
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0013-document-os-dependencies.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [documentation, installation]
+    notes: "TICK protocol. Document tmux, ttyd, node, git with versions. Add check-env script. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0015"
+    title: "Cleanup Protocol"
+    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
+    status: specified
+    priority: medium
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0015-cleanup-protocol.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [protocols, maintenance]
+    notes: "SPIDER protocol. CRITICAL: Needs dry-run mode and soft delete. High data loss risk if careless. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0019"
+    title: "Tab Bar Status Indicators"
+    summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
+    status: specified
+    priority: medium
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0019-tab-bar-status-indicators.md
+      plan: null
+      review: null
+    dependencies: ["0007"]
+    tags: [ui, dashboard]
+    notes: "TICK protocol. Color dots with accessibility (shapes/tooltips for colorblind). Consulted GPT-5 and Gemini Pro."
+
+  - id: "0023"
+    title: "Consult Tool (Stateful)"
+    summary: "Add stateful session support to consult tool via stdio communication with persistent CLI processes"
+    status: conceived
+    priority: medium
+    release: null
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0022"]
+    tags: [architecture, agents, consultation]
+    notes: "Phase 2: Stateful. Keep CLI running via stdio. Maintain session until closed. Depends on 0022."
+
+# Low Priority
+  - id: "0006"
+    title: "Tutorial Mode"
+    summary: "Interactive onboarding for new Codev users"
+    status: specified
+    priority: low
+    release: "v1.0.0"
+    files:
+      spec: codev/specs/0006-tutorial-mode.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [documentation, onboarding]
+    notes: ""
+
+  - id: "0012"
+    title: "Hide tmux Status Bar"
+    summary: "Cleaner dashboard UI by removing the tmux status bar from embedded terminals"
+    status: specified
+    priority: low
+    release: null
+    files:
+      spec: codev/specs/0012-hide-tmux-status-bar.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [ui, dashboard]
+    notes: "TICK protocol. tmux set-option status off. Add toggle for debugging. Consulted GPT-5 and Gemini Pro."
+
+  - id: "0017"
+    title: "Platform Portability Layer"
+    summary: "Implement transpilation from .codev/ source to platform-specific configs (CLAUDE.md, GEMINI.md, AGENTS.md)"
+    status: specified
+    priority: low
+    release: null
+    files:
+      spec: codev/specs/0017-platform-portability-layer.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [architecture, portability]
+    notes: "SPIDER protocol. HIGH COMPLEXITY WARNING: May be premature (YAGNI). One-way transpilation. Consulted GPT-5 and Gemini Pro."
+```
+
+---
+
+## Releases
+
+```yaml
+releases:
+  - version: "v1.0.0"
+    name: null
+    status: active
+    target_date: null
+    notes: "First stable release with full architect-builder workflow"
+
+  - version: "v0.2.0"
+    name: "Foundation"
+    status: released
+    target_date: null
+    notes: "Initial release establishing core infrastructure: test framework, architect-builder pattern, TypeScript CLI, and dashboard"
+```
+
+### v1.0.0 (active)
+
+10 projects in recommended order:
+
+| Order | ID | Title | Phase |
+|-------|------|-------|-------|
+| 1 | 0013 | Document OS Dependencies | Foundation |
+| 2 | 0022 | Consult Tool (Stateless) | Foundation |
+| 3 | 0015 | Cleanup Protocol | Foundation |
+| 4 | 0014 | Flexible Builder Spawning | Core CLI |
+| 5 | 0020 | Send Instructions to Builder | Core CLI |
+| 6 | 0024 | Builder Event Notifications | Core CLI |
+| 7 | 0019 | Tab Bar Status Indicators | Dashboard UX |
+| 8 | 0010 | Annotation Editor | Dashboard UX |
+| 9 | 0011 | Multi-Instance Support | Dashboard UX |
+| 10 | 0006 | Tutorial Mode | Onboarding |
+
+See Active Projects section above for full details and current status.
+
+### v0.2.0 - Foundation (released)
+
+```yaml
+  - id: "0001"
+    title: "Test Infrastructure"
+    summary: "BATS-based test framework for Codev installation and protocols"
+    status: integrated
+    priority: high
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0001-test-infrastructure.md
+      plan: codev/plans/0001-test-infrastructure.md
+      review: codev/reviews/0001-test-infrastructure.md
+    dependencies: []
+    tags: [testing, infrastructure]
+    notes: "64 tests passing, pre-commit hook installed"
+
+  - id: "0002"
+    title: "Architect-Builder Pattern"
+    summary: "Multi-agent orchestration with git worktrees for parallel development"
+    status: integrated
+    priority: high
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0002-architect-builder.md
+      plan: codev/plans/0002-architect-builder.md
+      review: null
+    dependencies: []
+    tags: [architecture, agents]
+    notes: "Bash CLI implemented, superseded by 0005 TypeScript CLI"
+
+  - id: "0004"
+    title: "Dashboard Nav UI"
+    summary: "Enhanced navigation and UX for the agent-farm dashboard"
+    status: integrated
+    priority: medium
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0004-dashboard-nav-ui.md
+      plan: codev/plans/0004-dashboard-nav-ui.md
+      review: null
+    dependencies: ["0005"]
+    tags: [ui, dashboard]
+    notes: "Integrated with TypeScript CLI"
+
+  - id: "0005"
+    title: "TypeScript CLI"
+    summary: "Migrate architect CLI from bash to TypeScript with npm distribution"
+    status: integrated
+    priority: high
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0005-typescript-cli.md
+      plan: codev/plans/0005-typescript-cli.md
+      review: codev/reviews/0005-typescript-cli.md
+    dependencies: ["0002"]
+    tags: [cli, typescript, npm]
+    notes: "Published as agent-farm@0.1.0 to npm"
+
+  - id: "0007"
+    title: "Split-Pane Dashboard"
+    summary: "Architect always visible on left, tabbed interface on right for files/builders/shells"
+    status: integrated
+    priority: medium
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0007-split-pane-dashboard.md
+      plan: codev/plans/0007-split-pane-dashboard.md
+      review: null
+    dependencies: ["0005"]
+    tags: [ui, dashboard]
+    notes: "Supersedes 0004 left-nav approach"
+
+  - id: "0008"
+    title: "Architecture Consolidation"
+    summary: "Eliminate brittleness by consolidating triple implementation to single TypeScript source"
+    status: integrated
+    priority: high
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0008-architecture-consolidation.md
+      plan: codev/plans/0008-architecture-consolidation.md
+      review: codev/reviews/0008-architecture-consolidation.md
+    dependencies: ["0005"]
+    tags: [architecture, cli, refactoring]
+    notes: "Completed 2025-12-03. Single TypeScript CLI, config.json, global port registry with file locking"
+
+  - id: "0009"
+    title: "Terminal File Click to Annotate"
+    summary: "Click on file paths in terminal output to open them in the annotation viewer"
+    status: integrated
+    priority: medium
+    release: "v0.2.0"
+    files:
+      spec: codev/specs/0009-terminal-file-click.md
+      plan: codev/plans/0009-terminal-file-click.md
+      review: codev/reviews/0009-terminal-file-click.md
+    dependencies: ["0007"]
+    tags: [ui, dashboard, dx]
+    notes: "Uses ttyd's native http link handling. Fixed annotation server startup wait. Deleted broken custom xterm.js templates."
+
+  - id: "0016"
+    title: "Clarify Builder Role Definition"
+    summary: "Resolved: Kept 'Builder' name but clarified it encompasses remodel, repair, maintain - not just new construction"
+    status: integrated
+    priority: medium
+    release: "v0.2.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: []
+    tags: [documentation, naming]
+    notes: "Decided to keep 'Builder' after consulting Pro and Codex. Updated codev/resources/conceptual-model.md with expanded definition. 'Building' = build, remodel, repair, extend, validate, document, maintain."
+
+  - id: "0018"
+    title: "Annotation Server Reliability"
+    summary: "Fix template path and stale process detection in annotation server"
+    status: integrated
+    priority: medium
+    release: "v0.2.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0008"]
+    tags: [bugfix, dashboard]
+    notes: "Fixed: (1) Template path now looks in codev/templates/ instead of deleted agent-farm/templates/, (2) Dashboard API now verifies annotation processes are alive before returning 'existing' entries, cleans up stale state automatically."
+```
+
+---
+
+## Integrated (Unassigned)
+
+Completed projects not associated with any formal release (ad-hoc fixes, documentation, improvements).
+
+```yaml
+# (none currently)
+```
+
+---
+
+## Terminal Projects
+
+Projects that are paused or canceled.
+
+```yaml
+  - id: "0003"
+    title: "End of Day Reporter"
+    summary: "Automated summary of development activity for daily standups"
+    status: on-hold
+    priority: low
+    release: null
+    files:
+      spec: codev/specs/0003-end-of-day-reporter.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [automation, reporting]
+    notes: "Paused per project owner"
+```
+
+---
+
 ## Next Available Number
 
-**0022** - Reserve this number for your next project
+**0025** - Reserve this number for your next project
 
 ---
 

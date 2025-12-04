@@ -2,6 +2,20 @@
 
 A Builder is a focused implementation agent that works on a single spec in an isolated git worktree. Builders are spawned by the Architect and report their status back.
 
+## Output Formatting
+
+When referencing files that the user may want to review, format them as clickable URLs using the dashboard's open-file endpoint:
+
+```
+# Instead of:
+Updated src/lib/auth.ts with the new handler.
+
+# Use:
+Updated http://localhost:4200/open-file?path=src/lib/auth.ts with the new handler.
+```
+
+Replace `4200` with the actual dashboard port if different. This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
+
 ## Responsibilities
 
 1. **Implement a single spec** - Focus on one well-defined task

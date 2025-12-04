@@ -84,16 +84,42 @@ function generateId(prefix: string): string {
   return `${prefix}${uuid}`;
 }
 
-// Find available port in range
-async function findAvailablePort(startPort: number): Promise<number> {
+// Get all ports currently used in state
+function getUsedPorts(state: DashboardState): Set<number> {
+  const ports = new Set<number>();
+  if (state.architect?.port) ports.add(state.architect.port);
+  for (const builder of state.builders || []) {
+    if (builder.port) ports.add(builder.port);
+  }
+  for (const util of state.utils || []) {
+    if (util.port) ports.add(util.port);
+  }
+  for (const annotation of state.annotations || []) {
+    if (annotation.port) ports.add(annotation.port);
+  }
+  return ports;
+}
+
+// Find available port in range (checks both state and actual availability)
+async function findAvailablePort(startPort: number, state?: DashboardState): Promise<number> {
+  // Get ports already allocated in state
+  const usedPorts = state ? getUsedPorts(state) : new Set<number>();
+
+  // Skip ports already in state
+  let port = startPort;
+  while (usedPorts.has(port)) {
+    port++;
+  }
+
+  // Then verify the port is actually available for binding
   return new Promise((resolve) => {
     const server = net.createServer();
-    server.listen(startPort, () => {
-      const { port } = server.address() as { port: number };
-      server.close(() => resolve(port));
+    server.listen(port, () => {
+      const { port: boundPort } = server.address() as { port: number };
+      server.close(() => resolve(boundPort));
     });
     server.on('error', () => {
-      resolve(findAvailablePort(startPort + 1));
+      resolve(findAvailablePort(port + 1, state));
     });
   });
 }
@@ -482,8 +508,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Find available port
-      const annotatePort = await findAvailablePort(CONFIG.annotatePortStart);
+      // Find available port (pass state to avoid already-allocated ports)
+      const annotatePort = await findAvailablePort(CONFIG.annotatePortStart, state);
 
       // Start annotation server
       const { script: serverScript, useTsx } = getAnnotateServerPath();
@@ -604,8 +630,8 @@ const server = http.createServer(async (req, res) => {
       const utilName = name || `shell-${state.utils.length + 1}`;
       const sessionName = `af-shell-${id}`;
 
-      // Find available port
-      const utilPort = await findAvailablePort(CONFIG.utilPortStart);
+      // Find available port (pass state to avoid already-allocated ports)
+      const utilPort = await findAvailablePort(CONFIG.utilPortStart, state);
 
       // Get shell command
       const shell = process.env.SHELL || '/bin/bash';

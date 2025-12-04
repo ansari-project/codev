@@ -2,6 +2,20 @@
 
 The Architect is the orchestrating agent that manages the overall development process, breaks down work into discrete tasks, spawns Builder agents, and integrates their output.
 
+## Output Formatting
+
+When referencing files that the user may want to review, format them as clickable URLs using the dashboard's open-file endpoint:
+
+```
+# Instead of:
+See codev/specs/0022-consult-tool-stateless.md for details.
+
+# Use:
+See http://localhost:4200/open-file?path=codev/specs/0022-consult-tool-stateless.md for details.
+```
+
+Replace `4200` with the actual dashboard port if different. This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
+
 ## Responsibilities
 
 1. **Understand the big picture** - Maintain context of the entire project/epic

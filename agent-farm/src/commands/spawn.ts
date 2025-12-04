@@ -126,15 +126,15 @@ export async function spawn(options: SpawnOptions): Promise<void> {
     }
     initialPrompt += ` Start by reading the spec${hasPlan ? ' and plan' : ''}, then begin implementation.`;
 
-    // Write initial prompt to a file to avoid shell escaping issues
+    // Write initial prompt to a file for reference
     const promptFile = resolve(worktreePath, '.builder-prompt.txt');
     writeFileSync(promptFile, initialPrompt);
 
-    // Build the start script
+    // Build the start script with a simple inline prompt (like architect)
+    // Tell claude to read the role file, then give it the task
     const scriptPath = resolve(worktreePath, '.builder-start.sh');
-    const roleArg = roleFile ? `--append-system-prompt "$(cat '${roleFile}')"` : '';
-    const promptArg = `-p "$(cat '${promptFile}')"`;
-    writeFileSync(scriptPath, `#!/bin/bash\nexec ${baseCmd} ${roleArg} ${promptArg}\n`);
+    const builderPrompt = `You are a Builder. Read codev/roles/builder.md for your full role definition. ${initialPrompt}`;
+    writeFileSync(scriptPath, `#!/bin/bash\nexec ${baseCmd} "${builderPrompt}"\n`);
     chmodSync(scriptPath, '755');
 
     // Create tmux session running the script

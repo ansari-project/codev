@@ -7,11 +7,13 @@ Each invocation is stateless (fresh process).
 Usage:
     consult gemini "Review this design"
     consult codex "What do you think of this API?"
-    consult pro "Review this"      # alias for gemini
-    consult gpt "Review this"      # alias for codex
+    consult both "Review this"        # parallel consultation
+    consult pro "Review this"         # alias for gemini
+    consult gpt "Review this"         # alias for codex
     echo "Review this" | consult pro
 """
 
+import concurrent.futures
 import os
 import shutil
 import subprocess
@@ -31,6 +33,30 @@ MODEL_MAP = {
     "pro": "gemini",
     "gpt": "codex",
 }
+
+
+def load_dotenv(codev_root: Path) -> None:
+    """Load .env file from codev root if it exists."""
+    env_file = codev_root / ".env"
+    if not env_file.exists():
+        return
+
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, _, value = line.partition("=")
+                key = key.strip()
+                value = value.strip()
+                # Remove surrounding quotes if present
+                if (value.startswith('"') and value.endswith('"')) or \
+                   (value.startswith("'") and value.endswith("'")):
+                    value = value[1:-1]
+                # Only set if not already in environment
+                if key not in os.environ:
+                    os.environ[key] = value
 
 
 def find_codev_root() -> Path:
@@ -69,9 +95,60 @@ def log_query(log_dir: Path, model: str, query: str) -> None:
         pass
 
 
+def run_single_consultation(
+    model: str, query: str, role: str, log_dir: Path
+) -> tuple[str, int, str]:
+    """Run a single consultation and return (model, exit_code, output)."""
+    temp_system_file = None
+
+    try:
+        if model == "gemini":
+            if not shutil.which("gemini"):
+                return (model, 1, "Error: gemini-cli not found")
+            temp_system_file = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False
+            )
+            temp_system_file.write(role)
+            temp_system_file.close()
+            cmd = ["gemini", "--yolo", query]
+            env = {"GEMINI_SYSTEM_MD": temp_system_file.name}
+        elif model == "codex":
+            if not shutil.which("codex"):
+                return (model, 1, "Error: codex not found")
+            cmd = ["codex", "exec", "--full-auto", query]
+            env = {"CODEX_SYSTEM_MESSAGE": role}
+        else:
+            return (model, 1, f"Unknown model: {model}")
+
+        log_query(log_dir, model, query)
+
+        full_env = {**os.environ, **env}
+        result = subprocess.run(
+            cmd, env=full_env, capture_output=True, text=True
+        )
+        output = result.stdout
+        if result.stderr:
+            # Filter out noisy stderr (like YOLO mode warnings)
+            stderr_lines = [
+                line for line in result.stderr.split("\n")
+                if line and not line.startswith("YOLO mode")
+                and "GOOGLE_API_KEY" not in line
+                and "GEMINI_API_KEY" not in line
+            ]
+            if stderr_lines:
+                output += "\n" + "\n".join(stderr_lines)
+        return (model, result.returncode, output)
+    finally:
+        if temp_system_file:
+            try:
+                os.unlink(temp_system_file.name)
+            except Exception:
+                pass
+
+
 def consult(
     model: str = typer.Argument(
-        ..., help="Model: gemini, codex (or aliases: pro, gpt)"
+        ..., help="Model: gemini, codex, both (or aliases: pro, gpt)"
     ),
     query: str = typer.Argument(
         None, help="Query (or pipe via stdin)"
@@ -85,12 +162,16 @@ def consult(
     Examples:
         consult gemini "Review this architecture"
         consult codex "What's wrong with this code?"
+        consult both "Review from both models"
         echo "Review this" | consult pro
     """
     # Lazy load paths
     codev_root = find_codev_root()
     role_file = codev_root / "codev" / "roles" / "consultant.md"
     log_dir = codev_root / ".consult"
+
+    # Load .env file
+    load_dotenv(codev_root)
 
     # Handle stdin
     if query is None:
@@ -109,7 +190,42 @@ def consult(
     # Resolve model aliases
     resolved = MODEL_MAP.get(model.lower(), model.lower())
 
-    # Build command with autonomous mode flags
+    # Handle parallel consultation
+    if resolved in ("both", "all"):
+        if dry_run:
+            typer.echo("Would run parallel consultation with: gemini, codex")
+            raise typer.Exit(0)
+
+        typer.echo("=" * 60)
+        typer.echo("PARALLEL CONSULTATION: gemini + codex")
+        typer.echo("=" * 60 + "\n")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            futures = {
+                executor.submit(run_single_consultation, m, query, role, log_dir): m
+                for m in ["gemini", "codex"]
+            }
+
+            results = {}
+            for future in concurrent.futures.as_completed(futures):
+                model_name = futures[future]
+                try:
+                    results[model_name] = future.result()
+                except Exception as e:
+                    results[model_name] = (model_name, 1, f"Error: {e}")
+
+        # Print results in order
+        for m in ["gemini", "codex"]:
+            model_name, exit_code, output = results[m]
+            typer.echo(f"\n{'─' * 60}")
+            typer.echo(f"📋 {model_name.upper()}")
+            typer.echo(f"{'─' * 60}")
+            typer.echo(output.strip())
+
+        typer.echo(f"\n{'=' * 60}")
+        raise typer.Exit(0)
+
+    # Single model consultation
     # Track temp file for cleanup
     temp_system_file = None
 
@@ -138,12 +254,12 @@ def consult(
                 err=True,
             )
             raise typer.Exit(1)
-        cmd = ["codex", "--full-auto", query]
+        cmd = ["codex", "exec", "--full-auto", query]
         env = {"CODEX_SYSTEM_MESSAGE": role}
     else:
         typer.echo(
             f"Unknown model: {model}\n"
-            f"Available: gemini, codex, pro, gpt",
+            f"Available: gemini, codex, both, pro, gpt",
             err=True,
         )
         raise typer.Exit(1)

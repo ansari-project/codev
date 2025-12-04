@@ -1,0 +1,4 @@
+# This directory contains CLEANUP protocol runtime artifacts
+# - audit-*.md files (timestamped audit reports)
+# - .trash/ directory (soft-deleted files with 30-day retention)
+# These are gitignored; see .gitignore

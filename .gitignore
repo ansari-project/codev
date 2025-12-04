@@ -2,3 +2,7 @@
 tmp/
 .builders/
 .consult/
+
+# Cleanup protocol artifacts
+codev/cleanup/.trash/
+codev/cleanup/audit-*.md

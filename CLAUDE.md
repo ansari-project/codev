@@ -405,6 +405,69 @@ When the user requests "Consult" or "consultation" (including variations like "u
 - Use GPT-5 Codex (gpt-5-codex) for coding and architecture perspective
 - Both models should be consulted unless explicitly specified otherwise
 
+## Consult Tool
+
+The `consult` CLI provides a unified interface for multi-agent consultation via external AI CLIs (gemini-cli and codex).
+
+### Prerequisites
+
+- **Python 3**: With typer installed (`pip install typer`)
+- **gemini-cli**: For Gemini consultations (`npm install -g @anthropic-ai/gemini-cli` or see https://github.com/google-gemini/gemini-cli)
+- **codex**: For Codex consultations (`npm install -g @openai/codex`)
+
+### Usage
+
+```bash
+# Consult Gemini (with autonomous mode)
+./codev/bin/consult gemini "Review this design approach"
+
+# Consult Codex (with autonomous mode)
+./codev/bin/consult codex "What do you think of this API?"
+
+# Use model aliases
+./codev/bin/consult pro "Review this"   # alias for gemini
+./codev/bin/consult gpt "Review this"   # alias for codex
+
+# Pipe input via stdin
+echo "Review this code" | ./codev/bin/consult pro
+
+# Dry run (print command without executing)
+./codev/bin/consult gemini "test" --dry-run
+```
+
+### Model Aliases
+
+| Alias | Resolves To | CLI Used |
+|-------|-------------|----------|
+| `gemini` | gemini-3-pro-preview | gemini-cli |
+| `pro` | gemini-3-pro-preview | gemini-cli |
+| `codex` | gpt-5-codex | codex |
+| `gpt` | gpt-5-codex | codex |
+
+### How It Works
+
+1. Reads the consultant role from `codev/roles/consultant.md`
+2. Invokes the appropriate CLI with autonomous mode enabled:
+   - gemini: `GEMINI_SYSTEM_MD=<temp_file> gemini --yolo <query>` (temp file contains the role)
+   - codex: `CODEX_SYSTEM_MESSAGE=<role> codex --full-auto <query>`
+3. Passes through stdout/stderr and exit codes
+4. Logs queries to `.consult/history.log`
+5. Cleans up temp files after execution
+
+### The Consultant Role
+
+The consultant role (`codev/roles/consultant.md`) defines a collaborative partner that:
+- Provides second perspectives on decisions
+- Offers alternatives and considerations
+- Works constructively alongside the primary agent
+- Is NOT adversarial or a rubber stamp
+
+### Key Files
+
+- `codev/bin/consult` - Python CLI script
+- `codev/roles/consultant.md` - Role definition
+- `.consult/history.log` - Query history (gitignored)
+
 ## Important Notes
 
 1. **ALWAYS check `codev/protocols/spider/protocol.md`** for detailed phase instructions

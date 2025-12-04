@@ -1,3 +1,4 @@
 .claude-task
 tmp/
 .builders/
+.consult/

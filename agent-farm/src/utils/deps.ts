@@ -113,6 +113,7 @@ export interface DependencyCheckResult {
   version: string | null;
   minVersion: string;
   versionOk: boolean;
+  versionUnknown: boolean;
   installHint: string;
 }
 
@@ -131,6 +132,7 @@ export async function checkDependency(dep: Dependency): Promise<DependencyCheckR
       version: null,
       minVersion: dep.minVersion,
       versionOk: false,
+      versionUnknown: false,
       installHint,
     };
   }
@@ -138,6 +140,7 @@ export async function checkDependency(dep: Dependency): Promise<DependencyCheckR
   // Get version
   let version: string | null = null;
   let versionOk = false;
+  let versionUnknown = false;
 
   try {
     const { stdout, stderr } = await run(dep.versionCmd);
@@ -147,10 +150,14 @@ export async function checkDependency(dep: Dependency): Promise<DependencyCheckR
 
     if (version) {
       versionOk = compareVersions(version, dep.minVersion) >= 0;
+    } else {
+      // Parser returned null - version unknown
+      versionUnknown = true;
     }
   } catch {
     // Command exists but version check failed
     version = 'unknown';
+    versionUnknown = true;
   }
 
   return {
@@ -158,7 +165,8 @@ export async function checkDependency(dep: Dependency): Promise<DependencyCheckR
     installed: true,
     version,
     minVersion: dep.minVersion,
-    versionOk: version ? versionOk : true, // If we can't parse version, assume OK
+    versionOk,
+    versionUnknown,
     installHint,
   };
 }
@@ -172,6 +180,7 @@ export async function checkDependency(dep: Dependency): Promise<DependencyCheckR
 export async function checkCoreDependencies(exitOnFailure = true): Promise<DependencyCheckResult[]> {
   const results: DependencyCheckResult[] = [];
   const failures: string[] = [];
+  const warnings: string[] = [];
 
   for (const dep of CORE_DEPENDENCIES) {
     const result = await checkDependency(dep);
@@ -179,6 +188,10 @@ export async function checkCoreDependencies(exitOnFailure = true): Promise<Depen
 
     if (!result.installed) {
       failures.push(`${dep.name} not found. Install with: ${result.installHint}`);
+    } else if (result.versionUnknown) {
+      warnings.push(
+        `${dep.name} version could not be determined (may be incompatible)`
+      );
     } else if (!result.versionOk && result.version) {
       failures.push(
         `${dep.name} version ${result.version} is below minimum ${dep.minVersion}. ` +
@@ -187,6 +200,15 @@ export async function checkCoreDependencies(exitOnFailure = true): Promise<Depen
     }
   }
 
+  // Show warnings first (non-fatal)
+  if (warnings.length > 0) {
+    logger.warn('Dependency warnings:');
+    for (const warning of warnings) {
+      logger.warn(`  • ${warning}`);
+    }
+  }
+
+  // Then show failures and exit if requested
   if (failures.length > 0 && exitOnFailure) {
     logger.error('Missing or outdated dependencies:');
     for (const failure of failures) {

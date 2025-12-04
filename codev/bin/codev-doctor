@@ -37,6 +37,13 @@ fi
 ERRORS=0
 WARNINGS=0
 
+# Detect OS for install hints
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    IS_MACOS=true
+else
+    IS_MACOS=false
+fi
+
 # Print header
 echo -e "${BOLD}Codev Doctor${NC} - Checking your environment"
 echo "============================================"
@@ -136,10 +143,14 @@ if command_exists node; then
     if version_gte "$version" "18.0.0"; then
         print_status "Node.js" "ok" "$version"
     else
-        print_status "Node.js" "warn" "$version" "need >= 18.0.0"
+        print_status "Node.js" "fail" "$version" "need >= 18.0.0"
     fi
 else
-    print_status "Node.js" "fail" "not installed" "brew install node"
+    if $IS_MACOS; then
+        print_status "Node.js" "fail" "not installed" "brew install node"
+    else
+        print_status "Node.js" "fail" "not installed" "apt install nodejs npm"
+    fi
 fi
 
 # tmux
@@ -148,10 +159,14 @@ if command_exists tmux; then
     if version_gte "$version" "3.0"; then
         print_status "tmux" "ok" "$version"
     else
-        print_status "tmux" "warn" "$version" "need >= 3.0"
+        print_status "tmux" "fail" "$version" "need >= 3.0"
     fi
 else
-    print_status "tmux" "fail" "not installed" "brew install tmux"
+    if $IS_MACOS; then
+        print_status "tmux" "fail" "not installed" "brew install tmux"
+    else
+        print_status "tmux" "fail" "not installed" "apt install tmux"
+    fi
 fi
 
 # ttyd
@@ -160,12 +175,16 @@ if command_exists ttyd; then
     if [[ -n "$version" ]] && version_gte "$version" "1.7.0"; then
         print_status "ttyd" "ok" "$version"
     elif [[ -n "$version" ]]; then
-        print_status "ttyd" "warn" "$version" "need >= 1.7.0"
+        print_status "ttyd" "fail" "$version" "need >= 1.7.0"
     else
-        print_status "ttyd" "ok" "(version unknown)"
+        print_status "ttyd" "warn" "(version unknown)" "may be incompatible"
     fi
 else
-    print_status "ttyd" "fail" "not installed" "brew install ttyd"
+    if $IS_MACOS; then
+        print_status "ttyd" "fail" "not installed" "brew install ttyd"
+    else
+        print_status "ttyd" "fail" "not installed" "build from source"
+    fi
 fi
 
 # git
@@ -177,7 +196,11 @@ if command_exists git; then
         print_status "git" "warn" "$version" "need >= 2.5.0"
     fi
 else
-    print_status "git" "fail" "not installed" "apt install git"
+    if $IS_MACOS; then
+        print_status "git" "fail" "not installed" "xcode-select --install"
+    else
+        print_status "git" "fail" "not installed" "apt install git"
+    fi
 fi
 
 # Python
@@ -189,7 +212,11 @@ if command_exists python3; then
         print_status "Python" "warn" "$version" "need >= 3.10"
     fi
 else
-    print_status "Python" "fail" "not installed" "brew install python"
+    if $IS_MACOS; then
+        print_status "Python" "fail" "not installed" "brew install python"
+    else
+        print_status "Python" "fail" "not installed" "apt install python3"
+    fi
 fi
 
 echo ""

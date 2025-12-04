@@ -449,7 +449,7 @@ echo "Review this code" | ./codev/bin/consult pro
 1. Reads the consultant role from `codev/roles/consultant.md`
 2. Invokes the appropriate CLI with autonomous mode enabled:
    - gemini: `GEMINI_SYSTEM_MD=<temp_file> gemini --yolo <query>` (temp file contains the role)
-   - codex: `CODEX_SYSTEM_PROMPT=<role> codex --full-auto <query>`
+   - codex: `CODEX_SYSTEM_MESSAGE=<role> codex --full-auto <query>`
 3. Passes through stdout/stderr and exit codes
 4. Logs queries to `.consult/history.log`
 5. Cleans up temp files after execution

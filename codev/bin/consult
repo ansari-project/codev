@@ -26,12 +26,13 @@ except ImportError:
     print("Error: typer not installed. Run: pip install typer", file=sys.stderr)
     sys.exit(1)
 
-app = typer.Typer(
-    help="Consult an external AI model for a second opinion.",
-    add_completion=False,
-)
+# Model aliases
+MODEL_MAP = {
+    "pro": "gemini",
+    "gpt": "codex",
+}
 
-# Find the codev root directory (look for codev/roles/consultant.md)
+
 def find_codev_root() -> Path:
     """Find the codev root directory by walking up from cwd."""
     current = Path.cwd()
@@ -42,31 +43,20 @@ def find_codev_root() -> Path:
     return current  # Fallback to cwd
 
 
-CODEV_ROOT = find_codev_root()
-ROLE_FILE = CODEV_ROOT / "codev" / "roles" / "consultant.md"
-LOG_DIR = CODEV_ROOT / ".consult"
-
-# Model aliases
-MODEL_MAP = {
-    "pro": "gemini",
-    "gpt": "codex",
-}
-
-
-def get_role() -> str:
+def get_role(role_file: Path) -> str:
     """Read the consultant role definition."""
-    if not ROLE_FILE.exists():
-        typer.echo(f"Error: Role file not found: {ROLE_FILE}", err=True)
+    if not role_file.exists():
+        typer.echo(f"Error: Role file not found: {role_file}", err=True)
         typer.echo("Are you in a codev-enabled project?", err=True)
         raise typer.Exit(1)
-    return ROLE_FILE.read_text()
+    return role_file.read_text()
 
 
-def log_query(model: str, query: str) -> None:
+def log_query(log_dir: Path, model: str, query: str) -> None:
     """Log consultation to .consult/history.log."""
     try:
-        LOG_DIR.mkdir(exist_ok=True)
-        log_file = LOG_DIR / "history.log"
+        log_dir.mkdir(exist_ok=True)
+        log_file = log_dir / "history.log"
         timestamp = datetime.now().isoformat()
         # Truncate long queries for log readability
         query_preview = query[:100].replace("\n", " ")
@@ -79,7 +69,6 @@ def log_query(model: str, query: str) -> None:
         pass
 
 
-@app.command()
 def consult(
     model: str = typer.Argument(
         ..., help="Model: gemini, codex (or aliases: pro, gpt)"
@@ -98,10 +87,15 @@ def consult(
         consult codex "What's wrong with this code?"
         echo "Review this" | consult pro
     """
+    # Lazy load paths
+    codev_root = find_codev_root()
+    role_file = codev_root / "codev" / "roles" / "consultant.md"
+    log_dir = codev_root / ".consult"
+
     # Handle stdin
     if query is None:
         if not sys.stdin.isatty():
-            query = sys.stdin.read().strip()
+            query = sys.stdin.read().rstrip()
             if not query:
                 typer.echo("Error: Empty input from stdin", err=True)
                 raise typer.Exit(1)
@@ -110,7 +104,7 @@ def consult(
             typer.echo("Usage: consult <model> <query>", err=True)
             raise typer.Exit(1)
 
-    role = get_role()
+    role = get_role(role_file)
 
     # Resolve model aliases
     resolved = MODEL_MAP.get(model.lower(), model.lower())
@@ -145,7 +139,7 @@ def consult(
             )
             raise typer.Exit(1)
         cmd = ["codex", "--full-auto", query]
-        env = {"CODEX_SYSTEM_PROMPT": role}
+        env = {"CODEX_SYSTEM_MESSAGE": role}
     else:
         typer.echo(
             f"Unknown model: {model}\n"
@@ -169,7 +163,7 @@ def consult(
             os.unlink(temp_system_file.name)
         raise typer.Exit(0)
 
-    log_query(resolved, query)
+    log_query(log_dir, resolved, query)
 
     # Execute with passthrough stdio, handle Ctrl+C gracefully
     full_env = {**os.environ, **(env or {})}
@@ -189,4 +183,4 @@ def consult(
 
 
 if __name__ == "__main__":
-    app()
+    typer.run(consult)

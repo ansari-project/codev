@@ -175,6 +175,33 @@ Before merging a Builder's work:
 3. Verify it matches the spec
 4. Run integration tests
 
+### PR Review Workflow
+
+**Use GitHub PR comments for reviews, not direct pasting.** This approach:
+- Avoids tmux paste buffer issues with large messages
+- Documents feedback in the PR for posterity
+- Follows standard GitHub workflow
+
+```bash
+# 1. Review the PR (optionally with multi-agent consultation)
+gh pr view 32
+./codev/bin/consult both "Review PR 32: <summary of changes>"
+
+# 2. Add review feedback as PR comment
+gh pr comment 32 --body "## Review
+
+### High Priority
+- Issue 1...
+
+### Medium Priority
+- Issue 2..."
+
+# 3. Notify builder to check PR comments (short message works reliably)
+af send 0013 "Check PR 32 comments and address feedback. Run: gh pr view 32 --comments"
+```
+
+**Note:** Large messages via `af send` may have issues with tmux paste buffers. Keep direct messages short; put detailed feedback in PR comments.
+
 ## State Management
 
 The Architect maintains state in:

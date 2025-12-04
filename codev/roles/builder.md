@@ -141,8 +141,29 @@ If you need help but aren't fully blocked:
 When implementation is complete:
 1. Run all tests
 2. Self-review the code
-3. Update status to `pr-ready`
-4. The Architect will review and merge
+3. Create a PR: `gh pr create --title "[Spec XXXX] Description" --body "..."`
+4. Update status to `pr-ready`
+5. The Architect will review and merge
+
+### Receiving PR Feedback
+
+The Architect reviews PRs and leaves feedback as GitHub PR comments. When notified to check feedback:
+
+```bash
+# View PR comments
+gh pr view <PR_NUMBER> --comments
+
+# Or view the full PR with comments in browser
+gh pr view <PR_NUMBER> --web
+```
+
+**Workflow:**
+1. Architect leaves review comments on PR
+2. You receive a short message: "Check PR comments and address feedback"
+3. Run `gh pr view <PR_NUMBER> --comments` to see feedback
+4. Address the issues (High priority first, then Medium, Low is optional)
+5. Push fixes to the same branch
+6. Reply to PR comment when done or if clarification needed
 
 ## Example Builder Session
 
@@ -161,9 +182,15 @@ When implementation is complete:
 8. Status: implementing
 9. Complete implementation
 10. Run tests: all passing
-11. Status: pr-ready
-12. Architect reviews and merges
-13. Status: complete
+11. Create PR: gh pr create --title "[Spec 0003] Add user authentication"
+12. Status: pr-ready
+13. Architect reviews, leaves PR comment with feedback
+14. Receive message: "Check PR 45 comments"
+15. Run: gh pr view 45 --comments
+16. Address High/Medium priority issues
+17. Push fixes, reply to PR comment
+18. Architect approves and merges
+19. Status: complete
 ```
 
 ## Constraints

@@ -91,8 +91,17 @@ export async function spawn(options: SpawnOptions): Promise<void> {
     fatal(`Failed to create worktree: ${error}`);
   }
 
-  // Find available port
-  const port = await findAvailablePort(config.builderPortRange[0]);
+  // Find available port (check state first to avoid collisions)
+  const state = await loadState();
+  const usedPorts = new Set<number>();
+  for (const b of state.builders || []) {
+    if (b.port) usedPorts.add(b.port);
+  }
+  let port = config.builderPortRange[0];
+  while (usedPorts.has(port)) {
+    port++;
+  }
+  port = await findAvailablePort(port);
 
   // Get builder command from config (hierarchy: CLI > config.json > default)
   const commands = getResolvedCommands();

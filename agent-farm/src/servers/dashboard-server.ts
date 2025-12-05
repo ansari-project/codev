@@ -70,10 +70,32 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
-// Find template (in codev/templates/)
+/**
+ * Find a template in the agent-farm templates directory
+ * Template is bundled with agent-farm package in templates/ directory
+ * @param filename - Template filename to find
+ * @param required - If true, throws error when not found; if false, returns null
+ */
+function findTemplatePath(filename: string, required: true): string;
+function findTemplatePath(filename: string, required?: false): string | null;
+function findTemplatePath(filename: string, required = false): string | null {
+  // 1. Try relative to compiled output (dist/servers/ -> templates/)
+  const pkgPath = path.resolve(__dirname, '../templates/', filename);
+  if (fs.existsSync(pkgPath)) return pkgPath;
+
+  // 2. Try relative to source (src/servers/ -> templates/)
+  const devPath = path.resolve(__dirname, '../../templates/', filename);
+  if (fs.existsSync(devPath)) return devPath;
+
+  if (required) {
+    throw new Error(`Template not found: ${filename}`);
+  }
+  return null;
+}
+
 const projectRoot = findProjectRoot();
-const templatePath = path.join(projectRoot, 'codev/templates/dashboard-split.html');
-const legacyTemplatePath = path.join(projectRoot, 'codev/templates/dashboard.html');
+const templatePath = findTemplatePath('dashboard-split.html', true);
+const legacyTemplatePath = findTemplatePath('dashboard.html', true);
 const stateFile = path.join(projectRoot, '.agent-farm', 'state.json');
 
 // Load state and clean up dead processes
@@ -336,8 +358,8 @@ function spawnTmuxWithTtyd(
 
     // Start ttyd to attach to the tmux session
     // Using simple theme arg to avoid shell escaping issues
-    // Use custom index.html for file path click-to-open functionality
-    const customIndexPath = path.join(projectRoot, 'codev/templates/ttyd-index.html');
+    // Use custom index.html for file path click-to-open functionality (optional)
+    const customIndexPath = findTemplatePath('ttyd-index.html');
     const ttydArgs = [
       '-W',
       '-p', String(ttydPort),
@@ -347,7 +369,7 @@ function spawnTmuxWithTtyd(
     ];
 
     // Add custom index if it exists
-    if (fs.existsSync(customIndexPath)) {
+    if (customIndexPath) {
       ttydArgs.push('-I', customIndexPath);
     }
 
@@ -450,17 +472,8 @@ function getAnnotateServerPath(): { script: string; useTsx: boolean } {
   return { script: jsPath, useTsx: false };
 }
 
-// Validate template exists (prefer split, fallback to legacy)
-let finalTemplatePath = templatePath;
-if (!fs.existsSync(templatePath)) {
-  if (fs.existsSync(legacyTemplatePath)) {
-    console.log('Using legacy dashboard template');
-    finalTemplatePath = legacyTemplatePath;
-  } else {
-    console.error(`Template not found: ${templatePath}`);
-    process.exit(1);
-  }
-}
+// Use split template as main, legacy is already loaded via findTemplatePath
+const finalTemplatePath = templatePath;
 
 // Security: Validate request origin
 function isRequestAllowed(req: http.IncomingMessage): boolean {

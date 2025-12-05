@@ -44,25 +44,24 @@ function findProjectRoot(startDir: string = process.cwd()): string {
 }
 
 /**
- * Get the templates directory (from codev/templates/ or config override)
+ * Get the agent-farm templates directory
+ * Templates are bundled with agent-farm, not in project codev/ directory
  */
-function getTemplatesDir(projectRoot: string, userConfig: UserConfig | null): string {
-  // Check config.json override
-  if (userConfig?.templates?.dir) {
-    const configPath = resolve(projectRoot, userConfig.templates.dir);
-    if (existsSync(configPath)) {
-      return configPath;
-    }
+function getTemplatesDir(): string {
+  // 1. Try relative to compiled output (dist/utils/ -> templates/)
+  const pkgPath = resolve(__dirname, '../templates');
+  if (existsSync(pkgPath)) {
+    return pkgPath;
   }
 
-  // Default: codev/templates/ (canonical location)
-  const templatesPath = resolve(projectRoot, 'codev/templates');
-  if (existsSync(templatesPath)) {
-    return templatesPath;
+  // 2. Try relative to source (src/utils/ -> templates/)
+  const devPath = resolve(__dirname, '../../templates');
+  if (existsSync(devPath)) {
+    return devPath;
   }
 
-  // Fail fast if templates not found
-  throw new Error(`Templates directory not found: ${templatesPath}`);
+  // Return the expected path even if not found (servers handle their own template lookup)
+  return devPath;
 }
 
 /**
@@ -217,7 +216,7 @@ export function getConfig(): Config {
     codevDir,
     buildersDir: resolve(projectRoot, '.builders'),
     stateDir: resolve(projectRoot, '.agent-farm'),
-    templatesDir: getTemplatesDir(projectRoot, userConfig),
+    templatesDir: getTemplatesDir(),
     serversDir: getServersDir(),
     bundledRolesDir: getRolesDir(projectRoot, userConfig),
     // Ports from global registry (prevents cross-project conflicts)

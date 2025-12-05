@@ -47,6 +47,29 @@ function findProjectRoot(): string {
   return process.cwd();
 }
 
+// Get project name from root path, with truncation for long names
+function getProjectName(projectRoot: string): string {
+  const baseName = path.basename(projectRoot);
+  const maxLength = 30;
+
+  if (baseName.length <= maxLength) {
+    return baseName;
+  }
+
+  // Truncate with ellipsis for very long names
+  return '...' + baseName.slice(-(maxLength - 3));
+}
+
+// HTML-escape a string to prevent XSS
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Find template (in codev/templates/)
 const projectRoot = findProjectRoot();
 const templatePath = path.join(projectRoot, 'codev/templates/dashboard-split.html');
@@ -925,6 +948,10 @@ const server = http.createServer(async (req, res) => {
       try {
         let template = fs.readFileSync(finalTemplatePath, 'utf-8');
         const state = loadState();
+
+        // Inject project name into template (HTML-escaped for security)
+        const projectName = escapeHtml(getProjectName(projectRoot));
+        template = template.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
 
         // Inject state into template
         const stateJson = JSON.stringify(state);

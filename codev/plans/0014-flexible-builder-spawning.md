@@ -69,12 +69,14 @@ Extend `af spawn` to support four modes: spec, task, protocol, and shell. Each m
 
 ```typescript
 function generateShortId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let id = '';
-  for (let i = 0; i < 4; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
+  // Generate random number 0 to 2^24-1, base64 encode to 4 chars
+  const num = Math.floor(Math.random() * 0xFFFFFF);
+  const bytes = new Uint8Array([num >> 16, (num >> 8) & 0xFF, num & 0xFF]);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+    .substring(0, 4);
 }
 ```
 

@@ -152,7 +152,7 @@
       background: #2a2a2a;
       padding: 20px;
       border-radius: 8px;
-      width: 400px;
+      width: 700px;
       max-width: 90vw;
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
       border: 1px solid #444;
@@ -254,6 +254,7 @@
     let fileLines = [];
     let currentLine = null;
     let isEditing = false;  // For comment dialog editing
+    let consecutiveEnters = 0;  // Track triple-enter to submit
 
     // Edit mode state
     let editMode = false;
@@ -343,7 +344,16 @@
       const match = line.match(commentStyle.regex);
 
       document.getElementById('dialogLine').textContent = lineIndex + 1;
-      document.getElementById('dialogPreview').textContent = line.substring(0, 100) + (line.length > 100 ? '...' : '');
+
+      // Show prior 3 lines + current line
+      const startLine = Math.max(0, lineIndex - 3);
+      const previewLines = [];
+      for (let i = startLine; i <= lineIndex; i++) {
+        const lineNum = (i + 1).toString().padStart(4, ' ');
+        const marker = i === lineIndex ? '→' : ' ';
+        previewLines.push(`${lineNum}${marker} ${fileLines[i]}`);
+      }
+      document.getElementById('dialogPreview').textContent = previewLines.join('\n');
 
       if (match) {
         // Editing existing comment
@@ -362,7 +372,7 @@
       // Position dialog next to click
       const dialog = document.querySelector('.dialog');
       const rect = event.target.getBoundingClientRect();
-      const dialogWidth = 400;
+      const dialogWidth = 700;
       const dialogHeight = 350;
 
       // Position to the right of the line number, with some padding
@@ -655,6 +665,20 @@
       if (hasUnsavedChanges) {
         e.preventDefault();
         e.returnValue = '';
+      }
+    });
+
+    // Triple-enter to submit annotation
+    document.getElementById('commentText').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        consecutiveEnters++;
+        if (consecutiveEnters >= 3) {
+          e.preventDefault();
+          consecutiveEnters = 0;
+          saveComment();
+        }
+      } else {
+        consecutiveEnters = 0;
       }
     });
 

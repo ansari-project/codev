@@ -425,6 +425,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [infrastructure, cleanup, agent-farm]
     notes: "TICK protocol. Removes template duplication between codev/ and codev-skeleton/."
+
+  - id: "0033"
+    title: "Rename Command"
+    summary: "Add af rename command to rename builders and utility terminals"
+    status: integrated
+    priority: low
+    release: "v1.1.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0031"]
+    tags: [cli, agent-farm]
+    notes: "Simple feature. Uses SQLite atomic UPDATE. Added getUtil(), renameBuilder(), renameUtil() to state.ts."
 ```
 
 ---

@@ -195,9 +195,10 @@ async function launchInstance(projectPath: string): Promise<{ success: boolean; 
     return { success: false, error: 'agent-farm CLI not found in project' };
   }
 
-  // Spawn detached process
+  // SECURITY: Use spawn with cwd option to avoid command injection
+  // Do NOT use bash -c with string concatenation
   try {
-    const child = spawn('bash', ['-c', `cd "${projectPath}" && ./codev/bin/agent-farm start`], {
+    const child = spawn(agentFarmScript, ['start'], {
       detached: true,
       stdio: 'ignore',
       cwd: projectPath,
@@ -212,18 +213,19 @@ async function launchInstance(projectPath: string): Promise<{ success: boolean; 
 
 /**
  * Find the overview template
+ * Template is bundled with agent-farm package in templates/ directory
  */
 function findTemplatePath(): string | null {
-  // Try relative to this file first (when running from agent-farm/src/servers)
-  const relativePath = path.resolve(__dirname, '../../../codev/templates/overview.html');
-  if (fs.existsSync(relativePath)) {
-    return relativePath;
+  // 1. Try relative to compiled output (dist/servers/ -> templates/)
+  const pkgPath = path.resolve(__dirname, '../templates/overview.html');
+  if (fs.existsSync(pkgPath)) {
+    return pkgPath;
   }
 
-  // Try current working directory (for installed projects)
-  const cwdPath = path.join(process.cwd(), 'codev/templates/overview.html');
-  if (fs.existsSync(cwdPath)) {
-    return cwdPath;
+  // 2. Try relative to source (src/servers/ -> templates/)
+  const devPath = path.resolve(__dirname, '../../templates/overview.html');
+  if (fs.existsSync(devPath)) {
+    return devPath;
   }
 
   return null;
@@ -350,7 +352,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       if (!templatePath) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Template not found. Make sure overview.html exists in codev/templates/');
+        res.end('Template not found. Make sure overview.html exists in agent-farm/templates/');
         return;
       }
 
@@ -375,6 +377,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, () => {
+// SECURITY: Bind to localhost only to prevent network exposure
+server.listen(port, '127.0.0.1', () => {
   console.log(`Overview dashboard: http://localhost:${port}`);
 });

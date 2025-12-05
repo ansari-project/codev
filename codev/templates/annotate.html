@@ -20,8 +20,8 @@
       top: 0;
       z-index: 100;
     }
-    .header h1 { font-size: 16px; font-weight: 500; }
-    .header .path { color: #888; font-size: 13px; margin-top: 4px; font-family: monospace; }
+    .header h1.path { font-size: 14px; font-weight: 500; font-family: monospace; color: #fff; }
+    .header .subtitle { color: #888; font-size: 12px; margin-top: 4px; }
     .header .actions { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
     .header .btn {
       padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer;
@@ -197,10 +197,10 @@
 </head>
 <body data-builder="{{BUILDER_ID}}" data-file="{{FILE_PATH}}" data-lang="{{LANG}}">
   <div class="header">
-    <h1>Annotation Viewer</h1>
-    <div class="path">{{FILE_PATH}}</div>
+    <h1 class="path">{{FILE_PATH}}</h1>
+    <div class="subtitle">Click on a line number to leave an annotation.</div>
     <div class="actions">
-      <button id="editBtn" class="btn btn-primary" onclick="toggleEditMode()">Edit</button>
+      <button id="editBtn" class="btn btn-primary" onclick="toggleEditMode()">Switch to Editing</button>
       <button id="saveBtn" class="btn btn-success" onclick="saveEdit()" style="display: none;">Save</button>
       <button id="cancelBtn" class="btn btn-secondary" onclick="cancelEdit()" style="display: none;">Cancel</button>
       <span id="unsavedIndicator">Unsaved changes</span>
@@ -504,6 +504,8 @@
       const saveBtn = document.getElementById('saveBtn');
       const cancelBtn = document.getElementById('cancelBtn');
 
+      const subtitle = document.querySelector('.subtitle');
+
       if (!editMode) {
         // Enter edit mode
         // Capture scroll position from view mode
@@ -515,7 +517,8 @@
         editor.value = currentContent;
         viewMode.style.display = 'none';
         editor.style.display = 'block';
-        editBtn.textContent = 'View';
+        editBtn.textContent = 'Switch to Annotate';
+        subtitle.textContent = 'Edit the file directly by clicking and typing.';
         saveBtn.style.display = 'inline-block';
         cancelBtn.style.display = 'inline-block';
         editMode = true;
@@ -537,7 +540,8 @@
         fileLines = currentContent.split('\n');
         editor.style.display = 'none';
         viewMode.style.display = 'flex';
-        editBtn.textContent = 'Edit';
+        editBtn.textContent = 'Switch to Editing';
+        subtitle.textContent = 'Click on a line number to leave an annotation.';
         saveBtn.style.display = 'none';
         cancelBtn.style.display = 'none';
         editMode = false;

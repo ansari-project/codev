@@ -189,17 +189,17 @@ Projects currently in development (conceived through committed), sorted by prior
 # Medium Priority
   - id: "0010"
     title: "Annotation Editor"
-    summary: "Add edit button to annotation viewer with basic inline editing capabilities"
-    status: specified
+    summary: "Add Edit/Annotate mode toggle to annotation viewer for inline file editing"
+    status: committed
     priority: medium
     release: "v1.0.0"
     files:
       spec: codev/specs/0010-annotation-editor.md
-      plan: null
+      plan: codev/plans/0010-annotation-editor.md
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, editing]
-    notes: "TICK protocol. Textarea swap approach. Backend /save endpoint already exists. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. PR 34 merged 2025-12-04. NEEDS TESTING before integration. Edit mode with auto-save on View, Cancel restores disk state. Consulted GPT-5 and Gemini Pro."
 
   - id: "0011"
     title: "Multi-Instance Support"
@@ -232,7 +232,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0015"
     title: "Cleanup Protocol"
     summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
-    status: planned
+    status: integrated
     priority: medium
     release: "v1.0.0"
     files:
@@ -241,7 +241,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [protocols, maintenance]
-    notes: "TICK protocol. Four phases: AUDIT→PRUNE→VALIDATE→SYNC. Dry-run default, soft-delete with restore.sh, 30-day retention. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. Four phases: AUDIT→PRUNE→VALIDATE→SYNC. Dry-run default, soft-delete with restore.sh, 30-day retention. PR 33 merged 2025-12-04. Consulted GPT-5 and Gemini Pro."
 
   - id: "0019"
     title: "Tab Bar Status Indicators"
@@ -355,6 +355,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [architecture, protocols, agents]
     notes: "Currently a Claude Code subagent. Consider if DOCUMENT protocol would be more appropriate and portable across AI CLIs."
+
+  - id: "0028"
+    title: "Librarian Role"
+    summary: "Replace architecture-documenter agent with a broader Librarian role that owns all documentation stewardship"
+    status: specified
+    priority: medium
+    release: null
+    files:
+      spec: codev/specs/0028-librarian-role.md
+      plan: null
+      review: null
+    dependencies: []
+    tags: [roles, documentation, architecture]
+    notes: "Librarian responsibilities: maintain arch.md, keep CLAUDE.md/AGENTS.md in sync, curate codev/resources/, track documentation debt, ensure spec/plan/review consistency. Supersedes 0027 (which focused only on arch.md)."
 ```
 
 ---
@@ -561,7 +575,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0028** - Reserve this number for your next project
+**0029** - Reserve this number for your next project
 
 ---
 

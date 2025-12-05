@@ -143,7 +143,10 @@ When implementation is complete:
 2. Self-review the code
 3. Create a PR: `gh pr create --title "[Spec XXXX] Description" --body "..."`
 4. Update status to `pr-ready`
-5. The Architect will review and merge
+5. Wait for Architect review and approval
+6. **Merge your own PR** once approved: `gh pr merge --merge --delete-branch`
+
+**Important**: The Builder is responsible for merging after Architect approval. This ensures the Builder sees the merge succeed and can handle any final cleanup.
 
 ### Receiving PR Feedback
 
@@ -165,7 +168,7 @@ gh pr view <PR_NUMBER> --web
 5. Push fixes to the same branch
 6. Reply to PR comment when done or if clarification needed
 
-## Example Builder Session
+## Example Builder Session.
 
 ```
 1. Spawned for spec 0003-user-auth
@@ -197,6 +200,6 @@ gh pr view <PR_NUMBER> --web
 
 - **Stay in scope** - Only implement what's in your spec
 - **Don't modify shared config** - Without Architect approval
-- **Don't merge yourself** - The Architect handles integration
+- **Merge your own PRs** - After Architect approves, you are responsible for merging
 - **Don't spawn other Builders** - Only Architects spawn Builders
 - **Keep worktree clean** - No untracked files, no debug code

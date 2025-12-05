@@ -251,6 +251,7 @@ async function startBuilderSession(
     '-W',
     '-p', String(port),
     '-t', 'theme={"background":"#000000"}',
+    '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
   ];
 
   if (existsSync(customIndexPath)) {
@@ -297,6 +298,7 @@ async function startShellSession(
     '-W',
     '-p', String(port),
     '-t', 'theme={"background":"#000000"}',
+    '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
   ];
 
   if (existsSync(customIndexPath)) {
@@ -611,6 +613,7 @@ async function spawnWorktree(options: SpawnOptions, config: Config): Promise<voi
     '-W',
     '-p', String(port),
     '-t', 'theme={"background":"#000000"}',
+    '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
   ];
 
   if (existsSync(customIndexPath)) {

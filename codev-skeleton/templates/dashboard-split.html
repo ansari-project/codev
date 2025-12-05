@@ -765,9 +765,7 @@
     // Get filename from path
     function getFileName(path) {
       const parts = path.split('/');
-      const name = parts[parts.length - 1];
-      // Remove extension for display
-      return name.replace(/\.(md|txt|ts|js|py|html|css|json)$/, '');
+      return parts[parts.length - 1];
     }
 
     // Track current architect port to avoid re-rendering iframe unnecessarily

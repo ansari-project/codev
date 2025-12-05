@@ -3,85 +3,51 @@
 ## Metadata
 - **ID**: 0011-multi-instance-support
 - **Protocol**: TICK
-- **Status**: specified
+- **Status**: integrated
 - **Created**: 2025-12-03
 - **Priority**: medium
 
 ## Problem Statement
 
-When running multiple agent-farm instances (one per project), it's hard to distinguish between them:
-1. All browser tabs show the same "Agent Farm Dashboard" title
-2. No way to see all running instances at a glance
-3. Port conflicts can occur if not managed carefully
+When running multiple agent-farm instances (one per project), all browser tabs show the same "Agent Farm Dashboard" title, making it hard to distinguish between them.
 
-## Current State
+## Solution
 
-- Dashboard title is generic: "Agent Farm Dashboard"
-- Each instance tracks state in its own `.agent-farm/` directory
-- Port registry exists at `~/.agent-farm/ports.json` with project isolation
-- No meta-view across instances
-
-## Desired State
-
-1. **Directory-aware titles**: Dashboard shows project directory name
-   - "Agent Farm - codev" or "Agent Farm - webapp"
-2. **Meta-dashboard (optional)**: Single page showing all running instances
-3. **Better port management**: Already implemented in 0008
+Directory-aware titles: Dashboard shows "Agent Farm - projectName" format in both the browser tab and page header.
 
 ## Success Criteria
 
-- [ ] Dashboard title includes project directory name
-- [ ] Browser tab title shows project name
-- [ ] (Optional) Meta-dashboard lists all running instances with links
+- [x] Dashboard title shows project name
+- [x] Browser tab title shows project name
+- [x] Long project names are truncated appropriately
 
-## Technical Approach
+## Implementation
 
-### Title Update
-
-Simple change to dashboard HTML template:
+Server injects `PROJECT_NAME` from `path.basename(projectRoot)` into the HTML template:
 
 ```html
 <title>Agent Farm - {{PROJECT_NAME}}</title>
 <h1>Agent Farm - {{PROJECT_NAME}}</h1>
 ```
 
-Server injects `PROJECT_NAME` from `path.basename(projectRoot)`.
+## Files Modified
 
-### Meta-Dashboard (Optional Stretch Goal)
-
-Separate static page that reads `~/.agent-farm/ports.json`:
-- Lists all projects with allocated ports
-- Links to each dashboard
-- Shows basic status (running/stopped)
-
-## Scope
-
-### In Scope
-- Directory name in dashboard title
-- Title in browser tab
-
-### Out of Scope (or stretch goal)
-- Meta-dashboard
-- Cross-instance communication
-
-## Test Scenarios
-
-1. Start dashboard in `/foo/bar/project-a` - title shows "Agent Farm - project-a"
-2. Start another in `/foo/bar/project-b` - title shows "Agent Farm - project-b"
-3. Browser tabs are distinguishable
+- `codev/templates/dashboard-split.html` - Added PROJECT_NAME placeholder
+- `codev-skeleton/templates/dashboard-split.html` - Added PROJECT_NAME placeholder
+- `agent-farm/src/servers/dashboard-server.ts` - Inject project name with HTML escaping
 
 ## Dependencies
 
 - Dashboard server (existing)
-- Port registry (0008, already implemented)
 
 ## Expert Consultation
+
 **Date**: 2025-12-03
 **Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
-- Handle long paths with truncation (e.g., `.../project-name`)
-- Both models confirmed approach is sound - simple, high-value UX fix
+- Handle long paths with truncation
+- Both models confirmed approach is sound
 
-## Approval
-- [ ] Technical Lead Review
-- [ ] Product Owner Review
+## Notes
+
+Meta-dashboard feature was split out to separate spec (0029).

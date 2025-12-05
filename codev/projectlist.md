@@ -203,17 +203,17 @@ Projects currently in development (conceived through committed), sorted by prior
 
   - id: "0011"
     title: "Multi-Instance Support"
-    summary: "Better support for running multiple agent-farm instances with directory-aware titles and meta-dashboard"
-    status: implementing
+    summary: "Directory-aware titles in dashboard for distinguishing multiple agent-farm instances"
+    status: integrated
     priority: medium
     release: "v1.0.0"
     files:
       spec: codev/specs/0011-multi-instance-support.md
-      plan: null
+      plan: codev/plans/0011-multi-instance-support.md
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, multi-project]
-    notes: "TICK protocol. Directory name in title. Handle long path truncation. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. PROJECT_NAME placeholder in templates. Meta-dashboard split to 0029."
 
   - id: "0013"
     title: "Document OS Dependencies"
@@ -369,6 +369,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [roles, documentation, architecture]
     notes: "Librarian responsibilities: maintain arch.md, keep CLAUDE.md/AGENTS.md in sync, curate codev/resources/, track documentation debt, ensure spec/plan/review consistency. Supersedes 0027 (which focused only on arch.md)."
+
+  - id: "0029"
+    title: "Overview Dashboard"
+    summary: "Centralized dashboard showing all running agent-farm instances with launch capability"
+    status: implementing
+    priority: medium
+    release: null
+    files:
+      spec: codev/specs/0029-overview-dashboard.md
+      plan: codev/plans/0029-overview-dashboard.md
+      review: null
+    dependencies: ["0008", "0011"]
+    tags: [ui, dashboard, multi-project]
+    notes: "TICK protocol. af overview command. Shows all instances, directory picker to launch new ones."
 ```
 
 ---
@@ -574,7 +588,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0029** - Reserve this number for your next project
+**0030** - Reserve this number for your next project
 
 ---
 

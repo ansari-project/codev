@@ -42,15 +42,18 @@ async function isPortInUse(port: number): Promise<boolean> {
 }
 
 /**
- * Get PID of process listening on a port
+ * Get all PIDs of processes listening on a port
  */
-function getProcessOnPort(port: number): number | null {
+function getProcessesOnPort(port: number): number[] {
   try {
     const result = execSync(`lsof -ti :${port} 2>/dev/null`, { encoding: 'utf-8' });
-    const pid = parseInt(result.trim().split('\n')[0], 10);
-    return isNaN(pid) ? null : pid;
+    return result
+      .trim()
+      .split('\n')
+      .map((line) => parseInt(line, 10))
+      .filter((pid) => !isNaN(pid));
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -122,18 +125,25 @@ export async function towerStop(options: TowerStopOptions = {}): Promise<void> {
 
   logger.header('Stopping Tower');
 
-  const pid = getProcessOnPort(port);
+  const pids = getProcessesOnPort(port);
 
-  if (!pid) {
+  if (pids.length === 0) {
     logger.info('Tower is not running');
     return;
   }
 
-  try {
-    process.kill(pid, 'SIGTERM');
-    logger.success(`Tower stopped (PID ${pid})`);
-  } catch (err) {
-    fatal(`Failed to stop tower: ${(err as Error).message}`);
+  let stopped = 0;
+  for (const pid of pids) {
+    try {
+      process.kill(pid, 'SIGTERM');
+      stopped++;
+    } catch {
+      // Process may have already exited
+    }
+  }
+
+  if (stopped > 0) {
+    logger.success(`Tower stopped (${stopped} process${stopped > 1 ? 'es' : ''}: PIDs ${pids.join(', ')})`);
   }
 }
 

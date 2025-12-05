@@ -147,6 +147,7 @@ function ensureLocalDatabase(): Database.Database {
   } else if (!migrated) {
     // Fresh install, just mark migration as done
     db.prepare('INSERT OR IGNORE INTO _migrations (version) VALUES (1)').run();
+    console.log('[info] Created new state.db at', dbPath);
   }
 
   return db;
@@ -188,6 +189,7 @@ function ensureGlobalDatabase(): Database.Database {
   } else if (!migrated) {
     // Fresh install, just mark migration as done
     db.prepare('INSERT OR IGNORE INTO _migrations (version) VALUES (1)').run();
+    console.log('[info] Created new global.db at', dbPath);
   }
 
   return db;

@@ -497,7 +497,7 @@
 
     // ==================== Edit Mode Functions ====================
 
-    function toggleEditMode() {
+    async function toggleEditMode() {
       const viewMode = document.getElementById('viewMode');
       const editor = document.getElementById('editor');
       const editBtn = document.getElementById('editBtn');
@@ -510,7 +510,8 @@
         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
 
         currentContent = fileLines.join('\n');
-        originalContent = currentContent;
+        // Note: originalContent is set only in init() and after successful saves
+        // to ensure Cancel always reverts to the true disk state
         editor.value = currentContent;
         viewMode.style.display = 'none';
         editor.style.display = 'block';
@@ -523,9 +524,14 @@
         editor.scrollTop = scrollTop;
         editor.focus();
       } else {
-        // Exit to view mode (apply changes to fileLines)
+        // Exit to view mode - auto-save changes per spec
         // Capture scroll position from editor
         const scrollTop = editor.scrollTop;
+
+        // Auto-save if there are changes (spec requires: "Edit text, click View → changes saved")
+        if (hasUnsavedChanges) {
+          await saveEdit();
+        }
 
         currentContent = editor.value;
         fileLines = currentContent.split('\n');

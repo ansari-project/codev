@@ -59,6 +59,10 @@ function loadState(): DashboardState {
     if (fs.existsSync(stateFile)) {
       const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8')) as DashboardState;
 
+      // Defensively normalize arrays before filtering (handles upgrade/corruption)
+      state.utils = Array.isArray(state.utils) ? state.utils : [];
+      state.annotations = Array.isArray(state.annotations) ? state.annotations : [];
+
       // Clean up dead shell processes (auto-close tabs when shell exits normally)
       const originalUtilCount = state.utils.length;
       state.utils = state.utils.filter((util) => {

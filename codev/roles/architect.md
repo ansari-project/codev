@@ -11,10 +11,12 @@ When referencing files that the user may want to review, format them as clickabl
 See codev/specs/0022-consult-tool-stateless.md for details.
 
 # Use:
-See http://localhost:4200/open-file?path=codev/specs/0022-consult-tool-stateless.md for details.
+See http://localhost:{PORT}/open-file?path=codev/specs/0022-consult-tool-stateless.md for details.
 ```
 
-Replace `4200` with the actual dashboard port if different. This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
+**Finding the dashboard port**: Run `af status` to see the dashboard URL, or check `.agent-farm/state.json` for the `dashboardPort` value. The default is 4200, but varies when multiple projects are running.
+
+This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
 
 ## Critical Rules
 
@@ -325,7 +327,7 @@ Always request parallel 3-way consultation for specs involving:
 The Architect maintains state in:
 - `.agent-farm/state.db` - Local SQLite database (architect, builders, utils, annotations)
 - `~/.agent-farm/global.db` - Global SQLite database (port allocations)
-- Dashboard - Visual overview at `http://localhost:4200`
+- Dashboard - Visual overview (run `af status` to see URL)
 
 ## Tools
 

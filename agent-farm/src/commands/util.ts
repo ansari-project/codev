@@ -92,6 +92,7 @@ export async function util(options: UtilOptions = {}): Promise<void> {
     '-p', String(port),
     '-t', `titleFixed=${name}`,
     '-t', 'fontSize=14',
+    '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
     shell,
   ];
 

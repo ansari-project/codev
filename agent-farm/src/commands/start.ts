@@ -117,6 +117,7 @@ export async function start(options: StartOptions = {}): Promise<void> {
     '-W',
     '-p', String(architectPort),
     '-t', 'theme={"background":"#000000"}',
+    '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
   ];
 
   // Add custom index if it exists

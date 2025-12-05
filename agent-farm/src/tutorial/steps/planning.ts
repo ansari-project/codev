@@ -14,7 +14,7 @@ function generatePlan(title: string): string {
 
 ## Metadata
 
-- **Spec**: codev/specs/0001-tutorial-task.md
+- **Spec**: codev/specs/tutorial-example.md
 - **Protocol**: TICK
 - **Created**: ${new Date().toISOString().split('T')[0]}
 
@@ -81,7 +81,7 @@ export const planningStep: Step = {
     console.log();
 
     // Check if spec exists
-    const specPath = resolve(ctx.projectPath, 'codev', 'specs', '0001-tutorial-task.md');
+    const specPath = resolve(ctx.projectPath, 'codev', 'specs', 'tutorial-example.md');
     let specTitle = ctx.state.userResponses.specTitle || 'Tutorial Task';
 
     if (existsSync(specPath)) {
@@ -96,7 +96,7 @@ export const planningStep: Step = {
         // Use default
       }
     } else {
-      prompts.info('No spec found at codev/specs/0001-tutorial-task.md');
+      prompts.info('No spec found at codev/specs/tutorial-example.md');
       prompts.content('We\'ll create an example plan anyway.\n');
     }
 
@@ -124,11 +124,11 @@ export const planningStep: Step = {
     prompts.code(planContent.slice(0, 600) + '...');
     console.log();
 
-    const shouldSave = await prompts.confirm('Save this plan to codev/plans/0001-tutorial-task.md?');
+    const shouldSave = await prompts.confirm('Save this plan to codev/plans/tutorial-example.md?');
 
     if (shouldSave) {
       const plansDir = resolve(ctx.projectPath, 'codev', 'plans');
-      const planPath = resolve(plansDir, '0001-tutorial-task.md');
+      const planPath = resolve(plansDir, 'tutorial-example.md');
 
       try {
         if (!existsSync(plansDir)) {
@@ -137,7 +137,7 @@ export const planningStep: Step = {
         }
 
         await writeFile(planPath, planContent);
-        prompts.success(`Saved to codev/plans/0001-tutorial-task.md`);
+        prompts.success(`Saved to codev/plans/tutorial-example.md`);
       } catch (error) {
         prompts.warn(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -145,13 +145,12 @@ export const planningStep: Step = {
 
     console.log();
     prompts.content('Multi-Agent Consultation:\n');
-    prompts.content('For complex features, you can get input from multiple AI models:');
-    prompts.code(`# Using the consult tool
-./codev/bin/consult gemini "Review my plan for ..."
-./codev/bin/consult codex "What do you think of ...""`);
+    prompts.content('For complex features, SPIDER protocol includes multi-agent review.');
+    prompts.content('This means getting input from multiple AI models (e.g., Claude, Gemini, GPT)');
+    prompts.content('to catch blind spots and consider alternatives.');
     console.log();
 
-    prompts.info('This helps catch blind spots and consider alternatives.');
+    prompts.info('See codev/protocols/ for details on consultation workflows.');
     console.log();
 
     await prompts.pressEnter();

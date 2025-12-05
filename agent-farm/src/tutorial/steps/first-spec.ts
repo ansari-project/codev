@@ -115,11 +115,11 @@ export const firstSpecStep: Step = {
       console.log('...\n');
     }
 
-    const shouldSave = await prompts.confirm('Save this spec to codev/specs/0001-tutorial-task.md?');
+    const shouldSave = await prompts.confirm('Save this spec to codev/specs/tutorial-example.md?');
 
     if (shouldSave) {
       const specsDir = resolve(ctx.projectPath, 'codev', 'specs');
-      const specPath = resolve(specsDir, '0001-tutorial-task.md');
+      const specPath = resolve(specsDir, 'tutorial-example.md');
 
       try {
         // Ensure specs directory exists
@@ -129,7 +129,7 @@ export const firstSpecStep: Step = {
         }
 
         await writeFile(specPath, specContent);
-        prompts.success(`Saved to codev/specs/0001-tutorial-task.md`);
+        prompts.success(`Saved to codev/specs/tutorial-example.md`);
       } catch (error) {
         prompts.warn(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
       }

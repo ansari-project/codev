@@ -1431,6 +1431,72 @@ The architect-builder system was consolidated to eliminate brittleness from trip
 - **`hooks/pre-commit`** - Runs test suite before commits
 - **`scripts/install-hooks.sh`** - Installation script
 
+### Tab Bar Status Indicators (Spec 0019)
+
+Added visual status indicators to builder tabs for at-a-glance monitoring.
+
+#### Status Indicator System
+- **Location**: `codev/templates/dashboard-split.html`
+- **Purpose**: Display builder status via color-coded dots in the tab bar
+- **Features**:
+  - Color-coded status dots using CSS variables
+  - Pulse animation for waiting/blocked states (WCAG 2.3.3 compliant)
+  - Diamond shape for blocked status (additional accessibility indicator)
+  - Tooltips on hover with ARIA labels
+  - prefers-reduced-motion support for accessibility
+
+#### CSS Variables (Status Colors)
+```css
+--status-active: #22c55e;    /* Green: spawning, implementing */
+--status-waiting: #eab308;   /* Yellow: pr-ready (waiting for review) */
+--status-error: #ef4444;     /* Red: blocked */
+--status-complete: #9e9e9e;  /* Gray: complete */
+```
+
+#### Status Configuration
+```javascript
+const STATUS_CONFIG = {
+  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
+  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
+  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
+  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
+  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+};
+```
+
+#### Status Dot Rendering (`getStatusDot()` function)
+- Returns HTML `<span>` with status indicator
+- Adds CSS classes: `status-dot`, `status-dot--diamond` (if blocked), `status-dot--pulse` (if waiting/blocked)
+- Sets inline background color from CSS variable
+- Includes title attribute for tooltip and ARIA label
+- Uses `role="img"` to avoid screen reader chatter on polling updates
+- Output example: `<span class="status-dot status-dot--pulse" style="background: var(--status-waiting)" title="PR Ready" role="img" aria-label="PR Ready"></span>`
+
+#### Accessibility Features
+1. **Color + Shape**: Blocked status uses diamond shape + red color (not just color)
+2. **Pulse Animation**: Waiting/blocked states pulse to draw attention
+3. **Reduced Motion**: `@media (prefers-reduced-motion: reduce)` disables animations
+4. **Tooltips**: Hover reveals status label
+5. **Screen Readers**: ARIA labels and role="img" for proper semantics
+
+#### Integration with Dashboard
+- Status dots appear in builder tabs next to builder name
+- Updates via existing 1-second polling mechanism (`refresh()` called via `setInterval`)
+- No backend changes required (uses existing state.json status field)
+- Status automatically updates when builder status changes
+
+#### CSS Classes
+```css
+.status-dot                 /* 6x6px circle */
+.status-dot--diamond        /* Rotated 45deg for diamond shape */
+.status-dot--pulse          /* Applies pulse animation */
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+```
+
 ### Terminal File Click to Annotate (Spec 0009)
 
 Added clickable file paths in terminal output that open in the annotation viewer.
@@ -1487,8 +1553,68 @@ Added clickable file paths in terminal output that open in the annotation viewer
 - `codev/templates/dashboard-split.html` (+54 lines)
 - `codev-skeleton/templates/dashboard-split.html` (+54 lines)
 
+### Tab Bar Status Indicators (Spec 0019)
+
+Added visual status indicators to the dashboard tab bar for at-a-glance builder monitoring.
+
+#### Dashboard UI Changes
+- **Location**: `codev/templates/dashboard-split.html`
+- **Change Type**: CSS + JavaScript enhancement
+
+#### CSS Status Color Variables
+```css
+--status-active: #22c55e;      /* Green: spawning, implementing */
+--status-waiting: #eab308;     /* Yellow: pr-ready (waiting for review) */
+--status-error: #ef4444;       /* Red: blocked */
+--status-complete: #9e9e9e;    /* Gray: complete */
+```
+
+#### New JavaScript Components
+
+**STATUS_CONFIG constant** - Maps builder status to visual properties:
+```javascript
+const STATUS_CONFIG = {
+  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
+  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
+  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
+  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
+  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+};
+```
+
+**getStatusDot() function** - Renders status indicators with accessibility:
+- Generates HTML for status dot with appropriate CSS classes
+- Sets inline color from CSS variables
+- Adds title tooltips and ARIA labels
+- Uses `role="img"` to prevent screen reader chatter on polling
+- Returns: `<span class="status-dot [--diamond] [--pulse]" style="background: ..." title="..." role="img" aria-label="..."></span>`
+
+#### CSS Accessibility Features
+- **Diamond shape** - Blocked status uses 45deg rotation for colorblind users
+- **Pulse animation** - Waiting/blocked states pulse (0.6 second opacity, 0.85 scale)
+- **Reduced motion support** - `@media (prefers-reduced-motion: reduce)` disables animations
+- **Tooltips** - Hover reveals status label
+- **Screen reader support** - ARIA labels on all indicators
+
+#### Integration Pattern
+- Status dots render in tab bar via `renderTabs()` function
+- Uses `getStatusDot(tab.status)` to generate HTML
+- Status field comes from builder tab object (populated from state.json)
+- Updates via existing 1-second polling mechanism (`refresh()` → `buildTabsFromState()` → `renderTabs()`)
+- No backend changes - uses existing builder status field
+
+#### Implementation Details
+- Hoisted `STATUS_CONFIG` for performance (consulted in every render cycle)
+- Changed from `role="status"` to `role="img"` to avoid screen reader chatter
+- CSS classes use BEM naming: `.status-dot`, `.status-dot--diamond`, `.status-dot--pulse`
+- Animation uses CSS custom properties for color consistency
+
+**Files Modified**:
+- `codev/templates/dashboard-split.html` - CSS variables, animations, getStatusDot() function
+- `codev-skeleton/templates/dashboard-split.html` - Synced with codev/ version
+
 ---
 
-**Last Updated**: 2025-12-03 (Spec 0009 implementation)
-**Version**: Post-terminal-file-click
+**Last Updated**: 2025-12-04 (Spec 0019 implementation)
+**Version**: Post-tab-bar-status-indicators
 **Next Review**: After next significant feature implementation

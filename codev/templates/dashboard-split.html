@@ -22,10 +22,11 @@
       --accent: #3b82f6;
       --tab-active: #333;
       --tab-hover: #2a2a2a;
-      --status-idle: #22c55e;
-      --status-working: #eab308;
-      --status-error: #ef4444;
-      --status-spawning: #3b82f6;
+      /* Status indicator colors per spec 0019 */
+      --status-active: #22c55e;    /* Green: spawning, implementing */
+      --status-waiting: #eab308;   /* Yellow: pr-ready (waiting for review) */
+      --status-error: #ef4444;     /* Red: blocked */
+      --status-complete: #9e9e9e;  /* Gray: complete */
     }
 
     body {
@@ -117,7 +118,7 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--status-idle);
+      background: var(--status-active);
     }
 
     .pane-header .status-dot.inactive {
@@ -231,6 +232,22 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
+    }
+
+    /* Diamond shape for blocked status (accessibility: not just color) */
+    .tab .status-dot--diamond {
+      border-radius: 1px;
+      transform: rotate(45deg);
+    }
+
+    /* Pulse animations for accessibility (colorblind users) */
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .tab .status-dot--pulse {
+      animation: pulse-slow 2s ease-in-out infinite;
     }
 
     .tab .close {
@@ -782,17 +799,23 @@
       }
     }
 
-    // Get status dot HTML
+    // Get status dot HTML with accessibility support
+    // Colors per spec 0019: green=active, yellow=waiting, red=blocked, gray=complete
+    // Accessibility: pulse animation for waiting/blocked, diamond shape for blocked
     function getStatusDot(status) {
-      const colors = {
-        'spawning': 'var(--status-spawning)',
-        'implementing': 'var(--status-working)',
-        'blocked': 'var(--status-error)',
-        'pr-ready': 'var(--status-idle)',
-        'complete': 'var(--status-idle)'
+      const statusConfig = {
+        'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
+        'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
+        'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
+        'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
+        'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
       };
-      const color = colors[status] || 'var(--text-muted)';
-      return `<span class="status-dot" style="background: ${color}"></span>`;
+      const config = statusConfig[status] || { color: 'var(--text-muted)', label: status || 'Unknown', shape: 'circle', pulse: false };
+      // Build CSS classes for accessibility
+      const classes = ['status-dot'];
+      if (config.shape === 'diamond') classes.push('status-dot--diamond');
+      if (config.pulse) classes.push('status-dot--pulse');
+      return `<span class="${classes.join(' ')}" style="background: ${config.color}" title="${config.label}" role="status" aria-label="${config.label}"></span>`;
     }
 
     // Track current tab content to avoid re-rendering iframe unnecessarily
@@ -837,7 +860,7 @@
       const archStatus = document.getElementById('status-architect');
       if (state.architect) {
         archStatus.innerHTML = `
-          <span class="dot" style="background: var(--status-idle)"></span>
+          <span class="dot" style="background: var(--status-active)"></span>
           <span>Architect: running</span>
         `;
       } else {

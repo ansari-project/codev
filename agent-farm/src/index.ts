@@ -92,13 +92,41 @@ program
 // Spawn command
 program
   .command('spawn')
-  .description('Spawn a new builder for a project')
-  .requiredOption('-p, --project <id>', 'Project/spec ID to work on')
-  .option('-i, --instruction <text>', 'Initial instruction to send to builder')
+  .description('Spawn a new builder in various modes')
+  .option('-p, --project <id>', 'Spawn builder for a spec (e.g., -p 0009)')
+  .option('--task <text>', 'Spawn builder with a task description')
+  .option('--protocol <name>', 'Spawn builder to run a protocol (e.g., cleanup)')
+  .option('--shell', 'Spawn a bare Claude session (no prompt, no worktree)')
+  .option('--files <files>', 'Context files for task mode (comma-separated)')
+  .option('--no-role', 'Skip loading role prompt')
+  .addHelpText('after', `
+Examples:
+  # Spec mode (existing behavior)
+  af spawn -p 0009                              # Spawn for spec 0009
+
+  # Task mode (ad-hoc tasks)
+  af spawn --task "Fix the login bug"           # Simple task
+  af spawn --task "Refactor auth" --files src/auth.ts,src/login.ts
+
+  # Protocol mode (run a protocol)
+  af spawn --protocol cleanup                   # Run cleanup protocol
+  af spawn --protocol experiment                # Run experiment protocol
+
+  # Shell mode (bare session)
+  af spawn --shell                              # Just Claude, no prompt/worktree
+`)
   .action(async (options) => {
     const { spawn } = await import('./commands/spawn.js');
     try {
-      await spawn({ project: options.project, instruction: options.instruction });
+      const files = options.files ? options.files.split(',').map((f: string) => f.trim()) : undefined;
+      await spawn({
+        project: options.project,
+        task: options.task,
+        protocol: options.protocol,
+        shell: options.shell,
+        files,
+        noRole: !options.role,
+      });
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
       process.exit(1);

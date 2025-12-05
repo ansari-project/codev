@@ -26,10 +26,12 @@ describe('Type Definitions', () => {
         phase: 'planning',
         worktree: '/path/to/worktree',
         branch: 'builder/0001-test',
+        type: 'spec',
       };
 
       expect(builder.id).toBe('B001');
       expect(builder.status).toBe('implementing');
+      expect(builder.type).toBe('spec');
     });
 
     it('should enforce status enum', () => {
@@ -162,12 +164,38 @@ describe('Type Definitions', () => {
   });
 
   describe('SpawnOptions', () => {
-    it('should require project', () => {
+    it('should accept project mode (spec)', () => {
       const options: SpawnOptions = {
         project: '0005',
       };
 
       expect(options.project).toBe('0005');
+    });
+
+    it('should accept task mode', () => {
+      const options: SpawnOptions = {
+        task: 'Fix the login bug',
+        files: ['src/auth.ts', 'src/login.ts'],
+      };
+
+      expect(options.task).toBe('Fix the login bug');
+      expect(options.files).toHaveLength(2);
+    });
+
+    it('should accept protocol mode', () => {
+      const options: SpawnOptions = {
+        protocol: 'cleanup',
+      };
+
+      expect(options.protocol).toBe('cleanup');
+    });
+
+    it('should accept shell mode', () => {
+      const options: SpawnOptions = {
+        shell: true,
+      };
+
+      expect(options.shell).toBe(true);
     });
   });
 });

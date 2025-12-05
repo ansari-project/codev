@@ -270,15 +270,35 @@ program
     }
   });
 
-// Overview command - centralized view of all agent-farm instances
-program
-  .command('overview')
-  .description('Start the overview dashboard showing all instances')
+// Tower command - centralized view of all agent-farm instances
+const towerCmd = program
+  .command('tower')
+  .description('Manage the tower dashboard showing all instances');
+
+towerCmd
+  .command('start')
+  .description('Start the tower dashboard')
   .option('-p, --port <port>', 'Port to run on (default: 4100)')
   .action(async (options) => {
-    const { overview } = await import('./commands/overview.js');
+    const { towerStart } = await import('./commands/tower.js');
     try {
-      await overview({
+      await towerStart({
+        port: options.port ? parseInt(options.port, 10) : undefined,
+      });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+towerCmd
+  .command('stop')
+  .description('Stop the tower dashboard')
+  .option('-p, --port <port>', 'Port to stop (default: 4100)')
+  .action(async (options) => {
+    const { towerStop } = await import('./commands/tower.js');
+    try {
+      await towerStop({
         port: options.port ? parseInt(options.port, 10) : undefined,
       });
     } catch (error) {

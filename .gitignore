@@ -2,6 +2,8 @@
 tmp/
 .builders/
 .consult/
+.agent-farm/
+.env
 
 # Cleanup protocol artifacts
 # .trash/ contains soft-deleted files (bulk data, not versioned)

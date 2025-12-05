@@ -97,7 +97,8 @@ export async function start(options: StartOptions = {}): Promise<void> {
   logger.kv('Port', architectPort);
 
   // Start architect in tmux session for persistence
-  const sessionName = 'af-architect';
+  // Use port in session name to ensure uniqueness across projects
+  const sessionName = `af-architect-${architectPort}`;
 
   // Kill any existing session
   try {

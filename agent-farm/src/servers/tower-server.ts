@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * Overview server for Agent Farm.
+ * Tower server for Agent Farm.
  * Provides a centralized view of all agent-farm instances across projects.
  *
- * Usage: node overview-server.js <port>
+ * Usage: node tower-server.js <port>
  */
 
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Default port for overview dashboard
+// Default port for tower dashboard
 const DEFAULT_PORT = 4100;
 
 // Parse arguments
@@ -122,6 +122,10 @@ async function getInstances(): Promise<InstanceStatus[]> {
   const instances: InstanceStatus[] = [];
 
   for (const [projectPath, entry] of Object.entries(registry.entries)) {
+    // Skip builder worktrees - they're managed by their parent project
+    if (projectPath.includes('/.builders/')) {
+      continue;
+    }
     const basePort = entry.basePort;
     const dashboardPort = basePort;
     const architectPort = basePort + 1;
@@ -160,12 +164,11 @@ async function getInstances(): Promise<InstanceStatus[]> {
     });
   }
 
-  // Sort by running status first (running at top), then by last used
+  // Sort: running first, then by last used (most recent first)
   instances.sort((a, b) => {
     if (a.running !== b.running) {
       return a.running ? -1 : 1;
     }
-    // Sort by lastUsed if both have same running status
     const aTime = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
     const bTime = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
     return bTime - aTime;
@@ -175,7 +178,77 @@ async function getInstances(): Promise<InstanceStatus[]> {
 }
 
 /**
+ * Get directory suggestions for autocomplete
+ */
+async function getDirectorySuggestions(inputPath: string): Promise<{ path: string; isProject: boolean }[]> {
+  // Default to home directory if empty
+  if (!inputPath) {
+    inputPath = homedir();
+  }
+
+  // Expand ~ to home directory
+  if (inputPath.startsWith('~')) {
+    inputPath = inputPath.replace('~', homedir());
+  }
+
+  // Determine the directory to list and the prefix to filter by
+  let dirToList: string;
+  let prefix: string;
+
+  if (inputPath.endsWith('/')) {
+    // User typed a complete directory path, list its contents
+    dirToList = inputPath;
+    prefix = '';
+  } else {
+    // User is typing a partial name, list parent and filter
+    dirToList = path.dirname(inputPath);
+    prefix = path.basename(inputPath).toLowerCase();
+  }
+
+  // Check if directory exists
+  if (!fs.existsSync(dirToList)) {
+    return [];
+  }
+
+  const stat = fs.statSync(dirToList);
+  if (!stat.isDirectory()) {
+    return [];
+  }
+
+  // Read directory contents
+  const entries = fs.readdirSync(dirToList, { withFileTypes: true });
+
+  // Filter to directories only, apply prefix filter, and check for codev/
+  const suggestions: { path: string; isProject: boolean }[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name.startsWith('.')) continue; // Skip hidden directories
+
+    const name = entry.name.toLowerCase();
+    if (prefix && !name.startsWith(prefix)) continue;
+
+    const fullPath = path.join(dirToList, entry.name);
+    const isProject = fs.existsSync(path.join(fullPath, 'codev'));
+
+    suggestions.push({ path: fullPath, isProject });
+  }
+
+  // Sort: projects first, then alphabetically
+  suggestions.sort((a, b) => {
+    if (a.isProject !== b.isProject) {
+      return a.isProject ? -1 : 1;
+    }
+    return a.path.localeCompare(b.path);
+  });
+
+  // Limit to 20 suggestions
+  return suggestions.slice(0, 20);
+}
+
+/**
  * Launch a new agent-farm instance
+ * First stops any stale state, then starts fresh
  */
 async function launchInstance(projectPath: string): Promise<{ success: boolean; error?: string }> {
   // Validate path exists
@@ -183,26 +256,55 @@ async function launchInstance(projectPath: string): Promise<{ success: boolean; 
     return { success: false, error: `Path does not exist: ${projectPath}` };
   }
 
-  // Check if it's a codev project
-  const codevDir = path.join(projectPath, 'codev');
-  if (!fs.existsSync(codevDir)) {
-    return { success: false, error: 'Not a codev project (missing codev/ directory)' };
+  // Validate it's a directory
+  const stat = fs.statSync(projectPath);
+  if (!stat.isDirectory()) {
+    return { success: false, error: `Not a directory: ${projectPath}` };
   }
 
-  // Check for agent-farm script
-  const agentFarmScript = path.join(projectPath, 'codev', 'bin', 'agent-farm');
-  if (!fs.existsSync(agentFarmScript)) {
-    return { success: false, error: 'agent-farm CLI not found in project' };
-  }
+  // Determine which agent-farm CLI to use:
+  // 1. Local install: codev/bin/agent-farm (if exists)
+  // 2. Global: npx agent-farm (fallback)
+  const localScript = path.join(projectPath, 'codev', 'bin', 'agent-farm');
+  const useLocal = fs.existsSync(localScript);
 
   // SECURITY: Use spawn with cwd option to avoid command injection
   // Do NOT use bash -c with string concatenation
   try {
-    const child = spawn(agentFarmScript, ['start'], {
-      detached: true,
-      stdio: 'ignore',
-      cwd: projectPath,
-    });
+    // First, stop any existing (possibly stale) instance
+    if (useLocal) {
+      const stopChild = spawn(localScript, ['stop'], {
+        cwd: projectPath,
+        stdio: 'ignore',
+      });
+      // Wait for stop to complete
+      await new Promise<void>((resolve) => {
+        stopChild.on('close', () => resolve());
+        stopChild.on('error', () => resolve());
+        // Timeout after 3 seconds
+        setTimeout(() => resolve(), 3000);
+      });
+    }
+
+    // Small delay to ensure cleanup
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Now start
+    let child;
+    if (useLocal) {
+      child = spawn(localScript, ['start'], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: projectPath,
+      });
+    } else {
+      // Use npx to run global agent-farm
+      child = spawn('npx', ['agent-farm', 'start'], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: projectPath,
+      });
+    }
     child.unref();
 
     return { success: true };
@@ -212,18 +314,60 @@ async function launchInstance(projectPath: string): Promise<{ success: boolean; 
 }
 
 /**
- * Find the overview template
+ * Get PID of process listening on a port
+ */
+function getProcessOnPort(targetPort: number): number | null {
+  try {
+    const result = execSync(`lsof -ti :${targetPort} 2>/dev/null`, { encoding: 'utf-8' });
+    const pid = parseInt(result.trim().split('\n')[0], 10);
+    return isNaN(pid) ? null : pid;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Stop an agent-farm instance by killing processes on its ports
+ */
+async function stopInstance(basePort: number): Promise<{ success: boolean; error?: string; stopped: number[] }> {
+  const stopped: number[] = [];
+
+  // Kill processes on the main port range (dashboard, architect, builders)
+  // Dashboard is basePort, architect is basePort+1, builders start at basePort+100
+  const portsToCheck = [basePort, basePort + 1];
+
+  for (const p of portsToCheck) {
+    const pid = getProcessOnPort(p);
+    if (pid) {
+      try {
+        process.kill(pid, 'SIGTERM');
+        stopped.push(p);
+      } catch {
+        // Process may have already exited
+      }
+    }
+  }
+
+  if (stopped.length === 0) {
+    return { success: true, error: 'No processes found to stop', stopped };
+  }
+
+  return { success: true, stopped };
+}
+
+/**
+ * Find the tower template
  * Template is bundled with agent-farm package in templates/ directory
  */
 function findTemplatePath(): string | null {
   // 1. Try relative to compiled output (dist/servers/ -> templates/)
-  const pkgPath = path.resolve(__dirname, '../templates/overview.html');
+  const pkgPath = path.resolve(__dirname, '../templates/tower.html');
   if (fs.existsSync(pkgPath)) {
     return pkgPath;
   }
 
   // 2. Try relative to source (src/servers/ -> templates/)
-  const devPath = path.resolve(__dirname, '../../templates/overview.html');
+  const devPath = path.resolve(__dirname, '../../templates/tower.html');
   if (fs.existsSync(devPath)) {
     return devPath;
   }
@@ -331,6 +475,21 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // API: Browse directories for autocomplete
+    if (req.method === 'GET' && url.pathname === '/api/browse') {
+      const inputPath = url.searchParams.get('path') || '';
+
+      try {
+        const suggestions = await getDirectorySuggestions(inputPath);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ suggestions }));
+      } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ suggestions: [], error: (err as Error).message }));
+      }
+      return;
+    }
+
     // API: Launch new instance
     if (req.method === 'POST' && url.pathname === '/api/launch') {
       const body = await parseJsonBody(req);
@@ -348,11 +507,28 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // API: Stop an instance
+    if (req.method === 'POST' && url.pathname === '/api/stop') {
+      const body = await parseJsonBody(req);
+      const basePort = body.basePort as number;
+
+      if (!basePort) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing basePort' }));
+        return;
+      }
+
+      const result = await stopInstance(basePort);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+
     // Serve dashboard
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       if (!templatePath) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Template not found. Make sure overview.html exists in agent-farm/templates/');
+        res.end('Template not found. Make sure tower.html exists in agent-farm/templates/');
         return;
       }
 
@@ -379,5 +555,5 @@ const server = http.createServer(async (req, res) => {
 
 // SECURITY: Bind to localhost only to prevent network exposure
 server.listen(port, '127.0.0.1', () => {
-  console.log(`Overview dashboard: http://localhost:${port}`);
+  console.log(`Tower: http://localhost:${port}`);
 });

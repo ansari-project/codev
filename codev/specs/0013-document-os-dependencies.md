@@ -14,6 +14,7 @@ Codev requires several OS-level dependencies that aren't clearly documented:
 - ttyd (web terminal)
 - Node.js (runtime)
 - git (worktrees)
+- gh (GitHub CLI for PRs, issues)
 - Python 3 (consult tool, scripts)
 - Claude Code CLI (primary AI agent)
 - Gemini CLI (consultation)
@@ -62,15 +63,18 @@ Codev requires the following:
 | tmux | >= 3.0 | `brew install tmux` | `apt install tmux` | Terminal sessions |
 | ttyd | >= 1.7 | `brew install ttyd` | See below | Web terminal |
 | git | >= 2.5 | (pre-installed) | `apt install git` | Worktrees |
+| gh | latest | `brew install gh` | `apt install gh` | GitHub CLI for PRs |
 | Python | >= 3.10 | `brew install python` | `apt install python3` | Consult tool |
 
 ### AI CLI Dependencies (at least one required)
 
-| Dependency | Installation | Purpose |
-|------------|--------------|---------|
-| Claude Code | `npm install -g @anthropic-ai/claude-code` | Primary AI agent |
-| Gemini CLI | `npm install -g @anthropic-ai/gemini-cli` | Consultation |
-| Codex CLI | `npm install -g @openai/codex` | Consultation |
+| Dependency | Installation | Docs | Purpose |
+|------------|--------------|------|---------|
+| Claude Code | `npm install -g @anthropic-ai/claude-code` | [docs](https://docs.anthropic.com/en/docs/claude-code) | Primary AI agent |
+| Gemini CLI | `npm install -g @anthropic-ai/gemini-cli` | [github](https://github.com/anthropics/gemini-cli) | Consultation |
+| Codex CLI | `npm install -g @openai/codex` | [github](https://github.com/openai/codex) | Consultation |
+
+**Note**: After installing gh, authenticate with `gh auth login`.
 
 ### Installing ttyd on Linux
 

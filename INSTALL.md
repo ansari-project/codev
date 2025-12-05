@@ -278,9 +278,10 @@ After installation, guide the user:
 - Fallback: "We can start with SPIDER-SOLO and migrate later"
 
 **Q: User has existing codev directory**
+- If upgrading from a previous codev version, see **[MIGRATION-1.0.md](MIGRATION-1.0.md)** for upgrade instructions
 - Ask: "You have an existing codev/ directory. Should I:"
+  - "Upgrade to v1.0.x (preserves your specs, plans, and reviews)"
   - "Back it up and reinstall"
-  - "Update the protocol only"
   - "Keep existing setup"
 
 **Q: User wants a different protocol name**

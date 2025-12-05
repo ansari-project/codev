@@ -53,11 +53,42 @@ const templatePath = path.join(projectRoot, 'codev/templates/dashboard-split.htm
 const legacyTemplatePath = path.join(projectRoot, 'codev/templates/dashboard.html');
 const stateFile = path.join(projectRoot, '.agent-farm', 'state.json');
 
-// Load state
+// Load state and clean up dead processes
 function loadState(): DashboardState {
   try {
     if (fs.existsSync(stateFile)) {
-      return JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+      const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8')) as DashboardState;
+
+      // Clean up dead shell processes (auto-close tabs when shell exits normally)
+      const originalUtilCount = state.utils.length;
+      state.utils = state.utils.filter((util) => {
+        if (!isProcessRunning(util.pid)) {
+          console.log(`Auto-closing shell tab ${util.name} (process ${util.pid} exited)`);
+          // Also clean up orphaned tmux session if it exists
+          if (util.tmuxSession) {
+            killTmuxSession(util.tmuxSession);
+          }
+          return false;
+        }
+        return true;
+      });
+
+      // Clean up dead annotation processes
+      const originalAnnotationCount = state.annotations.length;
+      state.annotations = state.annotations.filter((annotation) => {
+        if (!isProcessRunning(annotation.pid)) {
+          console.log(`Auto-closing file tab ${annotation.file} (process ${annotation.pid} exited)`);
+          return false;
+        }
+        return true;
+      });
+
+      // Save state if we cleaned up any processes
+      if (state.utils.length !== originalUtilCount || state.annotations.length !== originalAnnotationCount) {
+        saveState(state);
+      }
+
+      return state;
     }
   } catch (err) {
     console.error('Error loading state:', (err as Error).message);

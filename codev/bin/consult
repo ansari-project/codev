@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Consult tool - wrapper for gemini-cli and codex CLI.
+"""Consult tool - wrapper for gemini-cli, codex CLI, and claude CLI.
 
 Provides a unified interface for single-agent consultation via external AI CLIs.
 Each invocation is stateless (fresh process).
@@ -7,8 +7,10 @@ Each invocation is stateless (fresh process).
 Usage:
     consult gemini "Review this design"
     consult codex "What do you think of this API?"
+    consult claude "Review this implementation"
     consult pro "Review this"         # alias for gemini
     consult gpt "Review this"         # alias for codex
+    consult opus "Review this"        # alias for claude
     echo "Review this" | consult pro
 
 For parallel consultation, run multiple consult commands in separate shells.
@@ -33,6 +35,7 @@ except ImportError:
 MODEL_MAP = {
     "pro": "gemini",
     "gpt": "codex",
+    "opus": "claude",
 }
 
 
@@ -99,7 +102,7 @@ def log_query(log_dir: Path, model: str, query: str, duration_secs: float | None
 
 def consult(
     model: str = typer.Argument(
-        ..., help="Model: gemini, codex (or aliases: pro, gpt)"
+        ..., help="Model: gemini, codex, claude (or aliases: pro, gpt, opus)"
     ),
     query: str = typer.Argument(
         None, help="Query (or pipe via stdin)"
@@ -113,7 +116,9 @@ def consult(
     Examples:
         consult gemini "Review this architecture"
         consult codex "What's wrong with this code?"
+        consult claude "Review this design"
         consult pro "Review this"   # alias for gemini
+        consult opus "Review this"  # alias for claude
         echo "Review this" | consult gpt
     """
     # Lazy load paths
@@ -174,10 +179,22 @@ def consult(
             raise typer.Exit(1)
         cmd = ["codex", "exec", "--full-auto", query]
         env = {"CODEX_SYSTEM_MESSAGE": role}
+    elif resolved == "claude":
+        if not shutil.which("claude"):
+            typer.echo(
+                "Error: claude not found.\n"
+                "Install: npm install -g @anthropic-ai/claude-code",
+                err=True,
+            )
+            raise typer.Exit(1)
+        # Claude Code: prepend role to query, use prompt mode with permission skip
+        full_query = f"{role}\n\n---\n\nConsultation Request:\n{query}"
+        cmd = ["claude", "--print", "-p", full_query, "--dangerously-skip-permissions"]
+        env = {}
     else:
         typer.echo(
             f"Unknown model: {model}\n"
-            f"Available: gemini, codex (aliases: pro, gpt)",
+            f"Available: gemini, codex, claude (aliases: pro, gpt, opus)",
             err=True,
         )
         raise typer.Exit(1)

@@ -419,13 +419,14 @@ When the user requests "Consult" or "consultation" (including variations like "u
 
 ## Consult Tool
 
-The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli and codex). Each invocation is stateless (fresh process).
+The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli, codex, and claude). Each invocation is stateless (fresh process).
 
 ### Prerequisites
 
 - **Python 3**: With typer installed (`pip install typer`)
 - **gemini-cli**: For Gemini consultations (see https://github.com/google-gemini/gemini-cli)
 - **codex**: For Codex consultations (`npm install -g @openai/codex`)
+- **claude**: For Claude consultations (`npm install -g @anthropic-ai/claude-code`)
 
 ### Usage
 
@@ -436,9 +437,13 @@ The `consult` CLI provides a unified interface for single-agent consultation via
 # Consult Codex (with autonomous mode)
 ./codev/bin/consult codex "What do you think of this API?"
 
+# Consult Claude (with autonomous mode)
+./codev/bin/consult claude "Review this implementation"
+
 # Use model aliases
 ./codev/bin/consult pro "Review this"   # alias for gemini
 ./codev/bin/consult gpt "Review this"   # alias for codex
+./codev/bin/consult opus "Review this"  # alias for claude
 
 # Pipe input via stdin
 echo "Review this code" | ./codev/bin/consult pro
@@ -462,12 +467,18 @@ echo "Gemini completed in $(($(date +%s)-START))s"
 START=$(date +%s)
 ./codev/bin/consult codex "$QUERY"
 echo "Codex completed in $(($(date +%s)-START))s"
+
+# Terminal 3: Claude consultation with timing (simultaneously)
+START=$(date +%s)
+./codev/bin/consult claude "$QUERY"
+echo "Claude completed in $(($(date +%s)-START))s"
 ```
 
 Or use background processes:
 ```bash
 ./codev/bin/consult gemini "$QUERY" &
 ./codev/bin/consult codex "$QUERY" &
+./codev/bin/consult claude "$QUERY" &
 wait
 ```
 
@@ -479,6 +490,8 @@ wait
 | `pro` | gemini-3-pro-preview | gemini-cli |
 | `codex` | gpt-5-codex | codex |
 | `gpt` | gpt-5-codex | codex |
+| `claude` | (default model) | claude |
+| `opus` | (default model) | claude |
 
 ### Performance Characteristics
 
@@ -486,6 +499,7 @@ wait
 |-------|--------------|----------|
 | Gemini | ~120-150s | Pure text analysis, no shell commands |
 | Codex | ~200-250s | Sequential shell commands (`git show`, `rg`, etc.) |
+| Claude | ~60-120s | Balanced analysis with targeted tool use |
 
 **Why Codex is slower**: Codex CLI's `--full-auto` mode executes shell commands sequentially with reasoning between each step. For PR reviews, it typically runs 10-15 commands like `git show <branch>:<file>`, `rg -n "pattern"`, etc. This is more thorough but takes ~2x longer than Gemini's text-only analysis.
 
@@ -495,6 +509,7 @@ wait
 2. Invokes the appropriate CLI with autonomous mode enabled:
    - gemini: `GEMINI_SYSTEM_MD=<temp_file> gemini --yolo <query>` (temp file contains the role)
    - codex: `CODEX_SYSTEM_MESSAGE=<role> codex exec --full-auto <query>`
+   - claude: `claude --print -p <role + query> --dangerously-skip-permissions` (role prepended to query)
 3. Passes through stdout/stderr and exit codes
 4. Logs queries with timing to `.consult/history.log`
 5. Prints completion time to stderr
@@ -522,6 +537,69 @@ The consultant role (`codev/roles/consultant.md`) defines a collaborative partne
 3. **Document all deviations** from the plan with reasoning
 4. **Create atomic commits** for each phase completion
 5. **Maintain >90% test coverage** where possible
+
+## 🚨 CRITICAL: Before Starting ANY Task
+
+### ALWAYS Check for Existing Work First
+
+**BEFORE writing ANY code, run these checks:**
+
+```bash
+# Check if there's already a PR for this
+gh pr list --search "XXXX"
+
+# Check projectlist for status
+cat codev/projectlist.md | grep -A5 "XXXX"
+
+# Check if implementation already exists
+git log --oneline --all | grep -i "feature-name"
+```
+
+**If existing work exists:**
+1. READ the PR/commits first
+2. TEST if it actually works
+3. IDENTIFY specific bugs - don't rewrite from scratch
+4. FIX the bugs minimally
+
+### When Stuck: STOP After 15 Minutes
+
+**If you've been debugging the same issue for 15+ minutes:**
+1. **STOP coding immediately**
+2. **Consult external models** (GPT-5, Gemini) with specific questions
+3. **Ask the user** if you're on the right path
+4. **Consider simpler approaches** - you're probably overcomplicating it
+
+**Warning signs you're in a rathole:**
+- Making incremental fixes that don't work
+- User telling you you're overcomplicating it (LISTEN TO THEM)
+- Trying multiple CDNs/versions/approaches without understanding why
+- Not understanding the underlying technology (protocol, module system, etc.)
+
+### Understand Before Coding
+
+**Before implementing, you MUST understand:**
+1. **The protocol/API** - Read docs, don't guess
+2. **The module system** - ESM vs CommonJS vs UMD vs globals
+3. **What already exists** - Check the codebase and git history
+4. **The spec's assumptions** - Verify they're actually true
+
+**Example of what NOT to do (Spec 0009 disaster):**
+- Started coding without checking PR 28 existed
+- PR 28 was merged but never tested (xterm v5 doesn't export globals)
+- Spent 90 minutes trying different CDNs instead of understanding the problem
+- Ignored user's repeated feedback about overcomplication
+- Consulted external models only after an hour of failure
+
+**What SHOULD have happened:**
+```
+1. Check projectlist.md → "0009 is committed, needs integration"
+2. Check PR 28 → See what was implemented
+3. Test PR 28 → Find it doesn't work
+4. Identify ROOT CAUSE → xterm v5 module system issue
+5. Research → How does ttyd load xterm?
+6. Minimal fix → Match ttyd's approach
+7. Total time: 20 minutes
+```
 
 ## Lessons Learned from Test Infrastructure (Spec 0001)
 

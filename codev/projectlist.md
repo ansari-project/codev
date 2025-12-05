@@ -411,6 +411,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [infrastructure, database, concurrency]
     notes: "SPIDER protocol. Fixes race conditions in state.json and ports.json. Uses better-sqlite3 with WAL mode. 3-way reviewed."
+
+  - id: "0032"
+    title: "Consolidate Templates"
+    summary: "Move dashboard and annotate templates from codev/ to agent-farm/templates/"
+    status: planned
+    priority: medium
+    release: "v1.1.0"
+    files:
+      spec: codev/specs/0032-consolidate-templates.md
+      plan: codev/plans/0032-consolidate-templates.md
+      review: null
+    dependencies: []
+    tags: [infrastructure, cleanup, agent-farm]
+    notes: "TICK protocol. Removes template duplication between codev/ and codev-skeleton/."
 ```
 
 ---
@@ -622,7 +636,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0032** - Reserve this number for your next project
+**0033** - Reserve this number for your next project
 
 ---
 

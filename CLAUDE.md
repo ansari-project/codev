@@ -419,13 +419,14 @@ When the user requests "Consult" or "consultation" (including variations like "u
 
 ## Consult Tool
 
-The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli and codex). Each invocation is stateless (fresh process).
+The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli, codex, and claude). Each invocation is stateless (fresh process).
 
 ### Prerequisites
 
 - **Python 3**: With typer installed (`pip install typer`)
 - **gemini-cli**: For Gemini consultations (see https://github.com/google-gemini/gemini-cli)
 - **codex**: For Codex consultations (`npm install -g @openai/codex`)
+- **claude**: For Claude consultations (`npm install -g @anthropic-ai/claude-code`)
 
 ### Usage
 
@@ -436,9 +437,13 @@ The `consult` CLI provides a unified interface for single-agent consultation via
 # Consult Codex (with autonomous mode)
 ./codev/bin/consult codex "What do you think of this API?"
 
+# Consult Claude (with autonomous mode)
+./codev/bin/consult claude "Review this implementation"
+
 # Use model aliases
 ./codev/bin/consult pro "Review this"   # alias for gemini
 ./codev/bin/consult gpt "Review this"   # alias for codex
+./codev/bin/consult opus "Review this"  # alias for claude
 
 # Pipe input via stdin
 echo "Review this code" | ./codev/bin/consult pro
@@ -462,12 +467,18 @@ echo "Gemini completed in $(($(date +%s)-START))s"
 START=$(date +%s)
 ./codev/bin/consult codex "$QUERY"
 echo "Codex completed in $(($(date +%s)-START))s"
+
+# Terminal 3: Claude consultation with timing (simultaneously)
+START=$(date +%s)
+./codev/bin/consult claude "$QUERY"
+echo "Claude completed in $(($(date +%s)-START))s"
 ```
 
 Or use background processes:
 ```bash
 ./codev/bin/consult gemini "$QUERY" &
 ./codev/bin/consult codex "$QUERY" &
+./codev/bin/consult claude "$QUERY" &
 wait
 ```
 
@@ -479,6 +490,8 @@ wait
 | `pro` | gemini-3-pro-preview | gemini-cli |
 | `codex` | gpt-5-codex | codex |
 | `gpt` | gpt-5-codex | codex |
+| `claude` | (default model) | claude |
+| `opus` | (default model) | claude |
 
 ### Performance Characteristics
 
@@ -486,6 +499,7 @@ wait
 |-------|--------------|----------|
 | Gemini | ~120-150s | Pure text analysis, no shell commands |
 | Codex | ~200-250s | Sequential shell commands (`git show`, `rg`, etc.) |
+| Claude | ~60-120s | Balanced analysis with targeted tool use |
 
 **Why Codex is slower**: Codex CLI's `--full-auto` mode executes shell commands sequentially with reasoning between each step. For PR reviews, it typically runs 10-15 commands like `git show <branch>:<file>`, `rg -n "pattern"`, etc. This is more thorough but takes ~2x longer than Gemini's text-only analysis.
 
@@ -495,6 +509,7 @@ wait
 2. Invokes the appropriate CLI with autonomous mode enabled:
    - gemini: `GEMINI_SYSTEM_MD=<temp_file> gemini --yolo <query>` (temp file contains the role)
    - codex: `CODEX_SYSTEM_MESSAGE=<role> codex exec --full-auto <query>`
+   - claude: `claude --print -p <role + query> --dangerously-skip-permissions` (role prepended to query)
 3. Passes through stdout/stderr and exit codes
 4. Logs queries with timing to `.consult/history.log`
 5. Prints completion time to stderr

@@ -182,9 +182,9 @@ let cachedPorts: {
 /**
  * Initialize port allocation (must be called once at startup)
  */
-export async function initializePorts(): Promise<void> {
+export function initializePorts(): void {
   const projectRoot = findProjectRoot();
-  const ports = await getProjectPorts(projectRoot);
+  const ports = getProjectPorts(projectRoot);
   cachedPorts = {
     dashboardPort: ports.dashboardPort,
     architectPort: ports.architectPort,

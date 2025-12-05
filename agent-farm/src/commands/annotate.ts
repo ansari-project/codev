@@ -22,7 +22,7 @@ interface AnnotateOptions {
  * Returns true if successful, false if dashboard not available
  */
 async function tryDashboardApi(filePath: string): Promise<boolean> {
-  const state = await loadState();
+  const state = loadState();
 
   // Dashboard runs on dashboardPort (not architectPort + 1)
   if (!state.architect) {
@@ -121,7 +121,7 @@ export async function annotate(options: AnnotateOptions): Promise<void> {
     },
   };
 
-  await addAnnotation(annotation);
+  addAnnotation(annotation);
 
   // Wait a moment for server to start
   await new Promise((resolve) => setTimeout(resolve, 300));

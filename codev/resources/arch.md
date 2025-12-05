@@ -1456,28 +1456,37 @@ Added visual status indicators to builder tabs for at-a-glance monitoring.
 #### Status Configuration
 ```javascript
 const STATUS_CONFIG = {
-  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
-  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
-  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
-  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
-  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle',  animation: 'pulse' },
+  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle',  animation: 'pulse' },
+  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', animation: 'blink-fast' },
+  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'ring',    animation: 'blink-slow' },
+  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle',  animation: null }
 };
 ```
 
 #### Status Dot Rendering (`getStatusDot()` function)
 - Returns HTML `<span>` with status indicator
-- Adds CSS classes: `status-dot`, `status-dot--diamond` (if blocked), `status-dot--pulse` (if waiting/blocked)
+- Adds CSS classes based on config:
+  - `status-dot` (always)
+  - `status-dot--diamond` (blocked - rotated square)
+  - `status-dot--ring` (pr-ready - hollow circle)
+  - `status-dot--pulse` (active states - gentle pulse)
+  - `status-dot--blink-slow` (pr-ready - slow blink)
+  - `status-dot--blink-fast` (blocked - fast blink)
 - Sets inline background color from CSS variable
 - Includes title attribute for tooltip and ARIA label
 - Uses `role="img"` to avoid screen reader chatter on polling updates
-- Output example: `<span class="status-dot status-dot--pulse" style="background: var(--status-waiting)" title="PR Ready" role="img" aria-label="PR Ready"></span>`
+- Output example: `<span class="status-dot status-dot--ring status-dot--blink-slow" style="background: var(--status-waiting)" title="PR Ready" role="img" aria-label="PR Ready"></span>`
 
 #### Accessibility Features
-1. **Color + Shape**: Blocked status uses diamond shape + red color (not just color)
-2. **Pulse Animation**: Waiting/blocked states pulse to draw attention
-3. **Reduced Motion**: `@media (prefers-reduced-motion: reduce)` disables animations
-4. **Tooltips**: Hover reveals status label
-5. **Screen Readers**: ARIA labels and role="img" for proper semantics
+1. **Color + Shape + Animation**: Each status has distinct visual cues
+   - Active: solid circle + pulse animation
+   - Waiting: ring (hollow circle) + slow blink
+   - Blocked: diamond shape + fast blink
+   - Complete: solid circle, static
+2. **Reduced Motion**: `@media (prefers-reduced-motion: reduce)` disables all animations while keeping shape differentiators
+3. **Tooltips**: Hover reveals status label
+4. **Screen Readers**: ARIA labels and role="img" for proper semantics
 
 #### Integration with Dashboard
 - Status dots appear in builder tabs next to builder name
@@ -1487,13 +1496,29 @@ const STATUS_CONFIG = {
 
 #### CSS Classes
 ```css
-.status-dot                 /* 6x6px circle */
-.status-dot--diamond        /* Rotated 45deg for diamond shape */
-.status-dot--pulse          /* Applies pulse animation */
+/* Shape classes */
+.status-dot                 /* 6x6px circle (default) */
+.status-dot--diamond        /* Rotated 45deg for diamond shape (blocked) */
+.status-dot--ring           /* Hollow circle via box-shadow (pr-ready) */
 
-@keyframes pulse-slow {
+/* Animation classes */
+.status-dot--pulse          /* Gentle pulse 2s (active states) */
+.status-dot--blink-slow     /* Slow blink 3s (pr-ready) */
+.status-dot--blink-fast     /* Fast blink 0.8s (blocked) */
+
+@keyframes status-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.85); }
+  50% { opacity: 0.7; transform: scale(0.9); }
+}
+
+@keyframes status-blink-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes status-blink-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 ```
 
@@ -1574,25 +1599,27 @@ Added visual status indicators to the dashboard tab bar for at-a-glance builder 
 **STATUS_CONFIG constant** - Maps builder status to visual properties:
 ```javascript
 const STATUS_CONFIG = {
-  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
-  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
-  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
-  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
-  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+  'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle',  animation: 'pulse' },
+  'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle',  animation: 'pulse' },
+  'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', animation: 'blink-fast' },
+  'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'ring',    animation: 'blink-slow' },
+  'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle',  animation: null }
 };
 ```
 
 **getStatusDot() function** - Renders status indicators with accessibility:
 - Generates HTML for status dot with appropriate CSS classes
+- Shape classes: `status-dot--diamond` (blocked), `status-dot--ring` (pr-ready)
+- Animation classes: `status-dot--pulse`, `status-dot--blink-slow`, `status-dot--blink-fast`
 - Sets inline color from CSS variables
 - Adds title tooltips and ARIA labels
 - Uses `role="img"` to prevent screen reader chatter on polling
-- Returns: `<span class="status-dot [--diamond] [--pulse]" style="background: ..." title="..." role="img" aria-label="..."></span>`
+- Returns: `<span class="status-dot status-dot--ring status-dot--blink-slow" style="background: ..." title="..." role="img" aria-label="..."></span>`
 
 #### CSS Accessibility Features
-- **Diamond shape** - Blocked status uses 45deg rotation for colorblind users
-- **Pulse animation** - Waiting/blocked states pulse (0.6 second opacity, 0.85 scale)
-- **Reduced motion support** - `@media (prefers-reduced-motion: reduce)` disables animations
+- **Distinct shapes** - Circle (active/complete), Ring/hollow (pr-ready), Diamond (blocked)
+- **Distinct animations** - Pulse (active), slow blink (waiting), fast blink (blocked), static (complete)
+- **Reduced motion support** - `@media (prefers-reduced-motion: reduce)` disables animations but keeps shape differentiators
 - **Tooltips** - Hover reveals status label
 - **Screen reader support** - ARIA labels on all indicators
 

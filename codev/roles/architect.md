@@ -273,10 +273,58 @@ wait  # Wait for all to complete
 🤖 Generated with 3-way AI consultation (synthesized by architect)
 ```
 
+## Spec Review Best Practices
+
+When reviewing specs (especially with 3-way consultation), watch for these critical areas:
+
+### Migration Strategy
+- **Copy-then-delete**: Never delete original data until migration succeeds
+- **Transaction-wrapped**: All migration operations in a single transaction
+- **Backup preservation**: Keep `.bak` files permanently for rollback
+- **Idempotence**: Migration should detect and skip if already done
+
+### Schema Versioning
+- **Use internal tracking**: `_migrations` table in DB, not filesystem sentinels
+- **Version numbers**: Simple integer versions (1, 2, 3...)
+- **Applied timestamps**: Track when each migration ran
+
+### Concurrency Handling
+- **Busy timeouts**: SQLite needs `busy_timeout` pragma (5000ms typical)
+- **WAL verification**: Check if WAL mode succeeded, warn if fallback to DELETE mode
+- **Transaction modes**: Use `BEGIN IMMEDIATE` for operations that must serialize (port allocation)
+- **Retry logic**: `withRetry<T>()` wrapper for SQLITE_BUSY errors
+
+### Native Dependencies
+- **Compilation failures**: Provide clear error messages with rebuild instructions
+- **Prebuilt binaries**: Document fallback options (`--build-from-source=false`)
+- **Platform testing**: macOS and Linux may have different behaviors
+
+### Schema Design
+- **CHECK constraints**: Validate enum values at DB level (`CHECK(status IN (...))`)
+- **UNIQUE constraints**: Prevent duplicate ports, IDs at DB level
+- **Indexes**: Add for common query patterns (`idx_builders_status`)
+- **Triggers**: Automate `updated_at` timestamps
+
+### Testing Requirements
+Specs should explicitly require:
+1. **Unit tests**: Schema creation, CRUD operations, constraint enforcement
+2. **Concurrency tests**: Parallel writes, port allocation races
+3. **Integration tests**: Full workflow with real processes
+4. **Error handling tests**: Timeout behavior, migration failure, recovery
+
+### When to Request 3-Way Reviews
+Always request parallel 3-way consultation for specs involving:
+- Data persistence or migration
+- Concurrency or multi-process access
+- Native dependencies or platform-specific code
+- Schema design decisions
+- Security-sensitive operations
+
 ## State Management
 
 The Architect maintains state in:
-- `.agent-farm/state.json` - Current architect/builder/util status
+- `.agent-farm/state.db` - Local SQLite database (architect, builders, utils, annotations)
+- `~/.agent-farm/global.db` - Global SQLite database (port allocations)
 - Dashboard - Visual overview at `http://localhost:4200`
 
 ## Tools

@@ -234,25 +234,56 @@
       border-radius: 50%;
     }
 
-    /* Diamond shape for blocked status (accessibility: not just color) */
+    /* Shape modifiers for accessibility (not just color) */
     .tab .status-dot--diamond {
       border-radius: 1px;
       transform: rotate(45deg);
     }
 
-    /* Pulse animations for accessibility (colorblind users) */
-    @keyframes pulse-slow {
+    /* Ring shape for pr-ready (accessibility: distinct from circle) */
+    .tab .status-dot--ring {
+      box-shadow: inset 0 0 0 1.5px currentColor;
+      background: transparent !important;
+      color: var(--status-waiting);
+    }
+
+    /* Distinct animations per status category (spec 0019) */
+    @keyframes status-pulse {
+      /* Pulsing: Active/working (spawning, implementing) */
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
+      50% { opacity: 0.7; transform: scale(0.9); }
+    }
+
+    @keyframes status-blink-slow {
+      /* Slow blink: Idle/waiting (pr-ready) */
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes status-blink-fast {
+      /* Fast blink: Error/blocked */
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
     }
 
     .tab .status-dot--pulse {
-      animation: pulse-slow 2s ease-in-out infinite;
+      animation: status-pulse 2s ease-in-out infinite;
+    }
+
+    .tab .status-dot--blink-slow {
+      animation: status-blink-slow 3s ease-in-out infinite;
+    }
+
+    .tab .status-dot--blink-fast {
+      animation: status-blink-fast 0.8s ease-in-out infinite;
     }
 
     /* Respect reduced motion preference (WCAG 2.3.3) */
+    /* Motion-independent differentiators remain: diamond for blocked, ring for pr-ready */
     @media (prefers-reduced-motion: reduce) {
-      .tab .status-dot--pulse {
+      .tab .status-dot--pulse,
+      .tab .status-dot--blink-slow,
+      .tab .status-dot--blink-fast {
         animation: none;
       }
     }
@@ -808,24 +839,29 @@
 
     // Status configuration - hoisted for performance (per Codex review)
     // Colors per spec 0019: green=active, yellow=waiting, red=blocked, gray=complete
+    // Animations per spec 0019: pulse=active, blink-slow=waiting, blink-fast=blocked, static=complete
+    // Shapes for accessibility: circle=default, diamond=blocked, ring=waiting
     const STATUS_CONFIG = {
-      'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
-      'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
-      'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
-      'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
-      'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+      'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle',  animation: 'pulse' },
+      'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle',  animation: 'pulse' },
+      'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', animation: 'blink-fast' },
+      'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'ring',    animation: 'blink-slow' },
+      'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle',  animation: null }
     };
-    const DEFAULT_STATUS_CONFIG = { color: 'var(--text-muted)', label: 'Unknown', shape: 'circle', pulse: false };
+    const DEFAULT_STATUS_CONFIG = { color: 'var(--text-muted)', label: 'Unknown', shape: 'circle', animation: null };
 
     // Get status dot HTML with accessibility support
-    // Accessibility: pulse animation for waiting/blocked, diamond shape for blocked
+    // Accessibility: distinct animations per status, shapes for reduced-motion users
     // Uses role="img" instead of role="status" to avoid screen reader chatter on poll (per Codex review)
     function getStatusDot(status) {
       const config = STATUS_CONFIG[status] || { ...DEFAULT_STATUS_CONFIG, label: status || 'Unknown' };
       // Build CSS classes for accessibility
       const classes = ['status-dot'];
       if (config.shape === 'diamond') classes.push('status-dot--diamond');
-      if (config.pulse) classes.push('status-dot--pulse');
+      if (config.shape === 'ring') classes.push('status-dot--ring');
+      if (config.animation === 'pulse') classes.push('status-dot--pulse');
+      if (config.animation === 'blink-slow') classes.push('status-dot--blink-slow');
+      if (config.animation === 'blink-fast') classes.push('status-dot--blink-fast');
       return `<span class="${classes.join(' ')}" style="background: ${config.color}" title="${config.label}" role="img" aria-label="${config.label}"></span>`;
     }
 

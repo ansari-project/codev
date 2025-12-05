@@ -115,9 +115,9 @@ project-root/
 │   │   ├── tick/           # Fast autonomous implementation
 │   │   ├── experiment/     # Disciplined experimentation
 │   │   └── cleanup/        # Codebase maintenance and cruft removal
-│   ├── cleanup/             # CLEANUP protocol runtime artifacts (gitignored)
-│   │   ├── audit-*.md      # Timestamped audit reports
-│   │   └── .trash/         # Soft-deleted files (30-day retention)
+│   ├── cleanup/             # CLEANUP protocol runtime artifacts
+│   │   ├── audit-*.md      # Timestamped audit reports (versioned)
+│   │   └── .trash/         # Soft-deleted files (gitignored, 30-day retention)
 │   ├── projectlist.md      # Master project tracking (status, priority, dependencies)
 │   ├── specs/              # Feature specifications (WHAT to build)
 │   ├── plans/              # Implementation plans (HOW to build)

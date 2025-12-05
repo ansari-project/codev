@@ -231,7 +231,7 @@ Projects currently in development (conceived through committed), sorted by prior
 
   - id: "0015"
     title: "Cleanup Protocol"
-    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Index"
+    summary: "Multi-phase protocol for systematic codebase cleanup: Audit → Prune → Validate → Sync"
     status: planned
     priority: medium
     release: "v1.0.0"
@@ -241,7 +241,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [protocols, maintenance]
-    notes: "TICK protocol. Four phases: AUDIT→PRUNE→VALIDATE→INDEX. Dry-run default, soft-delete with restore.sh, 30-day retention. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. Four phases: AUDIT→PRUNE→VALIDATE→SYNC. Dry-run default, soft-delete with restore.sh, 30-day retention. Consulted GPT-5 and Gemini Pro."
 
   - id: "0019"
     title: "Tab Bar Status Indicators"

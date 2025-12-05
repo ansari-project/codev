@@ -270,4 +270,21 @@ program
     }
   });
 
+// Overview command - centralized view of all agent-farm instances
+program
+  .command('overview')
+  .description('Start the overview dashboard showing all instances')
+  .option('-p, --port <port>', 'Port to run on (default: 4100)')
+  .action(async (options) => {
+    const { overview } = await import('./commands/overview.js');
+    try {
+      await overview({
+        port: options.port ? parseInt(options.port, 10) : undefined,
+      });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 program.parse();

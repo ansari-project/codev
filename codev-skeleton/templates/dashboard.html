@@ -88,7 +88,7 @@
               <h3>Architect</h3>
               <span class="terminal-status status-architect">active</span>
             </div>
-            <iframe src="http://localhost:${architectPort}" title="Architect Console"></iframe>
+            <iframe src="http://localhost:${architectPort}" title="Architect Console" allow="clipboard-read; clipboard-write"></iframe>
           </div>
         </div>
       `;
@@ -119,7 +119,7 @@
                     <h3>Builder ${b.id}: ${b.name}</h3>
                     <span class="terminal-status ${statusClass}">${b.status} (${b.phase})</span>
                   </div>
-                  <iframe src="http://localhost:${b.port}" title="Builder ${b.id}"></iframe>
+                  <iframe src="http://localhost:${b.port}" title="Builder ${b.id}" allow="clipboard-read; clipboard-write"></iframe>
                 </div>
               `;
             }).join('')}

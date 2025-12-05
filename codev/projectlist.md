@@ -119,7 +119,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0014"
     title: "Flexible Builder Spawning"
     summary: "Generalize spawn command to accept natural language instructions, not just project specs"
-    status: planned
+    status: integrated
     priority: high
     release: "v1.0.0"
     files:
@@ -128,7 +128,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, architecture]
-    notes: "Four modes: spec, task, protocol, shell. Explicit flags only (no positional args). 4-char alphanumeric IDs. Consulted GPT-5 and Gemini Pro."
+    notes: "Five modes: spec, task, protocol, shell, worktree. 3-way reviewed, merged PR 35, 37 unit tests added."
 
   - id: "0020"
     title: "Send Instructions to Builder"
@@ -175,11 +175,11 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0024"
     title: "Builder Event Notifications"
     summary: "Notify builders via tmux send-keys when events occur (PR review completed, file changes, etc.)"
-    status: conceived
+    status: specified
     priority: high
-    release: "v1.0.0"
+    release: null
     files:
-      spec: null
+      spec: codev/specs/0024-builder-event-notifications.md
       plan: null
       review: null
     dependencies: ["0005"]
@@ -204,7 +204,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0011"
     title: "Multi-Instance Support"
     summary: "Better support for running multiple agent-farm instances with directory-aware titles and meta-dashboard"
-    status: specified
+    status: implementing
     priority: medium
     release: "v1.0.0"
     files:
@@ -246,7 +246,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0019"
     title: "Tab Bar Status Indicators"
     summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
-    status: specified
+    status: implementing
     priority: medium
     release: "v1.0.0"
     files:
@@ -275,16 +275,16 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0006"
     title: "Tutorial Mode"
     summary: "Interactive onboarding for new Codev users"
-    status: specified
+    status: merged
     priority: low
     release: "v1.0.0"
     files:
       spec: codev/specs/0006-tutorial-mode.md
-      plan: null
-      review: null
+      plan: codev/plans/0006-tutorial-mode.md
+      review: codev/reviews/0006-tutorial-mode.md
     dependencies: []
     tags: [documentation, onboarding]
-    notes: ""
+    notes: "PR #36 merged 2025-12-05"
 
   - id: "0012"
     title: "Hide tmux Status Bar"
@@ -392,7 +392,7 @@ releases:
 
 ### v1.0.0 (active)
 
-10 projects in recommended order:
+9 projects in recommended order:
 
 | Order | ID | Title | Phase |
 |-------|------|-------|-------|
@@ -401,11 +401,10 @@ releases:
 | 3 | 0015 | Cleanup Protocol | Foundation |
 | 4 | 0014 | Flexible Builder Spawning | Core CLI |
 | 5 | 0020 | Send Instructions to Builder | Core CLI |
-| 6 | 0024 | Builder Event Notifications | Core CLI |
-| 7 | 0019 | Tab Bar Status Indicators | Dashboard UX |
-| 8 | 0010 | Annotation Editor | Dashboard UX |
-| 9 | 0011 | Multi-Instance Support | Dashboard UX |
-| 10 | 0006 | Tutorial Mode | Onboarding |
+| 6 | 0019 | Tab Bar Status Indicators | Dashboard UX |
+| 7 | 0010 | Annotation Editor | Dashboard UX |
+| 8 | 0011 | Multi-Instance Support | Dashboard UX |
+| 9 | 0006 | Tutorial Mode | Onboarding |
 
 See Active Projects section above for full details and current status.
 

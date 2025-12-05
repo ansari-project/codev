@@ -16,6 +16,20 @@ See http://localhost:4200/open-file?path=codev/specs/0022-consult-tool-stateless
 
 Replace `4200` with the actual dashboard port if different. This opens files in the agent-farm annotation viewer when clicked in the dashboard terminal.
 
+## Critical Rules
+
+These rules are **non-negotiable** and must be followed at all times:
+
+### 🚫 NEVER Do These:
+1. **DO NOT use `af send` or `tmux send-keys` for review feedback** - Large messages get corrupted by tmux paste buffers. Always use GitHub PR comments for review feedback.
+2. **DO NOT merge PRs yourself** - Let the builders merge their own PRs after addressing feedback. The builder owns the merge process.
+3. **DO NOT commit directly to main** - All changes go through PRs.
+
+### ✅ ALWAYS Do These:
+1. **Leave PR comments for reviews** - Use `gh pr comment` to post review feedback.
+2. **Notify builders with short messages** - After posting PR comments, send a brief `af send` message like "Check PR #N comments" (not the full review).
+3. **Let builders merge their PRs** - After approving, tell the builder to merge. Don't do it yourself.
+
 ## Responsibilities
 
 1. **Understand the big picture** - Maintain context of the entire project/epic
@@ -24,7 +38,7 @@ Replace `4200` with the actual dashboard port if different. This opens files in 
 4. **Decompose work** - Break large features into spec-sized tasks for Builders
 5. **Spawn Builders** - Create isolated worktrees and assign tasks
 6. **Monitor progress** - Track Builder status, unblock when needed
-7. **Review and integrate** - Merge Builder PRs, run integration tests
+7. **Review and integrate** - Review Builder PRs, let builders merge them
 8. **Maintain quality** - Ensure consistency across Builder outputs
 
 ## Project Tracking
@@ -185,7 +199,7 @@ Before merging a Builder's work:
 ```bash
 # 1. Review the PR (optionally with multi-agent consultation)
 gh pr view 32
-./codev/bin/consult both "Review PR 32: <summary of changes>"
+./codev/bin/consult gemini "Review PR 32: <summary of changes>"
 
 # 2. Add review feedback as PR comment
 gh pr comment 32 --body "## Review
@@ -201,6 +215,63 @@ af send 0013 "Check PR 32 comments and address feedback. Run: gh pr view 32 --co
 ```
 
 **Note:** Large messages via `af send` may have issues with tmux paste buffers. Keep direct messages short; put detailed feedback in PR comments.
+
+### Parallel 3-Way Reviews
+
+For important PRs, run all three external reviews in parallel for faster turnaround:
+
+```bash
+# Launch all reviews as background processes
+QUERY="Review PR 35 (Spec 0014). Branch: builder/0014-...
+Verify: code quality, backward compat, ID generation, tests.
+Give verdict: APPROVE or REQUEST_CHANGES."
+
+# Run in parallel (background shells)
+./codev/bin/consult gemini "$QUERY" &
+./codev/bin/consult codex "$QUERY" &
+./codev/bin/consult claude "$QUERY" &
+wait  # Wait for all to complete
+```
+
+**Why Parallel**:
+- Claude: ~60-90s (fast, focused analysis)
+- Gemini: ~100-120s (pure text analysis)
+- Codex: ~200-250s (sequential shell commands: git show, rg, etc.)
+- Sequential: 360-460s total
+- Parallel: ~250s (limited by slowest reviewer)
+- **~45% faster** total review time
+
+**Note**: `consult claude` spawns an independent Claude Code instance - a fresh perspective separate from your current session.
+
+**3-Way Review Process** (architect as orchestrator):
+1. **Launch** all three reviews in background (`consult gemini &`, `consult codex &`, `consult claude &`)
+2. **Wait** for all background processes to complete
+3. **Synthesize** findings from all three into unified comment
+4. **Post** review comment to PR with priority-ranked issues
+5. **Send** short notification to builder
+
+**Review Comment Template**:
+```markdown
+## 3-Way Review: Claude + Gemini + Codex
+
+**Verdict: REQUEST_CHANGES** (consensus)
+
+### High Priority Issues
+1. [High] Issue description with file:line reference...
+
+### Medium Priority Issues
+2. [Medium] Issue...
+
+### Reviewers
+| Model | Time | Verdict |
+|-------|------|---------|
+| Claude | 72s | REQUEST_CHANGES |
+| Gemini 3 Pro | 106s | REQUEST_CHANGES |
+| GPT-5 Codex | 229s | REQUEST_CHANGES |
+
+---
+🤖 Generated with 3-way AI consultation (synthesized by architect)
+```
 
 ## State Management
 

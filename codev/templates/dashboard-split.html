@@ -242,12 +242,19 @@
 
     /* Pulse animations for accessibility (colorblind users) */
     @keyframes pulse-slow {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
     }
 
     .tab .status-dot--pulse {
       animation: pulse-slow 2s ease-in-out infinite;
+    }
+
+    /* Respect reduced motion preference (WCAG 2.3.3) */
+    @media (prefers-reduced-motion: reduce) {
+      .tab .status-dot--pulse {
+        animation: none;
+      }
     }
 
     .tab .close {
@@ -799,23 +806,27 @@
       }
     }
 
-    // Get status dot HTML with accessibility support
+    // Status configuration - hoisted for performance (per Codex review)
     // Colors per spec 0019: green=active, yellow=waiting, red=blocked, gray=complete
+    const STATUS_CONFIG = {
+      'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
+      'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
+      'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
+      'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
+      'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
+    };
+    const DEFAULT_STATUS_CONFIG = { color: 'var(--text-muted)', label: 'Unknown', shape: 'circle', pulse: false };
+
+    // Get status dot HTML with accessibility support
     // Accessibility: pulse animation for waiting/blocked, diamond shape for blocked
+    // Uses role="img" instead of role="status" to avoid screen reader chatter on poll (per Codex review)
     function getStatusDot(status) {
-      const statusConfig = {
-        'spawning':     { color: 'var(--status-active)',   label: 'Spawning',     shape: 'circle', pulse: false },
-        'implementing': { color: 'var(--status-active)',   label: 'Implementing', shape: 'circle', pulse: false },
-        'blocked':      { color: 'var(--status-error)',    label: 'Blocked',      shape: 'diamond', pulse: true },
-        'pr-ready':     { color: 'var(--status-waiting)',  label: 'PR Ready',     shape: 'circle', pulse: true },
-        'complete':     { color: 'var(--status-complete)', label: 'Complete',     shape: 'circle', pulse: false }
-      };
-      const config = statusConfig[status] || { color: 'var(--text-muted)', label: status || 'Unknown', shape: 'circle', pulse: false };
+      const config = STATUS_CONFIG[status] || { ...DEFAULT_STATUS_CONFIG, label: status || 'Unknown' };
       // Build CSS classes for accessibility
       const classes = ['status-dot'];
       if (config.shape === 'diamond') classes.push('status-dot--diamond');
       if (config.pulse) classes.push('status-dot--pulse');
-      return `<span class="${classes.join(' ')}" style="background: ${config.color}" title="${config.label}" role="status" aria-label="${config.label}"></span>`;
+      return `<span class="${classes.join(' ')}" style="background: ${config.color}" title="${config.label}" role="img" aria-label="${config.label}"></span>`;
     }
 
     // Track current tab content to avoid re-rendering iframe unnecessarily

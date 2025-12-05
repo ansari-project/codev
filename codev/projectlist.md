@@ -415,7 +415,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0032"
     title: "Consolidate Templates"
     summary: "Move dashboard and annotate templates from codev/ to agent-farm/templates/"
-    status: planned
+    status: implementing
     priority: medium
     release: "v1.1.0"
     files:

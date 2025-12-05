@@ -343,6 +343,7 @@ function spawnTmuxWithTtyd(
       '-p', String(ttydPort),
       '-t', 'theme={"background":"#000000"}',
       '-t', 'fontSize=14',
+      '-t', 'rightClickSelectsWord=true',  // Enable word selection on right-click for better UX
     ];
 
     // Add custom index if it exists

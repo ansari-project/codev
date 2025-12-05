@@ -781,7 +781,7 @@
         // Only update iframe if port changed (avoid flashing on poll)
         if (currentArchitectPort !== state.architect.port) {
           currentArchitectPort = state.architect.port;
-          content.innerHTML = `<iframe src="http://localhost:${state.architect.port}" title="Architect Terminal"></iframe>`;
+          content.innerHTML = `<iframe src="http://localhost:${state.architect.port}" title="Architect Terminal" allow="clipboard-read; clipboard-write"></iframe>`;
         }
       } else {
         if (currentArchitectPort !== null) {
@@ -895,7 +895,7 @@
       // Only update iframe if port changed (avoid flashing on poll)
       if (currentTabPort !== tab.port) {
         currentTabPort = tab.port;
-        content.innerHTML = `<iframe src="http://localhost:${tab.port}" title="${tab.name}"></iframe>`;
+        content.innerHTML = `<iframe src="http://localhost:${tab.port}" title="${tab.name}" allow="clipboard-read; clipboard-write"></iframe>`;
       }
     }
 

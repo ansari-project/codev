@@ -190,7 +190,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0010"
     title: "Annotation Editor"
     summary: "Add Edit/Annotate mode toggle to annotation viewer for inline file editing"
-    status: committed
+    status: integrated
     priority: medium
     release: "v1.0.0"
     files:
@@ -199,7 +199,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: ["0007"]
     tags: [ui, dashboard, editing]
-    notes: "TICK protocol. PR 34 merged 2025-12-04. NEEDS TESTING before integration. Edit mode with auto-save on View, Cancel restores disk state. Consulted GPT-5 and Gemini Pro."
+    notes: "TICK protocol. PR 34 merged 2025-12-04. Edit mode with auto-save, Cancel restores disk state. UX polish: contextual subtitles, clearer button labels. Consulted GPT-5 and Gemini Pro."
 
   - id: "0011"
     title: "Multi-Instance Support"

@@ -20,7 +20,7 @@ interface UtilOptions {
  * Returns true if successful, false if dashboard not available
  */
 async function tryDashboardApi(name?: string): Promise<boolean> {
-  const state = await loadState();
+  const state = loadState();
 
   // Dashboard runs on architectPort + 1
   if (!state.architect) {
@@ -112,7 +112,7 @@ export async function util(options: UtilOptions = {}): Promise<void> {
     pid: ttydProcess.pid,
   };
 
-  await addUtil(utilTerminal);
+  addUtil(utilTerminal);
 
   logger.blank();
   logger.success(`Utility terminal spawned!`);

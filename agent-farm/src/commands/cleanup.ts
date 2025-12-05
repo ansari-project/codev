@@ -63,7 +63,7 @@ export async function cleanup(options: CleanupOptions): Promise<void> {
   const projectId = options.project;
 
   // Load state to find the builder
-  const state = await loadState();
+  const state = loadState();
   const builder = state.builders.find((b) => b.id === projectId);
 
   if (!builder) {
@@ -166,7 +166,7 @@ async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> 
   }
 
   // Remove from state
-  await removeBuilder(builder.id);
+  removeBuilder(builder.id);
 
   logger.blank();
   logger.success(`Builder ${builder.id} cleaned up!`);

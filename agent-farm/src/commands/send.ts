@@ -42,7 +42,7 @@ async function sendToBuilder(
   message: string,
   options: SendOptions
 ): Promise<void> {
-  const state = await loadState();
+  const state = loadState();
   const builder = state.builders.find((b) => b.id === builderId);
 
   if (!builder) {
@@ -125,7 +125,7 @@ async function sendToAll(
   message: string,
   options: SendOptions
 ): Promise<{ sent: string[]; failed: string[] }> {
-  const state = await loadState();
+  const state = loadState();
   const results = { sent: [] as string[], failed: [] as string[] };
 
   if (state.builders.length === 0) {

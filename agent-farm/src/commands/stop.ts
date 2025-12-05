@@ -10,7 +10,7 @@ import { killProcess, isProcessRunning } from '../utils/shell.js';
  * Stop all agent farm processes
  */
 export async function stop(): Promise<void> {
-  const state = await loadState();
+  const state = loadState();
 
   logger.header('Stopping Agent Farm');
 
@@ -69,7 +69,7 @@ export async function stop(): Promise<void> {
   }
 
   // Clear state
-  await clearState();
+  clearState();
 
   logger.blank();
   if (stopped > 0) {

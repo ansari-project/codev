@@ -184,6 +184,20 @@ program
     }
   });
 
+// Rename command - rename a builder or utility terminal
+program
+  .command('rename <id> <name>')
+  .description('Rename a builder or utility terminal')
+  .action(async (id, name) => {
+    const { rename } = await import('./commands/rename.js');
+    try {
+      rename({ id, name });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 // Send command - send instructions to running builders
 program
   .command('send [builder] [message]')

@@ -187,6 +187,41 @@ export function getUtils(): UtilTerminal[] {
 }
 
 /**
+ * Get a single utility terminal by ID
+ */
+export function getUtil(id: string): UtilTerminal | null {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM utils WHERE id = ?').get(id) as DbUtil | undefined;
+  return row ? dbUtilToUtilTerminal(row) : null;
+}
+
+/**
+ * Rename a builder
+ * Returns the old name if found, null if not found
+ */
+export function renameBuilder(id: string, newName: string): string | null {
+  const db = getDb();
+  const builder = db.prepare('SELECT name FROM builders WHERE id = ?').get(id) as { name: string } | undefined;
+  if (!builder) return null;
+
+  db.prepare('UPDATE builders SET name = ? WHERE id = ?').run(newName, id);
+  return builder.name;
+}
+
+/**
+ * Rename a utility terminal
+ * Returns the old name if found, null if not found
+ */
+export function renameUtil(id: string, newName: string): string | null {
+  const db = getDb();
+  const util = db.prepare('SELECT name FROM utils WHERE id = ?').get(id) as { name: string } | undefined;
+  if (!util) return null;
+
+  db.prepare('UPDATE utils SET name = ? WHERE id = ?').run(newName, id);
+  return util.name;
+}
+
+/**
  * Add an annotation
  * Note: This is now synchronous
  */

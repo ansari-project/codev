@@ -253,4 +253,21 @@ portsCmd
     logger.info(`Remaining allocations: ${result.remaining}`);
   });
 
+// Tutorial command - interactive onboarding for new users
+program
+  .command('tutorial')
+  .description('Interactive tutorial for new users')
+  .option('--reset', 'Start tutorial fresh')
+  .option('--skip', 'Skip current step')
+  .option('--status', 'Show tutorial progress')
+  .action(async (options) => {
+    const { tutorial } = await import('./commands/tutorial.js');
+    try {
+      await tutorial(options);
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 program.parse();

@@ -131,3 +131,21 @@ export interface ResolvedCommands {
   builder: string;
   shell: string;
 }
+
+/**
+ * Tutorial state for interactive onboarding
+ */
+export interface TutorialState {
+  projectPath: string;
+  currentStep: string;
+  completedSteps: string[];
+  userResponses: Record<string, string>;
+  startedAt: string;
+  lastActiveAt: string;
+}
+
+export interface TutorialOptions {
+  reset?: boolean;
+  skip?: boolean;
+  status?: boolean;
+}

@@ -15,6 +15,20 @@ import { spawn, execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { DashboardState, Annotation, UtilTerminal, Builder } from '../types.js';
+import {
+  loadState,
+  getAnnotations,
+  addAnnotation,
+  removeAnnotation,
+  getUtils,
+  addUtil,
+  removeUtil,
+  getBuilder,
+  getBuilders,
+  removeBuilder,
+  clearState,
+  getArchitect,
+} from '../state.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,66 +88,33 @@ function escapeHtml(str: string): string {
 const projectRoot = findProjectRoot();
 const templatePath = path.join(projectRoot, 'codev/templates/dashboard-split.html');
 const legacyTemplatePath = path.join(projectRoot, 'codev/templates/dashboard.html');
-const stateFile = path.join(projectRoot, '.agent-farm', 'state.json');
 
-// Load state and clean up dead processes
-function loadState(): DashboardState {
-  try {
-    if (fs.existsSync(stateFile)) {
-      const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8')) as DashboardState;
-
-      // Defensively normalize arrays before filtering (handles upgrade/corruption)
-      state.utils = Array.isArray(state.utils) ? state.utils : [];
-      state.annotations = Array.isArray(state.annotations) ? state.annotations : [];
-
-      // Clean up dead shell processes (auto-close tabs when shell exits normally)
-      const originalUtilCount = state.utils.length;
-      state.utils = state.utils.filter((util) => {
-        if (!isProcessRunning(util.pid)) {
-          console.log(`Auto-closing shell tab ${util.name} (process ${util.pid} exited)`);
-          // Also clean up orphaned tmux session if it exists
-          if (util.tmuxSession) {
-            killTmuxSession(util.tmuxSession);
-          }
-          return false;
-        }
-        return true;
-      });
-
-      // Clean up dead annotation processes
-      const originalAnnotationCount = state.annotations.length;
-      state.annotations = state.annotations.filter((annotation) => {
-        if (!isProcessRunning(annotation.pid)) {
-          console.log(`Auto-closing file tab ${annotation.file} (process ${annotation.pid} exited)`);
-          return false;
-        }
-        return true;
-      });
-
-      // Save state if we cleaned up any processes
-      if (state.utils.length !== originalUtilCount || state.annotations.length !== originalAnnotationCount) {
-        saveState(state);
+// Clean up dead processes from state (called on state load)
+function cleanupDeadProcesses(): void {
+  // Clean up dead shell processes
+  for (const util of getUtils()) {
+    if (!isProcessRunning(util.pid)) {
+      console.log(`Auto-closing shell tab ${util.name} (process ${util.pid} exited)`);
+      if (util.tmuxSession) {
+        killTmuxSession(util.tmuxSession);
       }
-
-      return state;
+      removeUtil(util.id);
     }
-  } catch (err) {
-    console.error('Error loading state:', (err as Error).message);
   }
-  return { architect: null, builders: [], utils: [], annotations: [] };
+
+  // Clean up dead annotation processes
+  for (const annotation of getAnnotations()) {
+    if (!isProcessRunning(annotation.pid)) {
+      console.log(`Auto-closing file tab ${annotation.file} (process ${annotation.pid} exited)`);
+      removeAnnotation(annotation.id);
+    }
+  }
 }
 
-// Save state
-function saveState(state: DashboardState): void {
-  try {
-    const dir = path.dirname(stateFile);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  } catch (err) {
-    console.error('Error saving state:', (err as Error).message);
-  }
+// Load state with cleanup
+function loadStateWithCleanup(): DashboardState {
+  cleanupDeadProcesses();
+  return loadState();
 }
 
 // Generate unique ID using crypto for collision resistance
@@ -522,7 +503,7 @@ const server = http.createServer(async (req, res) => {
   try {
     // API: Get state
     if (req.method === 'GET' && url.pathname === '/api/state') {
-      const state = loadState();
+      const state = loadStateWithCleanup();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(state));
       return;
@@ -555,8 +536,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Check if already open
-      const state = loadState();
-      const existing = state.annotations.find((a) => a.file === fullPath);
+      const annotations = getAnnotations();
+      const existing = annotations.find((a) => a.file === fullPath);
       if (existing) {
         // Verify the process is still running
         if (isProcessRunning(existing.pid)) {
@@ -566,11 +547,11 @@ const server = http.createServer(async (req, res) => {
         }
         // Process is dead - clean up stale entry and spawn new one
         console.log(`Cleaning up stale annotation for ${fullPath} (pid ${existing.pid} dead)`);
-        state.annotations = state.annotations.filter((a) => a.id !== existing.id);
-        saveState(state);
+        removeAnnotation(existing.id);
       }
 
       // DoS protection: check tab limit
+      const state = loadState();
       if (countTotalTabs(state) >= CONFIG.maxTabs) {
         res.writeHead(429, { 'Content-Type': 'text/plain' });
         res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
@@ -624,8 +605,7 @@ const server = http.createServer(async (req, res) => {
         parent: { type: 'architect' },
       };
 
-      state.annotations.push(annotation);
-      saveState(state);
+      addAnnotation(annotation);
 
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ id: annotation.id, port: annotatePort }));
@@ -651,16 +631,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Check if builder already exists
-      const state = loadState();
-      const existing = state.builders.find((b) => b.id === projectId);
-      if (existing) {
+      const existingBuilder = getBuilder(projectId);
+      if (existingBuilder) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ id: existing.id, port: existing.port, existing: true }));
+        res.end(JSON.stringify({ id: existingBuilder.id, port: existingBuilder.port, existing: true }));
         return;
       }
 
       // DoS protection: check tab limit
-      if (countTotalTabs(state) >= CONFIG.maxTabs) {
+      const builderState = loadState();
+      if (countTotalTabs(builderState) >= CONFIG.maxTabs) {
         res.writeHead(429, { 'Content-Type': 'text/plain' });
         res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
         return;
@@ -685,10 +665,10 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const state = loadState();
+      const shellState = loadState();
 
       // DoS protection: check tab limit
-      if (countTotalTabs(state) >= CONFIG.maxTabs) {
+      if (countTotalTabs(shellState) >= CONFIG.maxTabs) {
         res.writeHead(429, { 'Content-Type': 'text/plain' });
         res.end(`Tab limit reached (max ${CONFIG.maxTabs}). Close some tabs first.`);
         return;
@@ -696,11 +676,11 @@ const server = http.createServer(async (req, res) => {
 
       // Generate ID and name
       const id = generateId('U');
-      const utilName = name || `shell-${state.utils.length + 1}`;
+      const utilName = name || `shell-${shellState.utils.length + 1}`;
       const sessionName = `af-shell-${id}`;
 
       // Find available port (pass state to avoid already-allocated ports)
-      const utilPort = await findAvailablePort(CONFIG.utilPortStart, state);
+      const utilPort = await findAvailablePort(CONFIG.utilPortStart, shellState);
 
       // Get shell command
       const shell = process.env.SHELL || '/bin/bash';
@@ -726,8 +706,7 @@ const server = http.createServer(async (req, res) => {
         tmuxSession: sessionName,
       };
 
-      state.utils.push(util);
-      saveState(state);
+      addUtil(util);
 
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ id, port: utilPort, name: utilName }));
@@ -737,16 +716,16 @@ const server = http.createServer(async (req, res) => {
     // API: Close tab
     if (req.method === 'DELETE' && url.pathname.startsWith('/api/tabs/')) {
       const tabId = decodeURIComponent(url.pathname.replace('/api/tabs/', ''));
-      const state = loadState();
       let found = false;
 
       // Check if it's a file tab
       if (tabId.startsWith('file-')) {
         const annotationId = tabId.replace('file-', '');
-        const annotation = state.annotations.find((a) => a.id === annotationId);
+        const tabAnnotations = getAnnotations();
+        const annotation = tabAnnotations.find((a) => a.id === annotationId);
         if (annotation) {
           await killProcessGracefully(annotation.pid);
-          state.annotations = state.annotations.filter((a) => a.id !== annotationId);
+          removeAnnotation(annotationId);
           found = true;
         }
       }
@@ -754,10 +733,10 @@ const server = http.createServer(async (req, res) => {
       // Check if it's a builder tab
       if (tabId.startsWith('builder-')) {
         const builderId = tabId.replace('builder-', '');
-        const builder = state.builders.find((b) => b.id === builderId);
+        const builder = getBuilder(builderId);
         if (builder) {
           await killProcessGracefully(builder.pid);
-          state.builders = state.builders.filter((b) => b.id !== builderId);
+          removeBuilder(builderId);
           found = true;
         }
       }
@@ -765,16 +744,16 @@ const server = http.createServer(async (req, res) => {
       // Check if it's a shell tab
       if (tabId.startsWith('shell-')) {
         const utilId = tabId.replace('shell-', '');
-        const util = state.utils.find((u) => u.id === utilId);
+        const tabUtils = getUtils();
+        const util = tabUtils.find((u) => u.id === utilId);
         if (util) {
           await killProcessGracefully(util.pid, util.tmuxSession);
-          state.utils = state.utils.filter((u) => u.id !== utilId);
+          removeUtil(utilId);
           found = true;
         }
       }
 
       if (found) {
-        saveState(state);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
       } else {
@@ -786,35 +765,35 @@ const server = http.createServer(async (req, res) => {
 
     // API: Stop all
     if (req.method === 'POST' && url.pathname === '/api/stop') {
-      const state = loadState();
+      const stopState = loadState();
 
       // Kill all tmux sessions first
-      for (const util of state.utils) {
+      for (const util of stopState.utils) {
         if (util.tmuxSession) {
           killTmuxSession(util.tmuxSession);
         }
       }
 
-      if (state.architect?.tmuxSession) {
-        killTmuxSession(state.architect.tmuxSession);
+      if (stopState.architect?.tmuxSession) {
+        killTmuxSession(stopState.architect.tmuxSession);
       }
 
       // Kill all processes gracefully
       const pids: number[] = [];
 
-      if (state.architect) {
-        pids.push(state.architect.pid);
+      if (stopState.architect) {
+        pids.push(stopState.architect.pid);
       }
 
-      for (const builder of state.builders) {
+      for (const builder of stopState.builders) {
         pids.push(builder.pid);
       }
 
-      for (const util of state.utils) {
+      for (const util of stopState.utils) {
         pids.push(util.pid);
       }
 
-      for (const annotation of state.annotations) {
+      for (const annotation of stopState.annotations) {
         pids.push(annotation.pid);
       }
 
@@ -822,7 +801,7 @@ const server = http.createServer(async (req, res) => {
       await Promise.all(pids.map((pid) => killProcessGracefully(pid)));
 
       // Clear state
-      saveState({ architect: null, builders: [], utils: [], annotations: [] });
+      clearState();
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, killed: pids.length }));
@@ -850,10 +829,10 @@ const server = http.createServer(async (req, res) => {
       let basePath = projectRoot;
       if (sourcePort) {
         const portNum = parseInt(sourcePort, 10);
-        const state = loadState();
+        const builders = getBuilders();
 
         // Check if it's a builder terminal
-        const builder = state.builders.find((b) => b.port === portNum);
+        const builder = builders.find((b) => b.port === portNum);
         if (builder && builder.worktree) {
           basePath = builder.worktree;
         }
@@ -958,7 +937,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       try {
         let template = fs.readFileSync(finalTemplatePath, 'utf-8');
-        const state = loadState();
+        const state = loadStateWithCleanup();
 
         // Inject project name into template (HTML-escaped for security)
         const projectName = escapeHtml(getProjectName(projectRoot));

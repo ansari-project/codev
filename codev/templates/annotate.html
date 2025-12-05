@@ -22,14 +22,26 @@
     }
     .header h1 { font-size: 16px; font-weight: 500; }
     .header .path { color: #888; font-size: 13px; margin-top: 4px; font-family: monospace; }
-    .header .actions { margin-top: 10px; }
+    .header .actions { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
     .header .btn {
       padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer;
-      font-size: 12px; margin-right: 8px;
+      font-size: 12px;
     }
     .btn-primary { background: #3b82f6; color: #fff; }
     .btn-secondary { background: #444; color: #fff; }
+    .btn-success { background: #22c55e; color: #fff; }
     .btn:hover { opacity: 0.9; }
+
+    /* Unsaved indicator */
+    #unsavedIndicator {
+      color: #fbbf24;
+      font-size: 12px;
+      display: none;
+    }
+    #unsavedIndicator::before {
+      content: '●';
+      margin-right: 4px;
+    }
 
     .content { display: flex; }
     .line-numbers {
@@ -74,6 +86,48 @@
       white-space: pre-wrap;
       word-wrap: break-word;
       min-height: 19.5px;
+    }
+
+    /* Editor textarea */
+    #editor {
+      display: none;
+      width: 100%;
+      height: calc(100vh - 80px);
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 15px;
+      border: none;
+      resize: none;
+      background: #1a1a1a;
+      color: #d4d4d4;
+      outline: none;
+      tab-size: 2;
+    }
+    #editor:focus {
+      outline: none;
+    }
+
+    /* Notification toast */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #22c55e;
+      color: white;
+      border-radius: 6px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 300;
+      animation: slideIn 0.3s ease;
+    }
+    .notification.error {
+      background: #ef4444;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     .review-line {
@@ -145,14 +199,23 @@
   <div class="header">
     <h1>Annotation Viewer</h1>
     <div class="path">{{FILE_PATH}}</div>
+    <div class="actions">
+      <button id="editBtn" class="btn btn-primary" onclick="toggleEditMode()">Edit</button>
+      <button id="saveBtn" class="btn btn-success" onclick="saveEdit()" style="display: none;">Save</button>
+      <button id="cancelBtn" class="btn btn-secondary" onclick="cancelEdit()" style="display: none;">Cancel</button>
+      <span id="unsavedIndicator">Unsaved changes</span>
+    </div>
   </div>
 
-  <div class="content">
+  <div class="content" id="viewMode">
     <div class="line-numbers" id="lineNumbers"></div>
     <div class="code-content">
       <pre><code id="codeContent"></code></pre>
     </div>
   </div>
+
+  <!-- Editor mode -->
+  <textarea id="editor" spellcheck="false"></textarea>
 
   <!-- Comment Dialog -->
   <div class="overlay" id="overlay">
@@ -190,7 +253,13 @@
     // State
     let fileLines = [];
     let currentLine = null;
-    let isEditing = false;
+    let isEditing = false;  // For comment dialog editing
+
+    // Edit mode state
+    let editMode = false;
+    let originalContent = '';
+    let currentContent = '';
+    let hasUnsavedChanges = false;
 
     // Comment patterns by file extension
     const COMMENT_PATTERNS = {
@@ -216,6 +285,8 @@
 
     // Initialize
     function init(content) {
+      currentContent = content;
+      originalContent = content;
       fileLines = content.split('\n');
       renderFile();
       updateAnnotationsList();
@@ -424,10 +495,162 @@
       }
     }
 
+    // ==================== Edit Mode Functions ====================
+
+    async function toggleEditMode() {
+      const viewMode = document.getElementById('viewMode');
+      const editor = document.getElementById('editor');
+      const editBtn = document.getElementById('editBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      if (!editMode) {
+        // Enter edit mode
+        // Capture scroll position from view mode
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+
+        currentContent = fileLines.join('\n');
+        // Note: originalContent is set only in init() and after successful saves
+        // to ensure Cancel always reverts to the true disk state
+        editor.value = currentContent;
+        viewMode.style.display = 'none';
+        editor.style.display = 'block';
+        editBtn.textContent = 'View';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+        editMode = true;
+
+        // Apply scroll position to editor
+        editor.scrollTop = scrollTop;
+        editor.focus();
+      } else {
+        // Exit to view mode - auto-save changes per spec
+        // Capture scroll position from editor
+        const scrollTop = editor.scrollTop;
+
+        // Auto-save if there are changes (spec requires: "Edit text, click View → changes saved")
+        if (hasUnsavedChanges) {
+          await saveEdit();
+        }
+
+        currentContent = editor.value;
+        fileLines = currentContent.split('\n');
+        editor.style.display = 'none';
+        viewMode.style.display = 'flex';
+        editBtn.textContent = 'Edit';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        editMode = false;
+
+        renderFile();
+        updateAnnotationsList();
+
+        // Apply scroll position to document
+        requestAnimationFrame(() => {
+          document.documentElement.scrollTop = scrollTop;
+          document.body.scrollTop = scrollTop;
+        });
+      }
+    }
+
+    async function saveEdit() {
+      const editor = document.getElementById('editor');
+      const content = editor.value;
+
+      try {
+        const response = await fetch('/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: filePath, content })
+        });
+
+        if (response.ok) {
+          currentContent = content;
+          originalContent = content;
+          fileLines = content.split('\n');
+          hasUnsavedChanges = false;
+          updateUnsavedIndicator();
+          showNotification('File saved!');
+        } else {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Save failed');
+        }
+      } catch (err) {
+        showNotification('Error saving file: ' + err.message, 'error');
+      }
+    }
+
+    function cancelEdit() {
+      const editor = document.getElementById('editor');
+      editor.value = originalContent;
+      currentContent = originalContent;
+      fileLines = originalContent.split('\n');
+      hasUnsavedChanges = false;
+      updateUnsavedIndicator();
+      toggleEditMode(); // Back to view mode
+    }
+
+    function updateUnsavedIndicator() {
+      const indicator = document.getElementById('unsavedIndicator');
+      indicator.style.display = hasUnsavedChanges ? 'inline' : 'none';
+    }
+
+    function showNotification(message, type = 'success') {
+      // Remove existing notification
+      const existing = document.querySelector('.notification');
+      if (existing) existing.remove();
+
+      const notification = document.createElement('div');
+      notification.className = 'notification' + (type === 'error' ? ' error' : '');
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Track unsaved changes in editor
+    document.getElementById('editor').addEventListener('input', () => {
+      hasUnsavedChanges = document.getElementById('editor').value !== originalContent;
+      updateUnsavedIndicator();
+    });
+
+    // Tab key handling for indentation
+    document.getElementById('editor').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const editor = e.target;
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+
+        // Insert 2 spaces (or could use \t)
+        editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 2;
+
+        // Trigger input event to update unsaved indicator
+        editor.dispatchEvent(new Event('input'));
+      }
+    });
+
     // Handle keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeDialog();
+      }
+
+      // Cmd/Ctrl+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (editMode) {
+          saveEdit();
+        }
+      }
+    });
+
+    // Warn before leaving with unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
       }
     });
 

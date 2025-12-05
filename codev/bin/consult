@@ -160,6 +160,10 @@ def consult(
         temp_system_file.close()
         cmd = ["gemini", "--yolo", query]
         env = {"GEMINI_SYSTEM_MD": temp_system_file.name}
+        # Avoid "Both GOOGLE_API_KEY and GEMINI_API_KEY are set" warning
+        # by unsetting GEMINI_API_KEY if GOOGLE_API_KEY is present
+        if os.environ.get("GOOGLE_API_KEY") and os.environ.get("GEMINI_API_KEY"):
+            env["GEMINI_API_KEY"] = ""
     elif resolved == "codex":
         if not shutil.which("codex"):
             typer.echo(

@@ -119,16 +119,16 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0014"
     title: "Flexible Builder Spawning"
     summary: "Generalize spawn command to accept natural language instructions, not just project specs"
-    status: specified
+    status: planned
     priority: high
     release: "v1.0.0"
     files:
       spec: codev/specs/0014-flexible-builder-spawning.md
-      plan: null
+      plan: codev/plans/0014-flexible-builder-spawning.md
       review: null
     dependencies: ["0005"]
     tags: [cli, agents, architecture]
-    notes: "Supports: spec mode, task mode (with --files), protocol mode (with --args), shell mode. Consulted GPT-5 and Gemini Pro."
+    notes: "Four modes: spec, task, protocol, shell. Explicit flags only (no positional args). 4-char alphanumeric IDs. Consulted GPT-5 and Gemini Pro."
 
   - id: "0020"
     title: "Send Instructions to Builder"

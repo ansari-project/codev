@@ -130,6 +130,8 @@ function getTypeColor(type: string): (text: string) => string {
       return chalk.magenta;
     case 'protocol':
       return chalk.yellow;
+    case 'worktree':
+      return chalk.blue;
     case 'shell':
       return chalk.gray;
     default:

@@ -2,7 +2,7 @@
  * Core types for Agent Farm
  */
 
-export type BuilderType = 'spec' | 'task' | 'protocol' | 'shell';
+export type BuilderType = 'spec' | 'task' | 'protocol' | 'shell' | 'worktree';
 
 export interface Builder {
   id: string;
@@ -85,7 +85,8 @@ export interface SpawnOptions {
   project?: string;     // Spec-based mode: --project / -p
   task?: string;        // Task mode: --task
   protocol?: string;    // Protocol mode: --protocol
-  shell?: boolean;      // Shell mode: --shell
+  shell?: boolean;      // Shell mode: --shell (no worktree, no prompt)
+  worktree?: boolean;   // Worktree mode: --worktree (worktree, no prompt)
 
   // Task mode options
   files?: string[];     // Context files for task mode: --files

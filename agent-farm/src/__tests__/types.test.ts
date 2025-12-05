@@ -197,5 +197,13 @@ describe('Type Definitions', () => {
 
       expect(options.shell).toBe(true);
     });
+
+    it('should accept worktree mode', () => {
+      const options: SpawnOptions = {
+        worktree: true,
+      };
+
+      expect(options.worktree).toBe(true);
+    });
   });
 });

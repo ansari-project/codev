@@ -18,13 +18,18 @@ import { run, spawnDetached, commandExists, findAvailablePort } from '../utils/s
 import { loadState, upsertBuilder } from '../state.js';
 
 /**
- * Generate a short 4-character alphanumeric ID
- * Uses base36 (0-9, a-z) for filesystem-safe IDs
+ * Generate a short 4-character base64-encoded ID
+ * Uses URL-safe base64 (a-z, A-Z, 0-9, -, _) for filesystem-safe IDs
  */
 function generateShortId(): string {
-  // Generate random number and convert to base36
-  const num = Math.floor(Math.random() * 1679616); // 36^4 = 1,679,616
-  return num.toString(36).padStart(4, '0');
+  // Generate random 24-bit number and base64 encode to 4 chars
+  const num = Math.floor(Math.random() * 0xFFFFFF);
+  const bytes = new Uint8Array([num >> 16, (num >> 8) & 0xFF, num & 0xFF]);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+    .substring(0, 4);
 }
 
 /**
@@ -36,14 +41,15 @@ function validateSpawnOptions(options: SpawnOptions): void {
     options.task,
     options.protocol,
     options.shell,
+    options.worktree,
   ].filter(Boolean);
 
   if (modes.length === 0) {
-    fatal('Must specify one of: --project (-p), --task, --protocol, --shell\n\nRun "af spawn --help" for examples.');
+    fatal('Must specify one of: --project (-p), --task, --protocol, --shell, --worktree\n\nRun "af spawn --help" for examples.');
   }
 
   if (modes.length > 1) {
-    fatal('Flags --project, --task, --protocol, --shell are mutually exclusive');
+    fatal('Flags --project, --task, --protocol, --shell, --worktree are mutually exclusive');
   }
 
   if (options.files && !options.task) {
@@ -59,6 +65,7 @@ function getSpawnMode(options: SpawnOptions): BuilderType {
   if (options.task) return 'task';
   if (options.protocol) return 'protocol';
   if (options.shell) return 'shell';
+  if (options.worktree) return 'worktree';
   throw new Error('No mode specified');
 }
 
@@ -554,6 +561,93 @@ async function spawnShell(options: SpawnOptions, config: Config): Promise<void> 
   logger.kv('Terminal', `http://localhost:${port}`);
 }
 
+/**
+ * Spawn a worktree session (has worktree/branch, but no initial prompt)
+ * Use case: Small features without spec/plan, like quick fixes
+ */
+async function spawnWorktree(options: SpawnOptions, config: Config): Promise<void> {
+  const shortId = generateShortId();
+  const builderId = `worktree-${shortId}`;
+  const branchName = `builder/worktree-${shortId}`;
+  const worktreePath = resolve(config.buildersDir, builderId);
+
+  logger.header(`Spawning Worktree ${builderId}`);
+  logger.kv('Branch', branchName);
+  logger.kv('Worktree', worktreePath);
+
+  await ensureDirectories(config);
+  await checkDependencies();
+  await createWorktree(config, branchName, worktreePath);
+
+  // Load builder role
+  const role = options.noRole ? null : loadRolePrompt(config, 'builder');
+  const commands = getResolvedCommands();
+
+  // Worktree mode: launch Claude with no prompt, but in the worktree directory
+  const port = await findFreePort(config);
+  const sessionName = `builder-${builderId}`;
+
+  logger.info('Creating tmux session...');
+
+  // Write role to a file if provided
+  if (role) {
+    const roleFile = resolve(worktreePath, '.builder-role.md');
+    writeFileSync(roleFile, role.content);
+    logger.info(`Loaded role (${role.source})`);
+  }
+
+  // No prompt file for worktree mode - interactive session
+
+  // Create tmux session running Claude with no initial prompt
+  await run(`tmux new-session -d -s "${sessionName}" -x 200 -y 50 -c "${worktreePath}" "${commands.builder}"`);
+
+  // Enable mouse scrolling in tmux
+  await run('tmux set -g mouse on');
+
+  // Start ttyd
+  logger.info('Starting worktree terminal...');
+  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  const ttydArgs = [
+    '-W',
+    '-p', String(port),
+    '-t', 'theme={"background":"#000000"}',
+  ];
+
+  if (existsSync(customIndexPath)) {
+    ttydArgs.push('-I', customIndexPath);
+    logger.info('Using custom terminal with file click support');
+  }
+
+  ttydArgs.push('tmux', 'attach-session', '-t', sessionName);
+
+  const ttydProcess = spawnDetached('ttyd', ttydArgs, {
+    cwd: worktreePath,
+  });
+
+  if (!ttydProcess.pid) {
+    fatal('Failed to start ttyd process for worktree');
+  }
+
+  const builder: Builder = {
+    id: builderId,
+    name: 'Worktree session',
+    port,
+    pid: ttydProcess.pid,
+    status: 'spawning',
+    phase: 'interactive',
+    worktree: worktreePath,
+    branch: branchName,
+    tmuxSession: sessionName,
+    type: 'worktree',
+  };
+
+  await upsertBuilder(builder);
+
+  logger.blank();
+  logger.success(`Worktree ${builderId} spawned!`);
+  logger.kv('Terminal', `http://localhost:${port}`);
+}
+
 // =============================================================================
 // Main entry point
 // =============================================================================
@@ -579,6 +673,9 @@ export async function spawn(options: SpawnOptions): Promise<void> {
       break;
     case 'shell':
       await spawnShell(options, config);
+      break;
+    case 'worktree':
+      await spawnWorktree(options, config);
       break;
   }
 }

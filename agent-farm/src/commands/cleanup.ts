@@ -80,27 +80,33 @@ export async function cleanup(options: CleanupOptions): Promise<void> {
 
 async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> {
   const config = getConfig();
+  const isShellMode = builder.type === 'shell';
 
-  logger.header(`Cleaning up Builder ${builder.id}`);
+  logger.header(`Cleaning up ${isShellMode ? 'Shell' : 'Builder'} ${builder.id}`);
   logger.kv('Name', builder.name);
-  logger.kv('Worktree', builder.worktree);
-  logger.kv('Branch', builder.branch);
-
-  // Check for uncommitted changes before cleanup
-  const { dirty, scaffoldOnly, details } = await hasUncommittedChanges(builder.worktree);
-  if (dirty && !force) {
-    logger.error(`Worktree has uncommitted changes: ${details}`);
-    logger.error('Use --force to delete anyway (WARNING: changes will be lost!)');
-    fatal('Cleanup aborted to prevent data loss.');
+  if (!isShellMode) {
+    logger.kv('Worktree', builder.worktree);
+    logger.kv('Branch', builder.branch);
   }
 
-  if (dirty && force) {
-    logger.warn(`Worktree has uncommitted changes: ${details}`);
-    logger.warn('Proceeding with --force (changes will be lost!)');
-  }
+  // Check for uncommitted changes before cleanup (skip for shell mode - no worktree)
+  let useForce = force || false;
+  if (!isShellMode) {
+    const { dirty, scaffoldOnly, details } = await hasUncommittedChanges(builder.worktree);
+    if (dirty && !force) {
+      logger.error(`Worktree has uncommitted changes: ${details}`);
+      logger.error('Use --force to delete anyway (WARNING: changes will be lost!)');
+      fatal('Cleanup aborted to prevent data loss.');
+    }
 
-  // Use force for git worktree if only scaffold files present (or explicit force)
-  const useForce = force || scaffoldOnly;
+    if (dirty && force) {
+      logger.warn(`Worktree has uncommitted changes: ${details}`);
+      logger.warn('Proceeding with --force (changes will be lost!)');
+    }
+
+    // Use force for git worktree if only scaffold files present (or explicit force)
+    useForce = force || scaffoldOnly;
+  }
 
   // Kill ttyd process if running
   if (builder.pid) {
@@ -112,8 +118,8 @@ async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> 
     }
   }
 
-  // Kill tmux session if exists
-  const sessionName = `builder-${builder.id}`;
+  // Kill tmux session if exists (use stored session name for correct shell/builder naming)
+  const sessionName = builder.tmuxSession || `builder-${builder.id}`;
   try {
     await run(`tmux kill-session -t "${sessionName}" 2>/dev/null`);
     logger.info('Killed tmux session');
@@ -121,8 +127,8 @@ async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> 
     // Session may not exist
   }
 
-  // Remove worktree
-  if (existsSync(builder.worktree)) {
+  // Remove worktree (skip for shell mode - no worktree created)
+  if (!isShellMode && existsSync(builder.worktree)) {
     logger.info('Removing worktree...');
     try {
       await run(`git worktree remove "${builder.worktree}"${useForce ? ' --force' : ''}`, {
@@ -139,21 +145,23 @@ async function cleanupBuilder(builder: Builder, force?: boolean): Promise<void> 
     }
   }
 
-  // Delete branch
-  logger.info('Deleting branch...');
-  try {
-    // Try -d first (safe delete, only if merged)
-    await run(`git branch -d "${builder.branch}"`, { cwd: config.projectRoot });
-  } catch {
-    if (force) {
-      // Force delete with -D
-      try {
-        await run(`git branch -D "${builder.branch}"`, { cwd: config.projectRoot });
-      } catch {
-        logger.warn(`Could not delete branch ${builder.branch}`);
+  // Delete branch (skip for shell mode)
+  if (!isShellMode && builder.branch) {
+    logger.info('Deleting branch...');
+    try {
+      // Try -d first (safe delete, only if merged)
+      await run(`git branch -d "${builder.branch}"`, { cwd: config.projectRoot });
+    } catch {
+      if (force) {
+        // Force delete with -D
+        try {
+          await run(`git branch -D "${builder.branch}"`, { cwd: config.projectRoot });
+        } catch {
+          logger.warn(`Could not delete branch ${builder.branch}`);
+        }
+      } else {
+        logger.warn(`Branch ${builder.branch} not fully merged. Use --force to delete anyway.`);
       }
-    } else {
-      logger.warn(`Branch ${builder.branch} not fully merged. Use --force to delete anyway.`);
     }
   }
 

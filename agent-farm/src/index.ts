@@ -97,6 +97,7 @@ program
   .option('--task <text>', 'Spawn builder with a task description')
   .option('--protocol <name>', 'Spawn builder to run a protocol (e.g., cleanup)')
   .option('--shell', 'Spawn a bare Claude session (no prompt, no worktree)')
+  .option('--worktree', 'Spawn worktree session (worktree+branch, no prompt)')
   .option('--files <files>', 'Context files for task mode (comma-separated)')
   .option('--no-role', 'Skip loading role prompt')
   .addHelpText('after', `
@@ -112,6 +113,9 @@ Examples:
   af spawn --protocol cleanup                   # Run cleanup protocol
   af spawn --protocol experiment                # Run experiment protocol
 
+  # Worktree mode (isolated branch, no prompt)
+  af spawn --worktree                           # Worktree for quick fixes
+
   # Shell mode (bare session)
   af spawn --shell                              # Just Claude, no prompt/worktree
 `)
@@ -124,6 +128,7 @@ Examples:
         task: options.task,
         protocol: options.protocol,
         shell: options.shell,
+        worktree: options.worktree,
         files,
         noRole: !options.role,
       });

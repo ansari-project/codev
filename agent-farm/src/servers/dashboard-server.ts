@@ -332,6 +332,16 @@ function spawnTmuxWithTtyd(
 
       // Enable mouse support in the session
       execSync(`tmux set-option -t "${sessionName}" -g mouse on`, { stdio: 'ignore' });
+
+      // Enable OSC 52 clipboard (allows copy to browser clipboard via ttyd)
+      execSync(`tmux set-option -t "${sessionName}" -g set-clipboard on`, { stdio: 'ignore' });
+
+      // Enable passthrough for hyperlinks and clipboard
+      execSync(`tmux set-option -t "${sessionName}" -g allow-passthrough on`, { stdio: 'ignore' });
+
+      // Copy selection to clipboard when mouse is released
+      execSync(`tmux bind-key -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection-and-cancel`, { stdio: 'ignore' });
+      execSync(`tmux bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-selection-and-cancel`, { stdio: 'ignore' });
     }
 
     // Start ttyd to attach to the tmux session

@@ -397,6 +397,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: ["0010"]
     tags: [ui, annotation, markdown]
     notes: "Currently markdown files render as plaintext in annotator. Add Prism markdown highlighting."
+
+  - id: "0031"
+    title: "SQLite for Runtime State"
+    summary: "Replace JSON files with SQLite for atomic, concurrent-safe runtime state management"
+    status: planned
+    priority: high
+    release: "v1.1.0"
+    files:
+      spec: codev/specs/0031-sqlite-runtime-state.md
+      plan: codev/plans/0031-sqlite-runtime-state.md
+      review: null
+    dependencies: []
+    tags: [infrastructure, database, concurrency]
+    notes: "SPIDER protocol. Fixes race conditions in state.json and ports.json. Uses better-sqlite3 with WAL mode. 3-way reviewed."
 ```
 
 ---
@@ -608,7 +622,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0031** - Reserve this number for your next project
+**0032** - Reserve this number for your next project
 
 ---
 

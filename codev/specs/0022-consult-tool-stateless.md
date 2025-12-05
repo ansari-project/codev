@@ -431,7 +431,7 @@ Log each consultation to `.consult/history.log` (in current directory):
 ## Expert Consultation
 
 **Date**: 2025-12-04
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 
 ### Key Feedback
 

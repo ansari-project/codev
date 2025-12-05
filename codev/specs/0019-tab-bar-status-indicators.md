@@ -123,7 +123,7 @@ setInterval(updateStatusIndicators, 5000);
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
 - **Accessibility**: Don't rely solely on red/green colors - add shape differences or tooltips for colorblind users
 - Consider event-driven state updates vs polling (polling may lag)

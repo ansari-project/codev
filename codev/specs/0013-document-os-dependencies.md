@@ -123,7 +123,7 @@ async function checkDependencies(): Promise<void> {
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
 - Add explicit minimum version constraints (tmux/ttyd have protocol changes between versions)
 - Consider `check-env` script for programmatic validation (not just docs)

@@ -136,7 +136,7 @@ Many CLIs are **text-in/text-out** only (e.g., basic OpenAI CLI, raw Gemini wrap
 | **Prompt flag** | `-p "text"` | `--input "text"` | `--input "text"` | `--message "text"` |
 | **System prompt** | `--append-system-prompt` | `--system` | `CODEX_SYSTEM_PROMPT` env | `--system-prompt-file` |
 | **Non-interactive** | (default) | `--quiet` or piped stdin | `--input` mode | `--yes` |
-| **Model selection** | `--model sonnet` | `--model gemini-2.5-pro` | `--model gpt-5` | `--model gpt-4` |
+| **Model selection** | `--model sonnet` | `--model gemini-3-pro-preview` | `--model gpt-5` | `--model gpt-4` |
 | **Agentic?** | Yes (full) | Partial (needs verification) | Partial (Agents SDK) | Yes (full) |
 | **File editing** | Built-in | Unknown | Agents SDK only | Built-in |
 | **Shell execution** | Built-in | Unknown | Agents SDK only | Built-in |
@@ -517,7 +517,7 @@ interface UserConfig {
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Sections Updated**:
 - **Constraints**: Added critical "Agentic Capability" section per Gemini - most CLIs are NOT agentic enough for Builder role
 - **CLI Comparison**: Updated flags per GPT-5 corrections (`--system` not `--system-instructions`, subcommands required)

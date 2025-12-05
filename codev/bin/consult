@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """Consult tool - wrapper for gemini-cli and codex CLI.
 
-Provides a unified interface for multi-agent consultation via external AI CLIs.
+Provides a unified interface for single-agent consultation via external AI CLIs.
 Each invocation is stateless (fresh process).
 
 Usage:
     consult gemini "Review this design"
     consult codex "What do you think of this API?"
-    consult both "Review this"        # parallel consultation
     consult pro "Review this"         # alias for gemini
     consult gpt "Review this"         # alias for codex
     echo "Review this" | consult pro
+
+For parallel consultation, run multiple consult commands in separate shells.
 """
 
-import concurrent.futures
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -78,8 +79,8 @@ def get_role(role_file: Path) -> str:
     return role_file.read_text()
 
 
-def log_query(log_dir: Path, model: str, query: str) -> None:
-    """Log consultation to .consult/history.log."""
+def log_query(log_dir: Path, model: str, query: str, duration_secs: float | None = None) -> None:
+    """Log consultation to .consult/history.log with optional timing."""
     try:
         log_dir.mkdir(exist_ok=True)
         log_file = log_dir / "history.log"
@@ -88,67 +89,17 @@ def log_query(log_dir: Path, model: str, query: str) -> None:
         query_preview = query[:100].replace("\n", " ")
         if len(query) > 100:
             query_preview += "..."
+        duration_str = f" duration={duration_secs:.1f}s" if duration_secs else ""
         with open(log_file, "a") as f:
-            f.write(f"{timestamp} model={model} query={query_preview}\n")
+            f.write(f"{timestamp} model={model}{duration_str} query={query_preview}\n")
     except Exception:
         # Logging failure should not block consultation
         pass
 
 
-def run_single_consultation(
-    model: str, query: str, role: str, log_dir: Path
-) -> tuple[str, int, str]:
-    """Run a single consultation and return (model, exit_code, output)."""
-    temp_system_file = None
-
-    try:
-        if model == "gemini":
-            if not shutil.which("gemini"):
-                return (model, 1, "Error: gemini-cli not found")
-            temp_system_file = tempfile.NamedTemporaryFile(
-                mode="w", suffix=".md", delete=False
-            )
-            temp_system_file.write(role)
-            temp_system_file.close()
-            cmd = ["gemini", "--yolo", query]
-            env = {"GEMINI_SYSTEM_MD": temp_system_file.name}
-        elif model == "codex":
-            if not shutil.which("codex"):
-                return (model, 1, "Error: codex not found")
-            cmd = ["codex", "exec", "--full-auto", query]
-            env = {"CODEX_SYSTEM_MESSAGE": role}
-        else:
-            return (model, 1, f"Unknown model: {model}")
-
-        log_query(log_dir, model, query)
-
-        full_env = {**os.environ, **env}
-        result = subprocess.run(
-            cmd, env=full_env, capture_output=True, text=True
-        )
-        output = result.stdout
-        if result.stderr:
-            # Filter out noisy stderr (like YOLO mode warnings)
-            stderr_lines = [
-                line for line in result.stderr.split("\n")
-                if line and not line.startswith("YOLO mode")
-                and "GOOGLE_API_KEY" not in line
-                and "GEMINI_API_KEY" not in line
-            ]
-            if stderr_lines:
-                output += "\n" + "\n".join(stderr_lines)
-        return (model, result.returncode, output)
-    finally:
-        if temp_system_file:
-            try:
-                os.unlink(temp_system_file.name)
-            except Exception:
-                pass
-
-
 def consult(
     model: str = typer.Argument(
-        ..., help="Model: gemini, codex, both (or aliases: pro, gpt)"
+        ..., help="Model: gemini, codex (or aliases: pro, gpt)"
     ),
     query: str = typer.Argument(
         None, help="Query (or pipe via stdin)"
@@ -162,8 +113,8 @@ def consult(
     Examples:
         consult gemini "Review this architecture"
         consult codex "What's wrong with this code?"
-        consult both "Review from both models"
-        echo "Review this" | consult pro
+        consult pro "Review this"   # alias for gemini
+        echo "Review this" | consult gpt
     """
     # Lazy load paths
     codev_root = find_codev_root()
@@ -189,43 +140,6 @@ def consult(
 
     # Resolve model aliases
     resolved = MODEL_MAP.get(model.lower(), model.lower())
-
-    # Handle parallel consultation
-    if resolved in ("both", "all"):
-        if dry_run:
-            typer.echo("Would run parallel consultation with: gemini, codex")
-            raise typer.Exit(0)
-
-        typer.echo("=" * 60)
-        typer.echo("PARALLEL CONSULTATION: gemini + codex")
-        typer.echo("=" * 60 + "\n")
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            futures = {
-                executor.submit(run_single_consultation, m, query, role, log_dir): m
-                for m in ["gemini", "codex"]
-            }
-
-            results = {}
-            for future in concurrent.futures.as_completed(futures):
-                model_name = futures[future]
-                try:
-                    results[model_name] = future.result()
-                except Exception as e:
-                    results[model_name] = (model_name, 1, f"Error: {e}")
-
-        # Print results in order
-        for m in ["gemini", "codex"]:
-            model_name, exit_code, output = results[m]
-            typer.echo(f"\n{'─' * 60}")
-            typer.echo(f"📋 {model_name.upper()}")
-            typer.echo(f"{'─' * 60}")
-            typer.echo(output.strip())
-
-        typer.echo(f"\n{'=' * 60}")
-        raise typer.Exit(0)
-
-    # Single model consultation
     # Track temp file for cleanup
     temp_system_file = None
 
@@ -259,7 +173,7 @@ def consult(
     else:
         typer.echo(
             f"Unknown model: {model}\n"
-            f"Available: gemini, codex, both, pro, gpt",
+            f"Available: gemini, codex (aliases: pro, gpt)",
             err=True,
         )
         raise typer.Exit(1)
@@ -279,14 +193,18 @@ def consult(
             os.unlink(temp_system_file.name)
         raise typer.Exit(0)
 
-    log_query(log_dir, resolved, query)
-
-    # Execute with passthrough stdio, handle Ctrl+C gracefully
+    # Execute with passthrough stdio, handle Ctrl+C gracefully, track timing
     full_env = {**os.environ, **(env or {})}
+    start_time = time.time()
     try:
         result = subprocess.run(cmd, env=full_env)
+        duration = time.time() - start_time
+        log_query(log_dir, resolved, query, duration)
+        typer.echo(f"\n[{resolved} completed in {duration:.1f}s]", err=True)
         raise typer.Exit(result.returncode)
     except KeyboardInterrupt:
+        duration = time.time() - start_time
+        log_query(log_dir, resolved, query, duration)
         typer.echo("\nInterrupted", err=True)
         raise typer.Exit(130)
     finally:

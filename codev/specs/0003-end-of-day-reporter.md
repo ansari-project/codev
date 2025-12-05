@@ -302,7 +302,7 @@ INSTRUCTIONS = """
 
 ## Expert Consultation
 **Date**: 2025-12-02
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 
 ### Key Feedback Incorporated:
 
@@ -314,7 +314,7 @@ INSTRUCTIONS = """
 - Recommended structured JSON prompt with low temperature
 - Highlighted git stash as missing data source
 
-**From Gemini 2.5 Pro**:
+**From Gemini 3 Pro**:
 - Confirmed Python over Shell for YAML/JSON parsing robustness
 - Emphasized privacy warning for API data transmission
 - Recommended `git shortlog` + `git diff --stat` over full diffs
@@ -335,7 +335,7 @@ INSTRUCTIONS = """
 - [ ] Technical Lead Review
 - [ ] Product Owner Review
 - [ ] Stakeholder Sign-off
-- [x] Expert AI Consultation Complete (GPT-5 Codex + Gemini 2.5 Pro, 2025-12-02)
+- [x] Expert AI Consultation Complete (GPT-5 Codex + Gemini 3 Pro, 2025-12-02)
 
 ## Notes
 - Consider future expansion to support Slack/email output as additional delivery modes

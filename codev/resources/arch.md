@@ -212,7 +212,7 @@ codev/                                  # Project root (git repository)
 
 **Key Features**:
 - Multi-agent consultation at each major checkpoint
-- Default models: Gemini 2.5 Pro + GPT-5
+- Default models: Gemini 3 Pro + GPT-5
 - Multiple user approval points
 - Comprehensive documentation requirements
 - Suitable for complex features (>300 lines)
@@ -833,7 +833,7 @@ Codev itself follows test-driven development practices:
 - Users of any AI coding assistant get appropriate file format
 
 ### 9. Multi-Agent Consultation by Default
-**Decision**: SPIDER and TICK default to consulting GPT-5 and Gemini 2.5 Pro
+**Decision**: SPIDER and TICK default to consulting GPT-5 and Gemini 3 Pro
 
 **Rationale**:
 - Multiple perspectives catch issues single agent misses
@@ -931,7 +931,7 @@ base+70-99: Reserved for future use
 - **AI Model Providers**:
   - Anthropic Claude (Sonnet, Opus)
   - OpenAI GPT-5
-  - Google Gemini 2.5 Pro
+  - Google Gemini 3 Pro
 
 ### External Tools
 - **Claude Code**: Native integration via `.claude/agents/`

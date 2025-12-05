@@ -77,7 +77,7 @@ Separate static page that reads `~/.agent-farm/ports.json`:
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
 - Handle long paths with truncation (e.g., `.../project-name`)
 - Both models confirmed approach is sound - simple, high-value UX fix

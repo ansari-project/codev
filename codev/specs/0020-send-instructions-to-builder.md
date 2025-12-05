@@ -379,7 +379,7 @@ app.post('/api/builders/:id/send', async (req, res) => {
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Sections Updated**:
 - **Solution Approach**: Changed from `send-keys` to `load-buffer + paste-buffer` per both models' strong recommendation
 - **Structured Message Format**: Added `### [ARCHITECT INSTRUCTION | timestamp] ###` wrapper per both models

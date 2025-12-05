@@ -136,7 +136,7 @@ Per `codev/resources/conceptual-model.md`, CLEANUP is correctly classified as a 
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
 - **CRITICAL**: Add "Dry Run" mode for Prune phase - show what would be deleted without deleting
 - Add rollback strategy if Validate phase fails

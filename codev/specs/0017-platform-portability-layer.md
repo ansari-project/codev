@@ -155,7 +155,7 @@ Consider starting with just CLAUDE.md ↔ AGENTS.md sync tool.
 
 ## Expert Consultation
 **Date**: 2025-12-03
-**Models Consulted**: GPT-5 Codex, Gemini 2.5 Pro
+**Models Consulted**: GPT-5 Codex, Gemini 3 Pro
 **Feedback Incorporated**:
 - Define if one-way (.codev → platform) or bidirectional - bidirectional is much harder
 - **HIGH COMPLEXITY WARNING**: Risk of "lowest common denominator" limiting platform-specific features

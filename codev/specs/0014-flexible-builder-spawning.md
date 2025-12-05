@@ -10,6 +10,7 @@
 ## Problem Statement
 
 Currently, `af spawn` is tightly coupled to project specs. It requires `--project XXXX` and expects a spec file at `codev/specs/XXXX-*.md`. This limits flexibility in several ways:
+<!-- REVIEW(@architect): this is a test. -->
 
 1. **Ad-hoc tasks**: Users can't spawn a builder for quick tasks without first creating a spec file
 2. **Protocol invocation**: Users can't run a protocol (like CLEANUP) directly via spawn

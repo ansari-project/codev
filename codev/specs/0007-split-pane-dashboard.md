@@ -426,7 +426,7 @@ This spec supersedes **0004-dashboard-nav-ui** which used a left navigation bar 
 
 ## Expert Consultation Summary
 
-### Gemini 2.5 Pro Feedback (Incorporated)
+### Gemini 3 Pro Feedback (Incorporated)
 
 **Key Insights**:
 1. ✅ Split-pane "Command Center" pattern is superior to left-nav for orchestrator workflows

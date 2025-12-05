@@ -18,7 +18,7 @@ This brought us to Codev: **Co**-development between humans and agents, driven b
 
 The SP(IDE)R protocol structures the creation of a shared context between the agents and the human.
 
-**Specify**: The human and agents work together to align on a specification. Claude takes a first shot at transforming your request into concrete acceptance criteria, then gets reviews from other agents (Gemini 2.5 Pro and GPT-5). These agents might identify missing requirements, security concerns, or architectural considerations. Claude then comes back to the human with remaining open questions and design choices. This collaborative specification is stored in `codev/specs/####-feature-name.md`.
+**Specify**: The human and agents work together to align on a specification. Claude takes a first shot at transforming your request into concrete acceptance criteria, then gets reviews from other agents (Gemini 3 Pro and GPT-5). These agents might identify missing requirements, security concerns, or architectural considerations. Claude then comes back to the human with remaining open questions and design choices. This collaborative specification is stored in `codev/specs/####-feature-name.md`.
 
 **Plan**: Claude proposes how to break down the implementation into phases, with clear deliverables and exit criteria. Again, other agents review: one might suggest a different sequencing, another might identify missing test considerations. The human has final review and can request changes. Any differences of opinion between agents are captured in the discussion. This plan is stored in `codev/plans/####-feature-name.md`.
 
@@ -29,7 +29,7 @@ Then for each phase, you run the **IDE loop**:
 
 **Review** (or Refine/Revise/Reflect): After all phases complete, document what you learned. What worked? What didn't? These lessons feed forward into the next feature. But here's the key: you also update the SP(IDE)R protocol itself based on what you learned. The methodology evolves with your project. This review is captured in `codev/reviews/####-feature-name.md`.
 
-The key differentiator is multi-agent consultation and fixed human review points. After writing the specification, we don't just proceed: we bring in multiple AI agents (GPT-5 and Gemini 2.5 Pro in our case) to review from different perspectives. One might catch security issues, another might spot performance problems. This happens again after implementation and testing. Each agent brings its own strengths and blind spots, as does the human who has final say at key decision points.
+The key differentiator is multi-agent consultation and fixed human review points. After writing the specification, we don't just proceed: we bring in multiple AI agents (GPT-5 and Gemini 3 Pro in our case) to review from different perspectives. One might catch security issues, another might spot performance problems. This happens again after implementation and testing. Each agent brings its own strengths and blind spots, as does the human who has final say at key decision points.
 
 ## The Todo Manager Case Study
 
@@ -112,7 +112,7 @@ All three methodologies address the same core challenge: moving from vague promp
 - **SP(IDE)R**: Human-in-the-loop with deliberate review gates and multi-agent consultation by design (best for complex, evolving projects)
 
 **Unique SP(IDE)R Features**:
-- **Multi-agent by design**: Not just one AI's opinion - brings in multiple AI perspectives (GPT-5, Gemini 2.5 Pro) to catch blind spots
+- **Multi-agent by design**: Not just one AI's opinion - brings in multiple AI perspectives (GPT-5, Gemini 3 Pro) to catch blind spots
 - **Human review gates**: Explicit checkpoints where humans must approve before proceeding, preventing runaway automation
 - **Protocol evolution**: The methodology updates itself based on project lessons learned
 - **Community-driven improvement**: Protocol improvements are shared across implementations

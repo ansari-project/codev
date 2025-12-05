@@ -146,7 +146,7 @@ Use sequential numbering with descriptive names:
 ## Multi-Agent Consultation
 
 **DEFAULT BEHAVIOR**: Consultation is ENABLED by default with:
-- **Gemini 2.5 Pro** (gemini-2.5-pro) for deep analysis
+- **Gemini 3 Pro** (gemini-3-pro-preview) for deep analysis
 - **GPT-5 Codex** (gpt-5-codex) for coding and architecture perspective
 
 To disable: User must explicitly say "without multi-agent consultation"
@@ -413,18 +413,18 @@ gh pr merge <number> --squash
 ## Consultation Guidelines
 
 When the user requests "Consult" or "consultation" (including variations like "ultrathink and consult"), this specifically means:
-- Use Gemini 2.5 Pro (gemini-2.5-pro) for deep analysis
+- Use Gemini 3 Pro (gemini-3-pro-preview) for deep analysis
 - Use GPT-5 Codex (gpt-5-codex) for coding and architecture perspective
 - Both models should be consulted unless explicitly specified otherwise
 
 ## Consult Tool
 
-The `consult` CLI provides a unified interface for multi-agent consultation via external AI CLIs (gemini-cli and codex).
+The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli and codex). Each invocation is stateless (fresh process).
 
 ### Prerequisites
 
 - **Python 3**: With typer installed (`pip install typer`)
-- **gemini-cli**: For Gemini consultations (`npm install -g @anthropic-ai/gemini-cli` or see https://github.com/google-gemini/gemini-cli)
+- **gemini-cli**: For Gemini consultations (see https://github.com/google-gemini/gemini-cli)
 - **codex**: For Codex consultations (`npm install -g @openai/codex`)
 
 ### Usage
@@ -447,6 +447,30 @@ echo "Review this code" | ./codev/bin/consult pro
 ./codev/bin/consult gemini "test" --dry-run
 ```
 
+### Parallel Consultation
+
+For 3-way reviews (Claude + Gemini + Codex), run consultations in parallel using separate shell processes:
+
+```bash
+# Terminal 1: Gemini consultation with timing
+QUERY="Review PR 34..."
+START=$(date +%s)
+./codev/bin/consult gemini "$QUERY"
+echo "Gemini completed in $(($(date +%s)-START))s"
+
+# Terminal 2: Codex consultation with timing (simultaneously)
+START=$(date +%s)
+./codev/bin/consult codex "$QUERY"
+echo "Codex completed in $(($(date +%s)-START))s"
+```
+
+Or use background processes:
+```bash
+./codev/bin/consult gemini "$QUERY" &
+./codev/bin/consult codex "$QUERY" &
+wait
+```
+
 ### Model Aliases
 
 | Alias | Resolves To | CLI Used |
@@ -456,15 +480,25 @@ echo "Review this code" | ./codev/bin/consult pro
 | `codex` | gpt-5-codex | codex |
 | `gpt` | gpt-5-codex | codex |
 
+### Performance Characteristics
+
+| Model | Typical Time | Approach |
+|-------|--------------|----------|
+| Gemini | ~120-150s | Pure text analysis, no shell commands |
+| Codex | ~200-250s | Sequential shell commands (`git show`, `rg`, etc.) |
+
+**Why Codex is slower**: Codex CLI's `--full-auto` mode executes shell commands sequentially with reasoning between each step. For PR reviews, it typically runs 10-15 commands like `git show <branch>:<file>`, `rg -n "pattern"`, etc. This is more thorough but takes ~2x longer than Gemini's text-only analysis.
+
 ### How It Works
 
 1. Reads the consultant role from `codev/roles/consultant.md`
 2. Invokes the appropriate CLI with autonomous mode enabled:
    - gemini: `GEMINI_SYSTEM_MD=<temp_file> gemini --yolo <query>` (temp file contains the role)
-   - codex: `CODEX_SYSTEM_MESSAGE=<role> codex --full-auto <query>`
+   - codex: `CODEX_SYSTEM_MESSAGE=<role> codex exec --full-auto <query>`
 3. Passes through stdout/stderr and exit codes
-4. Logs queries to `.consult/history.log`
-5. Cleans up temp files after execution
+4. Logs queries with timing to `.consult/history.log`
+5. Prints completion time to stderr
+6. Cleans up temp files after execution
 
 ### The Consultant Role
 
@@ -473,12 +507,13 @@ The consultant role (`codev/roles/consultant.md`) defines a collaborative partne
 - Offers alternatives and considerations
 - Works constructively alongside the primary agent
 - Is NOT adversarial or a rubber stamp
+- Uses `git show <branch>:<file>` for PR reviews (not working directory)
 
 ### Key Files
 
 - `codev/bin/consult` - Python CLI script
 - `codev/roles/consultant.md` - Role definition
-- `.consult/history.log` - Query history (gitignored)
+- `.consult/history.log` - Query history with timing (gitignored)
 
 ## Important Notes
 

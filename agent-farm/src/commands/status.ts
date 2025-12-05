@@ -31,20 +31,22 @@ export async function status(): Promise<void> {
   // Builders
   if (state.builders.length > 0) {
     logger.info('Builders:');
-    const widths = [8, 20, 15, 12, 8];
+    const widths = [12, 20, 10, 12, 10, 6];
 
-    logger.row(['ID', 'Name', 'Status', 'Phase', 'Port'], widths);
-    logger.row(['──', '────', '──────', '─────', '────'], widths);
+    logger.row(['ID', 'Name', 'Type', 'Status', 'Phase', 'Port'], widths);
+    logger.row(['──', '────', '────', '──────', '─────', '────'], widths);
 
     for (const builder of state.builders) {
       const running = await isProcessRunning(builder.pid);
       const statusColor = getStatusColor(builder.status, running);
+      const typeColor = getTypeColor(builder.type || 'spec');
 
       logger.row([
         builder.id,
         builder.name.substring(0, 18),
+        typeColor(builder.type || 'spec'),
         statusColor(builder.status),
-        builder.phase.substring(0, 10),
+        builder.phase.substring(0, 8),
         String(builder.port),
       ], widths);
     }
@@ -115,6 +117,23 @@ function getStatusColor(status: string, running: boolean): (text: string) => str
       return chalk.green;
     case 'complete':
       return chalk.green;
+    default:
+      return chalk.white;
+  }
+}
+
+function getTypeColor(type: string): (text: string) => string {
+  switch (type) {
+    case 'spec':
+      return chalk.cyan;
+    case 'task':
+      return chalk.magenta;
+    case 'protocol':
+      return chalk.yellow;
+    case 'worktree':
+      return chalk.blue;
+    case 'shell':
+      return chalk.gray;
     default:
       return chalk.white;
   }

@@ -132,7 +132,7 @@ describe('State Management', () => {
       // Set some state
       await saveState({
         architect: { port: 7680, pid: 1234, cmd: 'claude', startedAt: '2024-01-01' },
-        builders: [{ id: 'B001', name: 'test', port: 7681, pid: 2345, status: 'implementing', phase: 'init', worktree: '/tmp', branch: 'test' }],
+        builders: [{ id: 'B001', name: 'test', port: 7681, pid: 2345, status: 'implementing', phase: 'init', worktree: '/tmp', branch: 'test', type: 'spec' }],
         utils: [],
         annotations: [],
       });

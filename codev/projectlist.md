@@ -401,7 +401,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0031"
     title: "SQLite for Runtime State"
     summary: "Replace JSON files with SQLite for atomic, concurrent-safe runtime state management"
-    status: planned
+    status: implementing
     priority: high
     release: "v1.1.0"
     files:

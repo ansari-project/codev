@@ -1,0 +1,7 @@
+# CLEANUP Protocol Runtime Artifacts
+#
+# This directory contains:
+# - audit-*.md files: Timestamped audit reports (VERSIONED - committed to git)
+# - .trash/ directory: Soft-deleted files with 30-day retention (GITIGNORED)
+#
+# Only .trash/ is gitignored. Audit reports are committed for collaboration.

@@ -36,6 +36,7 @@ You are working in the Codev project itself, with multiple development protocols
 - **SPIDER-SOLO**: Single-agent variant - `codev/protocols/spider-solo/protocol.md`
 - **TICK**: Fast autonomous implementation - `codev/protocols/tick/protocol.md`
 - **EXPERIMENT**: Disciplined experimentation - `codev/protocols/experiment/protocol.md`
+- **CLEANUP**: Codebase maintenance and cruft removal - `codev/protocols/cleanup/protocol.md`
 
 Key locations:
 - Protocol details: `codev/protocols/` (Choose appropriate protocol)
@@ -80,6 +81,13 @@ When asked about project status, incomplete work, or what to work on next:
 - Research spikes
 - Prototyping before committing to implementation
 
+### Use CLEANUP for:
+- Removing dead code and unused dependencies
+- Quarterly codebase maintenance
+- Before major refactoring efforts
+- Cleaning up after feature deprecation
+- Syncing documentation with codebase
+
 ### Skip formal protocols for:
 - README typos or minor documentation fixes
 - Small bug fixes in templates
@@ -105,7 +113,11 @@ project-root/
 │   │   ├── spider/         # Multi-phase development with consultation
 │   │   ├── spider-solo/    # Single-agent SPIDER variant
 │   │   ├── tick/           # Fast autonomous implementation
-│   │   └── experiment/     # Disciplined experimentation
+│   │   ├── experiment/     # Disciplined experimentation
+│   │   └── cleanup/        # Codebase maintenance and cruft removal
+│   ├── cleanup/             # CLEANUP protocol runtime artifacts
+│   │   ├── audit-*.md      # Timestamped audit reports (versioned)
+│   │   └── .trash/         # Soft-deleted files (gitignored, 30-day retention)
 │   ├── projectlist.md      # Master project tracking (status, priority, dependencies)
 │   ├── specs/              # Feature specifications (WHAT to build)
 │   ├── plans/              # Implementation plans (HOW to build)

@@ -70,7 +70,7 @@ The protocol MUST define which targets it operates on:
 4. Phase 1: AUDIT - detailed activities, entry/exit criteria
 5. Phase 2: PRUNE - dry-run, soft-delete, restore.sh generation
 6. Phase 3: VALIDATE - test suite, build verification
-7. Phase 4: INDEX - update projectlist.md, AGENTS.md, arch.md
+7. Phase 4: SYNC - update projectlist.md, AGENTS.md, arch.md
 8. Retention policy (.trash/ kept 30 days)
 9. Rollback strategy
 
@@ -81,7 +81,7 @@ The protocol MUST define which targets it operates on:
 | AUDIT | Clean git state, tests passing | Audit report generated |
 | PRUNE | Audit report reviewed by human | Files moved to .trash/, restore.sh generated |
 | VALIDATE | PRUNE complete | All tests pass, build succeeds |
-| INDEX | VALIDATE passes | projectlist.md and docs updated |
+| SYNC | VALIDATE passes | projectlist.md and docs updated |
 
 **Audit Report Template**:
 ```markdown
@@ -163,14 +163,14 @@ echo "Restored 2 files"
 #### Implementation Details
 
 **Integration Points**:
-1. `architecture-documenter` - called during INDEX phase
+1. `architecture-documenter` - called during SYNC phase
 2. Future: `af spawn --protocol cleanup` (requires 0014)
 3. Manual invocation instructions until 0014 is complete
 
 **Required .gitignore additions**:
 ```
 codev/cleanup/.trash/
-codev/cleanup/audit-*.md
+# Note: audit-*.md reports ARE versioned (committed to git)
 ```
 
 #### Acceptance Criteria
@@ -210,7 +210,7 @@ Phase 1 (Protocol Definition) ──→ Phase 2 (Integration Points)
 - Add entry/exit criteria per phase ✓
 - Preserve directory structure in .trash/ ✓
 - Generate restore.sh for easy rollback ✓
-- Rename SYNC → INDEX to clarify purpose ✓
+- Rename INDEX → SYNC to clarify purpose ✓
 - Add retention policy for .trash/ ✓
 - Add .gitignore entries ✓
 
@@ -222,4 +222,4 @@ Phase 1 (Protocol Definition) ──→ Phase 2 (Integration Points)
 - This protocol is primarily documentation
 - Actual cleanup tooling (dead-code-auditor subagent) is out of scope per spec
 - Human approval required for all deletions (no automated removal)
-- INDEX phase updates metadata (projectlist.md, AGENTS.md) not just syncs docs
+- SYNC phase updates metadata (projectlist.md, AGENTS.md) not just syncs docs

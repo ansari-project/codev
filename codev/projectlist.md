@@ -443,16 +443,16 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0034"
     title: "Table Alignment in Markdown Annotator"
     summary: "Auto-pad markdown table cells so pipes align vertically across rows"
-    status: conceived
+    status: planned
     priority: low
     release: null
     files:
-      spec: null
-      plan: null
+      spec: codev/specs/0034-table-alignment.md
+      plan: codev/plans/0034-table-alignment.md
       review: null
     dependencies: ["0030"]
     tags: [ui, annotation, markdown]
-    notes: "Two-pass rendering: detect tables, compute column widths, pad cells. Improves readability without changing line count."
+    notes: "Two-pass rendering with code block awareness. Preserves alignment markers (:---:). Consulted Gemini/Codex."
 ```
 
 ---

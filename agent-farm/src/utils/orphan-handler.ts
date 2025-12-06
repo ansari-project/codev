@@ -3,19 +3,16 @@
  *
  * Detects and handles orphaned tmux sessions from previous agent-farm runs.
  * This prevents resource leaks and ensures clean startup.
+ *
+ * IMPORTANT: Only cleans up sessions for THIS project (based on port).
+ * Sessions from other projects are left alone.
  */
 
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from './logger.js';
 import { run } from './shell.js';
-
-// Session naming patterns used by agent-farm
-const SESSION_PATTERNS = [
-  /^af-architect$/,
-  /^builder-\d+$/,
-  /^util-[A-Z0-9]+$/,
-];
+import { getConfig } from './config.js';
 
 interface OrphanedSession {
   name: string;
@@ -23,20 +20,32 @@ interface OrphanedSession {
 }
 
 /**
- * Find tmux sessions that match agent-farm naming patterns
+ * Find tmux sessions that match THIS project's agent-farm patterns
+ * Only matches sessions with this project's port to avoid killing other projects
  */
 async function findOrphanedSessions(): Promise<OrphanedSession[]> {
+  const config = getConfig();
+  const architectPort = config.architectPort;
+
+  // Project-specific patterns - only match THIS project's sessions
+  const projectPatterns = [
+    new RegExp(`^af-architect-${architectPort}$`),  // Only this project's architect
+    /^builder-\d+$/,  // Builder sessions (already unique per spec)
+    /^util-[A-Z0-9]+$/,  // Util sessions (already unique)
+    /^af-architect$/,  // Legacy pattern (no port) - safe to clean
+  ];
+
   try {
     const result = await run('tmux list-sessions -F "#{session_name}" 2>/dev/null');
     const sessions = result.stdout.trim().split('\n').filter(Boolean);
     const orphans: OrphanedSession[] = [];
 
     for (const name of sessions) {
-      if (SESSION_PATTERNS[0].test(name)) {
+      if (projectPatterns[0].test(name) || projectPatterns[3].test(name)) {
         orphans.push({ name, type: 'architect' });
-      } else if (SESSION_PATTERNS[1].test(name)) {
+      } else if (projectPatterns[1].test(name)) {
         orphans.push({ name, type: 'builder' });
-      } else if (SESSION_PATTERNS[2].test(name)) {
+      } else if (projectPatterns[2].test(name)) {
         orphans.push({ name, type: 'util' });
       }
     }

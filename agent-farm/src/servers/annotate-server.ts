@@ -29,34 +29,29 @@ if (!filePath) {
 const fullFilePath = filePath;
 const displayPath = path.basename(filePath);
 
-// Find project root by looking for .agent-farm directory
-function findProjectRoot(): string {
-  let dir = process.cwd();
-  while (dir !== '/') {
-    if (fs.existsSync(path.join(dir, '.agent-farm'))) {
-      return dir;
-    }
-    if (fs.existsSync(path.join(dir, 'codev'))) {
-      return dir;
-    }
-    dir = path.dirname(dir);
-  }
-  return process.cwd();
+/**
+ * Find the annotate template
+ * Template is bundled with agent-farm package in templates/ directory
+ */
+function findTemplatePath(): string {
+  const filename = 'annotate.html';
+
+  // 1. Try relative to compiled output (dist/servers/ -> templates/)
+  const pkgPath = path.resolve(__dirname, '../templates/', filename);
+  if (fs.existsSync(pkgPath)) return pkgPath;
+
+  // 2. Try relative to source (src/servers/ -> templates/)
+  const devPath = path.resolve(__dirname, '../../templates/', filename);
+  if (fs.existsSync(devPath)) return devPath;
+
+  throw new Error(`Template not found: ${filename}`);
 }
 
-// Find template in codev/templates/
-const projectRoot = findProjectRoot();
-const templatePath = path.join(projectRoot, 'codev/templates/annotate.html');
+const templatePath = findTemplatePath();
 
 // Validate file exists
 if (!fs.existsSync(fullFilePath)) {
   console.error(`File not found: ${fullFilePath}`);
-  process.exit(1);
-}
-
-// Validate template exists
-if (!fs.existsSync(templatePath)) {
-  console.error(`Template not found: ${templatePath}`);
   process.exit(1);
 }
 

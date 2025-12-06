@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import type { Config, UserConfig, ResolvedCommands } from '../types.js';
 import { getProjectPorts } from './port-registry.js';
 
@@ -22,9 +23,45 @@ const DEFAULT_COMMANDS = {
 let cliOverrides: Partial<ResolvedCommands> = {};
 
 /**
+ * Check if we're in a git worktree and return the main repo root if so
+ */
+function getMainRepoFromWorktree(dir: string): string | null {
+  try {
+    // Get the common git directory (same for main repo and worktrees)
+    const gitCommonDir = execSync('git rev-parse --git-common-dir', {
+      cwd: dir,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+
+    // If it's just '.git', we're in the main repo
+    if (gitCommonDir === '.git') {
+      return null;
+    }
+
+    // We're in a worktree - gitCommonDir points to main repo's .git directory
+    // e.g., /path/to/main/repo/.git or /path/to/main/repo/.git/worktrees/...
+    // The main repo is the parent of .git
+    const mainGitDir = resolve(dir, gitCommonDir);
+    const mainRepo = dirname(mainGitDir.replace(/\/worktrees\/[^/]+$/, ''));
+    return mainRepo;
+  } catch {
+    // Not in a git repo
+    return null;
+  }
+}
+
+/**
  * Find the project root by looking for codev/ directory
+ * Handles git worktrees by finding the main repository
  */
 function findProjectRoot(startDir: string = process.cwd()): string {
+  // First check if we're in a git worktree
+  const mainRepo = getMainRepoFromWorktree(startDir);
+  if (mainRepo && existsSync(resolve(mainRepo, 'codev'))) {
+    return mainRepo;
+  }
+
   let dir = startDir;
 
   while (dir !== '/') {
@@ -44,25 +81,24 @@ function findProjectRoot(startDir: string = process.cwd()): string {
 }
 
 /**
- * Get the templates directory (from codev/templates/ or config override)
+ * Get the agent-farm templates directory
+ * Templates are bundled with agent-farm, not in project codev/ directory
  */
-function getTemplatesDir(projectRoot: string, userConfig: UserConfig | null): string {
-  // Check config.json override
-  if (userConfig?.templates?.dir) {
-    const configPath = resolve(projectRoot, userConfig.templates.dir);
-    if (existsSync(configPath)) {
-      return configPath;
-    }
+function getTemplatesDir(): string {
+  // 1. Try relative to compiled output (dist/utils/ -> templates/)
+  const pkgPath = resolve(__dirname, '../templates');
+  if (existsSync(pkgPath)) {
+    return pkgPath;
   }
 
-  // Default: codev/templates/ (canonical location)
-  const templatesPath = resolve(projectRoot, 'codev/templates');
-  if (existsSync(templatesPath)) {
-    return templatesPath;
+  // 2. Try relative to source (src/utils/ -> templates/)
+  const devPath = resolve(__dirname, '../../templates');
+  if (existsSync(devPath)) {
+    return devPath;
   }
 
-  // Fail fast if templates not found
-  throw new Error(`Templates directory not found: ${templatesPath}`);
+  // Return the expected path even if not found (servers handle their own template lookup)
+  return devPath;
 }
 
 /**
@@ -182,9 +218,9 @@ let cachedPorts: {
 /**
  * Initialize port allocation (must be called once at startup)
  */
-export async function initializePorts(): Promise<void> {
+export function initializePorts(): void {
   const projectRoot = findProjectRoot();
-  const ports = await getProjectPorts(projectRoot);
+  const ports = getProjectPorts(projectRoot);
   cachedPorts = {
     dashboardPort: ports.dashboardPort,
     architectPort: ports.architectPort,
@@ -217,7 +253,7 @@ export function getConfig(): Config {
     codevDir,
     buildersDir: resolve(projectRoot, '.builders'),
     stateDir: resolve(projectRoot, '.agent-farm'),
-    templatesDir: getTemplatesDir(projectRoot, userConfig),
+    templatesDir: getTemplatesDir(),
     serversDir: getServersDir(),
     bundledRolesDir: getRolesDir(projectRoot, userConfig),
     // Ports from global registry (prevents cross-project conflicts)

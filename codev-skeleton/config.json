@@ -3,11 +3,5 @@
     "architect": "claude",
     "builder": "claude",
     "shell": "bash"
-  },
-  "templates": {
-    "dir": "codev/templates"
-  },
-  "roles": {
-    "dir": "codev/roles"
   }
 }

@@ -246,7 +246,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0019"
     title: "Tab Bar Status Indicators"
     summary: "Show builder status (working/idle/error) in dashboard tab bar for at-a-glance monitoring"
-    status: implementing
+    status: integrated
     priority: medium
     release: "v1.0.0"
     files:
@@ -275,7 +275,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0006"
     title: "Tutorial Mode"
     summary: "Interactive onboarding for new Codev users"
-    status: merged
+    status: integrated
     priority: low
     release: "v1.0.0"
     files:
@@ -382,7 +382,63 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: ["0008", "0011"]
     tags: [ui, dashboard, multi-project]
-    notes: "TICK protocol. af overview command. Shows all instances, directory picker to launch new ones."
+    notes: "TICK protocol. af tower command. Shows all instances, directory picker to launch new ones."
+
+  - id: "0030"
+    title: "Markdown Syntax Highlighting in Annotator"
+    summary: "Enable syntax highlighting for markdown files in the annotation viewer"
+    status: conceived
+    priority: low
+    release: "v1.1.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0010"]
+    tags: [ui, annotation, markdown]
+    notes: "Currently markdown files render as plaintext in annotator. Add Prism markdown highlighting."
+
+  - id: "0031"
+    title: "SQLite for Runtime State"
+    summary: "Replace JSON files with SQLite for atomic, concurrent-safe runtime state management"
+    status: integrated
+    priority: high
+    release: "v1.1.0"
+    files:
+      spec: codev/specs/0031-sqlite-runtime-state.md
+      plan: codev/plans/0031-sqlite-runtime-state.md
+      review: null
+    dependencies: []
+    tags: [infrastructure, database, concurrency]
+    notes: "SPIDER protocol. Fixes race conditions in state.json and ports.json. Uses better-sqlite3 with WAL mode. 3-way reviewed. Merged 2025-12-05."
+
+  - id: "0032"
+    title: "Consolidate Templates"
+    summary: "Move dashboard and annotate templates from codev/ to agent-farm/templates/"
+    status: implementing
+    priority: medium
+    release: "v1.1.0"
+    files:
+      spec: codev/specs/0032-consolidate-templates.md
+      plan: codev/plans/0032-consolidate-templates.md
+      review: null
+    dependencies: []
+    tags: [infrastructure, cleanup, agent-farm]
+    notes: "TICK protocol. Removes template duplication between codev/ and codev-skeleton/."
+
+  - id: "0033"
+    title: "Rename Command"
+    summary: "Add af rename command to rename builders and utility terminals"
+    status: integrated
+    priority: low
+    release: "v1.1.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0031"]
+    tags: [cli, agent-farm]
+    notes: "Simple feature. Uses SQLite atomic UPDATE. Added getUtil(), renameBuilder(), renameUtil() to state.ts."
 ```
 
 ---
@@ -391,11 +447,17 @@ Projects currently in development (conceived through committed), sorted by prior
 
 ```yaml
 releases:
-  - version: "v1.0.0"
+  - version: "v1.1.0"
     name: null
-    status: active
+    status: planning
     target_date: null
-    notes: "First stable release with full architect-builder workflow"
+    notes: "Polish and improvements"
+
+  - version: "v1.0.0"
+    name: "Architect"
+    status: released
+    target_date: "2025-12-05"
+    notes: "First stable release with full architect-builder workflow, tower dashboard, and migration tooling"
 
   - version: "v0.2.0"
     name: "Foundation"
@@ -588,7 +650,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0030** - Reserve this number for your next project
+**0033** - Reserve this number for your next project
 
 ---
 

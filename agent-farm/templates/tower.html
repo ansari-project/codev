@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Farm Tower</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2a2a2a;
+      --border: #333;
+      --text-primary: #fff;
+      --text-secondary: #ccc;
+      --text-muted: #666;
+      --accent: #3b82f6;
+      --status-running: #22c55e;
+      --status-stopped: #666;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0;
+      font-size: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 .emoji {
+      font-size: 28px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #333;
+      border-color: #444;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    /* Main content - left aligned */
+    .main {
+      padding: 32px;
+    }
+
+    /* Section headers */
+    .section-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h2 {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+
+    .empty-state code {
+      background: var(--bg-tertiary);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+
+    /* Instance cards - 4 column grid */
+    .instances {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 1600px) {
+      .instances {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .instances {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 800px) {
+      .instances {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .instance {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .instance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+    }
+
+    .instance-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .instance-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .instance-path-row {
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .instance-name {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .status-badge.running {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--status-running);
+    }
+
+    .status-badge.stopped {
+      background: rgba(102, 102, 102, 0.15);
+      color: var(--status-stopped);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-dot.running {
+      background: var(--status-running);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.stopped {
+      background: var(--status-stopped);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .instance-path {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .instance-body {
+      padding: 20px;
+    }
+
+    .ports-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .port-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+    }
+
+    .port-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .port-type {
+      font-size: 15px;
+      color: var(--text-secondary);
+      min-width: 100px;
+    }
+
+    .port-url {
+      font-size: 15px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .port-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .port-status.active {
+      background: var(--status-running);
+    }
+
+    .port-status.inactive {
+      background: var(--status-stopped);
+    }
+
+    .port-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .port-actions a {
+      padding: 6px 16px;
+      border-radius: 4px;
+      background: var(--bg-primary);
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.15s ease;
+    }
+
+    .port-actions a:hover {
+      background: #333;
+    }
+
+    .port-actions a.disabled {
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .instance-meta {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 24px;
+    }
+
+    /* Recents section */
+    .recents-section {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+
+    .recents-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .recent-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .recent-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .recent-name {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .recent-path {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .recent-time {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Launch section */
+    .launch-section {
+      margin-top: 32px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .launch-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .launch-form {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .launch-form input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+
+    .launch-form input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .launch-form input[type="text"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Autocomplete dropdown */
+    .autocomplete-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+
+    .autocomplete-dropdown.show {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: 10px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-family: monospace;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.selected {
+      background: var(--bg-secondary);
+    }
+
+    .autocomplete-item .project-badge {
+      background: var(--status-running);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: system-ui;
+    }
+
+    .autocomplete-item .folder-icon {
+      color: var(--text-muted);
+    }
+
+    .launch-hint {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Loading state */
+    .loading {
+      padding: 48px;
+      color: var(--text-muted);
+    }
+
+    .loading .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 14px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 15px;
+      animation: toast-in 0.3s ease-out;
+    }
+
+    .toast.error {
+      border-color: #ef4444;
+    }
+
+    .toast.success {
+      border-color: #22c55e;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .status-dot.running,
+      .loading .spinner {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>
+      <span class="emoji">🗼</span>
+      Agent Farm Tower
+    </h1>
+    <div class="header-actions">
+      <button class="btn" onclick="refresh()">Refresh</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading instances...</p>
+      </div>
+    </div>
+
+    <div id="recents-container"></div>
+
+    <div class="launch-section">
+      <h3>
+        <span>+</span>
+        Launch New Instance
+      </h3>
+      <div class="launch-form">
+        <div class="autocomplete-wrapper">
+          <input type="text" id="project-path" placeholder="Start typing a path (e.g., ~/Development/)" autocomplete="off" />
+          <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
+        </div>
+        <button class="btn btn-primary" onclick="launchInstance()">Start</button>
+      </div>
+      <p class="launch-hint">
+        Type a path to see suggestions. Directories with <code>codev/</code> are highlighted as valid projects.
+      </p>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // State
+    let runningInstances = [];
+    let recentInstances = [];
+
+    // Initialize
+    async function init() {
+      await refresh();
+      // Poll every 5 seconds
+      setInterval(refresh, 5000);
+    }
+
+    // Refresh data from API
+    async function refresh() {
+      try {
+        const response = await fetch('/api/status');
+        if (!response.ok) throw new Error('Failed to fetch status');
+
+        const data = await response.json();
+        runningInstances = (data.instances || []).filter(i => i.running);
+        recentInstances = (data.instances || []).filter(i => !i.running);
+        render();
+      } catch (err) {
+        console.error('Refresh error:', err);
+        showToast('Failed to refresh: ' + err.message, 'error');
+      }
+    }
+
+    // Render the UI
+    function render() {
+      const content = document.getElementById('content');
+
+      if (runningInstances.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h2>No running instances</h2>
+            <p>Start a new instance below or run <code>af start</code> in a project directory.</p>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <h2 class="section-header">Running Instances</h2>
+          <div class="instances">
+            ${runningInstances.map(renderInstance).join('')}
+          </div>
+        `;
+      }
+
+      // Render recents
+      const recentsContainer = document.getElementById('recents-container');
+      if (recentInstances.length > 0) {
+        recentsContainer.innerHTML = `
+          <div class="recents-section">
+            <h2 class="section-header">Recent Projects</h2>
+            <div class="recents-list">
+              ${recentInstances.map(renderRecentItem).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        recentsContainer.innerHTML = '';
+      }
+    }
+
+    // Render a single instance card
+    function renderInstance(instance) {
+      const statusClass = instance.running ? 'running' : 'stopped';
+      const statusText = instance.running ? 'Running' : 'Stopped';
+
+      const portsHtml = instance.ports.map(port => `
+        <div class="port-item">
+          <div class="port-info">
+            <span class="port-status ${port.active ? 'active' : 'inactive'}"></span>
+            <span class="port-type">${escapeHtml(port.type)}</span>
+            <span class="port-url">${escapeHtml(port.url)}</span>
+          </div>
+          <div class="port-actions">
+            <a href="${escapeHtml(port.url)}" target="_blank" class="${port.active ? '' : 'disabled'}">
+              Open
+            </a>
+          </div>
+        </div>
+      `).join('');
+
+      const lastUsed = instance.lastUsed
+        ? formatDate(instance.lastUsed)
+        : 'Never';
+
+      return `
+        <div class="instance">
+          <div class="instance-header">
+            <div class="instance-title">
+              <span class="instance-name">${escapeHtml(instance.projectName)}</span>
+              <span class="status-badge ${statusClass}">
+                <span class="status-dot ${statusClass}"></span>
+                ${statusText}
+              </span>
+            </div>
+            <div class="instance-actions">
+              ${instance.running ? `
+                <button class="btn btn-small" onclick="restartInstance(${instance.basePort}, '${escapeHtml(instance.projectPath)}')">Restart</button>
+                <button class="btn btn-small btn-danger" onclick="stopInstance(${instance.basePort})">Stop</button>
+              ` : `
+                <button class="btn btn-small btn-primary" onclick="launchPath('${escapeHtml(instance.projectPath)}')">Start</button>
+              `}
+            </div>
+          </div>
+          <div class="instance-path-row">
+            <span class="instance-path" title="${escapeHtml(instance.projectPath)}">
+              ${escapeHtml(instance.projectPath)}
+            </span>
+          </div>
+          <div class="instance-body">
+            <div class="ports-list">
+              ${portsHtml}
+            </div>
+            <div class="instance-meta">
+              <span>Last active: ${lastUsed}</span>
+              <span>Port block: ${instance.basePort}-${instance.basePort + 99}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render a recent item
+    function renderRecentItem(instance) {
+      const lastUsed = instance.lastUsed ? formatDate(instance.lastUsed) : 'Never';
+
+      return `
+        <div class="recent-item">
+          <div class="recent-info">
+            <span class="recent-name">${escapeHtml(instance.projectName)}</span>
+            <span class="recent-path">${escapeHtml(instance.projectPath)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="recent-time">${lastUsed}</span>
+            <button class="btn btn-primary" onclick="launchPath('${escapeHtml(instance.projectPath)}')">Start</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Autocomplete state
+    let suggestions = [];
+    let selectedIndex = -1;
+    let debounceTimer = null;
+
+    // Setup autocomplete
+    const pathInput = document.getElementById('project-path');
+    const dropdown = document.getElementById('autocomplete-dropdown');
+
+    pathInput.addEventListener('input', (e) => {
+      // Debounce to avoid too many requests
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchSuggestions(e.target.value);
+      }, 150);
+    });
+
+    pathInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+        renderDropdown();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        renderDropdown();
+      } else if (e.key === 'Enter') {
+        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+          e.preventDefault();
+          selectSuggestion(suggestions[selectedIndex]);
+        } else if (pathInput.value.trim()) {
+          launchInstance();
+        }
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+      } else if (e.key === 'Tab' && suggestions.length > 0) {
+        e.preventDefault();
+        // Tab completes to common prefix or first suggestion
+        if (selectedIndex >= 0) {
+          selectSuggestion(suggestions[selectedIndex]);
+        } else if (suggestions.length > 0) {
+          selectSuggestion(suggestions[0]);
+        }
+      }
+    });
+
+    pathInput.addEventListener('focus', () => {
+      if (pathInput.value) {
+        fetchSuggestions(pathInput.value);
+      }
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.autocomplete-wrapper')) {
+        hideDropdown();
+      }
+    });
+
+    async function fetchSuggestions(inputPath) {
+      if (!inputPath) {
+        hideDropdown();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/browse?path=' + encodeURIComponent(inputPath));
+        const data = await response.json();
+        suggestions = data.suggestions || [];
+        selectedIndex = -1;
+        renderDropdown();
+      } catch (err) {
+        console.error('Fetch suggestions error:', err);
+        suggestions = [];
+        hideDropdown();
+      }
+    }
+
+    function renderDropdown() {
+      if (suggestions.length === 0) {
+        hideDropdown();
+        return;
+      }
+
+      dropdown.innerHTML = suggestions.map((s, i) => `
+        <div class="autocomplete-item ${i === selectedIndex ? 'selected' : ''}"
+             onclick="selectSuggestion(suggestions[${i}])">
+          <span class="folder-icon">📁</span>
+          <span>${escapeHtml(s.path)}</span>
+          ${s.isProject ? '<span class="project-badge">codev</span>' : ''}
+        </div>
+      `).join('');
+
+      dropdown.classList.add('show');
+
+      // Scroll selected item into view
+      if (selectedIndex >= 0) {
+        const items = dropdown.querySelectorAll('.autocomplete-item');
+        if (items[selectedIndex]) {
+          items[selectedIndex].scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }
+
+    function selectSuggestion(suggestion) {
+      pathInput.value = suggestion.path + '/';
+      hideDropdown();
+      // Fetch new suggestions for the selected directory
+      fetchSuggestions(pathInput.value);
+      pathInput.focus();
+    }
+
+    function hideDropdown() {
+      dropdown.classList.remove('show');
+      suggestions = [];
+      selectedIndex = -1;
+    }
+
+    // Launch a specific path (from recents)
+    async function launchPath(projectPath) {
+      try {
+        const response = await fetch('/api/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Launch failed');
+        }
+
+        showToast('Instance launching...', 'success');
+        setTimeout(refresh, 2000);
+      } catch (err) {
+        showToast('Failed to launch: ' + err.message, 'error');
+      }
+    }
+
+    // Stop an instance by port
+    async function stopInstance(basePort) {
+      try {
+        const response = await fetch('/api/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ basePort })
+        });
+
+        const result = await response.json();
+
+        if (result.stopped && result.stopped.length > 0) {
+          showToast('Instance stopped', 'success');
+        } else {
+          showToast('No processes found to stop', 'info');
+        }
+        setTimeout(refresh, 1000);
+      } catch (err) {
+        showToast('Failed to stop: ' + err.message, 'error');
+      }
+    }
+
+    // Restart an instance
+    async function restartInstance(basePort, projectPath) {
+      try {
+        // First stop
+        await fetch('/api/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ basePort })
+        });
+
+        // Wait a moment for processes to die
+        await new Promise(r => setTimeout(r, 1000));
+
+        // Then start
+        const response = await fetch('/api/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Restart failed');
+        }
+
+        showToast('Instance restarting...', 'success');
+        setTimeout(refresh, 2000);
+      } catch (err) {
+        showToast('Failed to restart: ' + err.message, 'error');
+      }
+    }
+
+    // Launch a new instance
+    async function launchInstance() {
+      const input = document.getElementById('project-path');
+      const projectPath = input.value.trim();
+
+      if (!projectPath) {
+        showToast('Please enter a project path', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Launch failed');
+        }
+
+        input.value = '';
+        showToast('Instance launching... Please wait a moment.', 'success');
+
+        // Refresh after a delay to allow instance to start
+        setTimeout(refresh, 2000);
+      } catch (err) {
+        showToast('Failed to launch: ' + err.message, 'error');
+      }
+    }
+
+    // Format date for display
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+
+      // Less than a minute
+      if (diff < 60000) {
+        return 'Just now';
+      }
+
+      // Less than an hour
+      if (diff < 3600000) {
+        const mins = Math.floor(diff / 60000);
+        return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+      }
+
+      // Less than a day
+      if (diff < 86400000) {
+        const hours = Math.floor(diff / 3600000);
+        return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      }
+
+      // Format as date
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // HTML escape
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 4000);
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

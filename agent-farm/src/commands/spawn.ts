@@ -173,7 +173,7 @@ async function checkDependencies(): Promise<void> {
  * Find an available port, avoiding ports already in use by other builders
  */
 async function findFreePort(config: Config): Promise<number> {
-  const state = await loadState();
+  const state = loadState();
   const usedPorts = new Set<number>();
   for (const b of state.builders || []) {
     if (b.port) usedPorts.add(b.port);
@@ -246,7 +246,7 @@ async function startBuilderSession(
 
   // Start ttyd connecting to the tmux session
   logger.info('Starting builder terminal...');
-  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  const customIndexPath = resolve(config.templatesDir, 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(port),
@@ -293,7 +293,7 @@ async function startShellSession(
 
   // Start ttyd
   logger.info('Starting shell terminal...');
-  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  const customIndexPath = resolve(config.templatesDir, 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(port),
@@ -389,7 +389,7 @@ async function spawnSpec(options: SpawnOptions, config: Config): Promise<void> {
     type: 'spec',
   };
 
-  await upsertBuilder(builder);
+  upsertBuilder(builder);
 
   logger.blank();
   logger.success(`Builder ${builderId} spawned!`);
@@ -455,7 +455,7 @@ async function spawnTask(options: SpawnOptions, config: Config): Promise<void> {
     taskText,
   };
 
-  await upsertBuilder(builder);
+  upsertBuilder(builder);
 
   logger.blank();
   logger.success(`Builder ${builderId} spawned!`);
@@ -514,7 +514,7 @@ async function spawnProtocol(options: SpawnOptions, config: Config): Promise<voi
     protocolName,
   };
 
-  await upsertBuilder(builder);
+  upsertBuilder(builder);
 
   logger.blank();
   logger.success(`Builder ${builderId} spawned!`);
@@ -556,7 +556,7 @@ async function spawnShell(options: SpawnOptions, config: Config): Promise<void> 
     type: 'shell',
   };
 
-  await upsertBuilder(builder);
+  upsertBuilder(builder);
 
   logger.blank();
   logger.success(`Shell ${shellId} spawned!`);
@@ -644,7 +644,7 @@ async function spawnWorktree(options: SpawnOptions, config: Config): Promise<voi
     type: 'worktree',
   };
 
-  await upsertBuilder(builder);
+  upsertBuilder(builder);
 
   logger.blank();
   logger.success(`Worktree ${builderId} spawned!`);

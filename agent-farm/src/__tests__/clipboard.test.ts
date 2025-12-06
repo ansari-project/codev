@@ -23,10 +23,8 @@ const projectRoot = findProjectRoot();
 
 describe('Dashboard clipboard permissions', () => {
   const templates = [
-    'codev/templates/dashboard-split.html',
-    'codev/templates/dashboard.html',
-    'codev-skeleton/templates/dashboard-split.html',
-    'codev-skeleton/templates/dashboard.html',
+    'agent-farm/templates/dashboard-split.html',
+    'agent-farm/templates/dashboard.html',
   ];
 
   templates.forEach((templatePath) => {

@@ -4,46 +4,27 @@ A development methodology that treats natural language context as code. Instead 
 
 ## Prerequisites
 
-Codev requires the following dependencies. Run `./codev/bin/codev-doctor` to verify your installation.
+Codev requires several dependencies. See **[DEPENDENCIES.md](codev-skeleton/DEPENDENCIES.md)** for complete installation instructions.
 
-### Core Dependencies (required for Agent Farm)
+**Quick summary:**
 
-| Dependency | Min Version | macOS | Ubuntu/Debian | Purpose |
-|------------|-------------|-------|---------------|---------|
-| Node.js | >= 18.0 | `brew install node` | `apt install nodejs npm` | Runtime for agent-farm |
-| tmux | >= 3.0 | `brew install tmux` | `apt install tmux` | Terminal multiplexer |
-| ttyd | >= 1.7 | `brew install ttyd` | See below | Web-based terminal |
-| git | >= 2.5 | (pre-installed) | `apt install git` | Worktrees for builders |
-| Python | >= 3.10 | `brew install python` | `apt install python3` | Consult tool |
+| Dependency | Min Version | macOS | Purpose |
+|------------|-------------|-------|---------|
+| Node.js | 18.0 | `brew install node` | Runtime |
+| tmux | 3.0 | `brew install tmux` | Terminal multiplexer |
+| ttyd | 1.7 | `brew install ttyd` | Web terminal |
+| git | 2.5 | (pre-installed) | Worktrees |
+| gh | latest | `brew install gh` | GitHub CLI |
+| Python | 3.10 | `brew install python` | Consult tool |
+| AI CLI | - | See below | At least one required |
 
-### AI CLI Dependencies (at least one required)
+**AI CLI Options** (install at least one):
+- Claude Code: `npm install -g @anthropic-ai/claude-code`
+- Gemini CLI: [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)
+- Codex CLI: `npm install -g @openai/codex`
 
-| Dependency | Installation | Purpose |
-|------------|--------------|---------|
-| Claude Code | `npm install -g @anthropic-ai/claude-code` | Primary AI agent |
-| Gemini CLI | See [gemini-cli](https://github.com/google-gemini/gemini-cli) | Multi-agent consultation |
-| Codex CLI | `npm install -g @openai/codex` | Multi-agent consultation |
-
-**Note**: You only need one AI CLI to get started. Multi-agent consultation (SPIDER protocol) requires Claude Code plus at least one consultation CLI (Gemini or Codex).
-
-### Installing ttyd on Linux
-
-ttyd may not be available in default package repositories. Build from source:
-
+**Verify your installation:**
 ```bash
-# Ubuntu/Debian - install build dependencies
-sudo apt install build-essential cmake git libjson-c-dev libwebsockets-dev
-
-# Clone and build ttyd
-git clone https://github.com/tsl0922/ttyd.git
-cd ttyd && mkdir build && cd build
-cmake .. && make && sudo make install
-```
-
-### Verifying Installation
-
-```bash
-# Run the doctor command to check all dependencies
 ./codev/bin/codev-doctor
 ```
 

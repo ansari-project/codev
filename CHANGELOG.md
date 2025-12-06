@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **SQLite for Runtime State**: Replaced JSON files with SQLite databases for proper ACID transactions and concurrency handling
+  - `.agent-farm/state.db` replaces `state.json` for local dashboard state
+  - `~/.agent-farm/global.db` replaces `ports.json` for global port registry
+  - All state operations are now synchronous with proper transaction support
+  - WAL mode enabled for concurrent reads
+  - `busy_timeout` handles lock contention gracefully
+  - Migration from JSON is automatic (backups preserved as `.bak` files)
+
+### Added
+
+- **Database CLI commands** (`af db`): Tools for debugging and maintenance
+  - `af db dump`: Export all tables to JSON
+  - `af db query "<sql>"`: Run SELECT queries against the database
+  - `af db reset`: Delete database and start fresh (with `--force`)
+  - `af db stats`: Show database statistics
+
+### Dependencies
+
+- Added `better-sqlite3` for SQLite database access
+
+## [1.0.0] - 2025-12-05 "Architect"
+
+First stable release with full architect-builder workflow.
+
 ### Breaking Changes
 
 - **Removed bash architect scripts**: `codev/bin/architect` and `codev-skeleton/bin/architect` have been deleted. All functionality is now in the TypeScript `agent-farm` implementation.
@@ -35,32 +61,105 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Global port registry** (`~/.agent-farm/ports.json`): Each project gets its own 100-port block (4200-4299, 4300-4399, etc.) to prevent port conflicts when running multiple architects simultaneously.
-- **config.json support**: Customize architect, builder, and shell commands via `codev/config.json` instead of editing scripts.
-- **CLI command overrides**: `--architect-cmd`, `--builder-cmd`, `--shell-cmd` flags override config.json values.
-- **Safe worktree cleanup**: The `cleanup` command now checks for uncommitted changes and refuses to delete dirty worktrees without `--force`.
-- **Orphaned session handling**: On startup, stale tmux sessions from previous runs are automatically detected and cleaned up.
-- **Stale artifact warnings**: The system warns about old bash-era files (builders.md, .architect.pid) if present.
-- **Ports management commands**: `agent-farm ports list` and `agent-farm ports cleanup` for managing port allocations.
-- **Roles directory** (`codev/roles/`): Architect and builder role prompts are now in a dedicated directory.
+- **Tower Dashboard** (`af tower`): Centralized view of all agent-farm instances
+  - Shows running instances with status indicators
+  - Recent projects list with one-click Start
+  - Directory autocomplete for launching new instances
+  - Works with any directory (falls back to global agent-farm)
+
+- **Consult Tool** (`codev/bin/consult`): Unified CLI for multi-agent consultation
+  - Supports Gemini (gemini-cli), Codex, and Claude
+  - Stateless invocations with timing logs
+  - Consultant role as collaborative partner
+
+- **Flexible Builder Spawning** (`af spawn`): Five spawn modes
+  - `--project`: Spec-driven builder (existing behavior)
+  - `--task`: Ad-hoc task with natural language
+  - `--protocol`: Run a protocol (cleanup, experiment)
+  - `--worktree`: Isolated branch without prompt
+  - `--shell`: Bare Claude session
+
+- **Send Instructions to Builder** (`af send`): Architect-to-builder communication
+  - Send follow-up instructions to running builders
+  - Support for file attachments and interrupts
+  - Broadcast to all builders with `--all`
+
+- **Annotation Editor**: Edit files inline from the dashboard
+  - Toggle between View and Edit modes
+  - Auto-save on blur, Cancel restores disk state
+
+- **Tab Bar Status Indicators**: At-a-glance builder status
+  - Color dots showing working/idle/error states
+  - Accessibility support with shapes and tooltips
+
+- **Multi-Instance Support**: Directory-aware dashboard titles
+  - Browser tabs show "AF: project-name"
+  - Long paths truncated cleanly
+
+- **Tutorial Mode** (`af tutorial`): Interactive onboarding
+  - Step-by-step introduction to agent-farm
+  - Progress tracking with skip/reset options
+
+- **Cleanup Protocol**: Systematic codebase maintenance
+  - Four phases: AUDIT → PRUNE → VALIDATE → SYNC
+  - Dry-run by default, soft-delete with 30-day retention
+
+- **OS Dependencies Documentation**: `codev-doctor` health check
+  - Validates ttyd, tmux, node, git installations
+  - Clear instructions for missing dependencies
+
+- **Global port registry** (`~/.agent-farm/ports.json`): Each project gets its own 100-port block to prevent conflicts
+- **config.json support**: Customize architect, builder, and shell commands
+- **CLI command overrides**: `--architect-cmd`, `--builder-cmd`, `--shell-cmd` flags
+- **Safe worktree cleanup**: Checks for uncommitted changes before deletion
+- **Orphaned session handling**: Stale tmux sessions auto-cleaned on startup
+- **Ports management**: `af ports list` and `af ports cleanup` commands
+- **Roles directory** (`codev/roles/`): Architect and builder role prompts
 
 ### Changed
 
-- **Single implementation**: All architect-builder functionality is now in the TypeScript `agent-farm` package.
-- **Template location**: Templates are read from `codev/templates/` at runtime (configurable via config.json).
-- **Port scheme**: Uses deterministic port blocks per project instead of finding available ports dynamically.
+- **Single implementation**: All functionality in TypeScript `agent-farm` package
+- **Template location**: Templates read from `codev/templates/` at runtime
+- **Port scheme**: Deterministic port blocks per project
 
 ### Removed
 
 - `codev/bin/architect` (bash script) - replaced by `codev/bin/agent-farm`
 - `codev-skeleton/bin/architect` - replaced by `codev-skeleton/bin/agent-farm`
-- `agent-farm/templates/` - templates are now only in `codev/templates/`
+- `agent-farm/templates/` - templates now only in `codev/templates/`
 - `codev/builders.md` - replaced by `.agent-farm/state.json`
-- npm package distribution - use local installation instead
+- npm package distribution - use local installation
 
 ### Fixed
 
-- Port collisions between multiple projects running simultaneously
+- Port collisions between multiple projects
 - State corruption from concurrent access
 - Template path resolution issues
-- Process management reliability (tmux sessions are now properly tracked)
+- Process management reliability
+- Annotation server startup wait
+- Stale process detection in dashboard state
+
+## [0.2.0] - 2025-12-03 "Foundation"
+
+Initial release establishing core infrastructure.
+
+### Added
+
+- **Test Infrastructure**: BATS-based test framework (64 tests)
+- **Architect-Builder Pattern**: Multi-agent orchestration with git worktrees
+- **TypeScript CLI**: `agent-farm` package
+- **Split-Pane Dashboard**: Architect always visible, tabbed right pane
+- **Architecture Consolidation**: Single TypeScript source of truth
+- **Terminal File Click**: Click paths in terminal to open annotation viewer
+
+### Infrastructure
+
+- Pre-commit hooks for test validation
+- Global port registry with file locking
+- XDG-compliant test sandboxing
+
+---
+
+[Unreleased]: https://github.com/cluesmith/codev/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/cluesmith/codev/releases/tag/v1.0.0
+[0.2.0]: https://github.com/cluesmith/codev/releases/tag/v0.2.0

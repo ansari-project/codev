@@ -48,8 +48,8 @@ Protocols are sequences of steps to build something. Each protocol balances rigo
 
 | Tool | Purpose |
 |------|---------|
-| **Agent Farm** | Orchestrates parallel builders. Manages git worktrees, spawns agents, tracks status, provides a dashboard. |
-| **Consult** | Multi-model consultation via Zen MCP. Query GPT-5, Gemini, and others for review and validation. |
+| **Agent Farm (`af`)** | Orchestrates parallel builders. Manages git worktrees, spawns agents, tracks status, provides a dashboard. |
+| **Consult** | Multi-model consultation. Query Gemini, Codex, and Claude for review and validation. |
 
 #### Agent Farm
 
@@ -67,9 +67,15 @@ af cleanup -p 0003    # Clean up when done
 Brings external models into the conversation for review and validation:
 
 ```bash
-# Via Zen MCP tools
-mcp__zen__chat        # General discussion with external models
-mcp__zen__thinkdeep   # Deep analysis and investigation
+# Consult Gemini or Codex
+./codev/bin/consult gemini "Review this spec for issues..."
+./codev/bin/consult codex "Review this implementation..."
+
+# Parallel 3-way review
+./codev/bin/consult gemini "$QUERY" &
+./codev/bin/consult codex "$QUERY" &
+./codev/bin/consult claude "$QUERY" &
+wait
 ```
 
 Consultation happens at protocol checkpoints. The primary agent implements; consultants review.
@@ -85,23 +91,6 @@ Consultation happens at protocol checkpoints. The primary agent implements; cons
 4. **Specs before code** - Never implement without a spec. Even for "small" changes.
 
 5. **Reviews capture knowledge** - Lessons learned documents prevent repeating mistakes.
-
-## Getting Started
-
-```bash
-# Install prerequisites
-brew install ttyd tmux
-
-# Build agent-farm
-cd agent-farm && npm install && npm run build
-
-# Start the dashboard
-./codev/bin/agent-farm start
-
-# Read the protocols
-cat codev/protocols/spider/protocol.md
-cat codev/protocols/tick/protocol.md
-```
 
 ---
 

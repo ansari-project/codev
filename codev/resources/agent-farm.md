@@ -56,13 +56,17 @@ af spawn --worktree                 # Worktree for quick fixes
 ### Communication
 
 ```bash
-# Send message to a builder
+# Send message to a builder (from architect)
 af send 0013 "Check PR 32 comments"
 af send 0013 --interrupt "Stop and check PR"    # Send Ctrl+C first
 af send 0013 --file src/auth.ts "Review this"   # Include file content
 
 # Send to all builders
 af send --all "Sync with main branch"
+
+# Send to architect (from a builder worktree)
+af send architect "Question about the spec..."
+af send arch "Blocked on auth helper"           # shorthand
 
 # Raw mode (skip structured formatting)
 af send 0013 --raw "literal text"
@@ -75,6 +79,8 @@ af send 0013 --no-enter "don't press enter"
 - `--interrupt` - Send Ctrl+C first to interrupt current activity
 - `--raw` - Skip structured message formatting
 - `--no-enter` - Do not send Enter after message
+
+**Note:** Builders can send to architect using `af send architect` from their worktree. The command auto-detects the builder ID.
 
 ### Cleanup
 

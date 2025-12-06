@@ -12,6 +12,9 @@ af annotate src/lib/auth.ts
 
 # Check your status
 af status
+
+# Send a message to the architect
+af send architect "Question about the spec..."
 ```
 
 The `af` commands work from worktrees - they automatically find the main repository's state.

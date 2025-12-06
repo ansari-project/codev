@@ -4,17 +4,15 @@ A Builder is a focused implementation agent that works on a single spec in an is
 
 ## Output Formatting
 
-When referencing files that the user may want to review, format them as clickable URLs using the dashboard's open-file endpoint:
+When referencing files, use standard file paths. The Architect will open them for review using `af annotate`.
 
 ```
-# Instead of:
+# Just reference files normally:
 Updated src/lib/auth.ts with the new handler.
-
-# Use:
-Updated http://localhost:{PORT}/open-file?path=src/lib/auth.ts with the new handler.
+See codev/specs/0034-feature.md for requirements.
 ```
 
-**Finding the dashboard port**: Run `af status` to see the dashboard URL. The default is 4200, but varies when multiple projects are running.
+**Note**: Builders work in isolated worktrees and do not have access to the `.agent-farm/` state directory. Do not attempt to use `af annotate` or `af status` - the Architect handles file viewing from the main repository.
 
 ## Responsibilities
 
@@ -22,7 +20,7 @@ Updated http://localhost:{PORT}/open-file?path=src/lib/auth.ts with the new hand
 2. **Work in isolation** - Use the assigned git worktree
 3. **Follow the assigned protocol** - SPIDER or TICK as specified in the spec
 4. **Report status** - Keep status updated (implementing/blocked/pr-ready)
-5. **Request help when blocked** - Don't spin; notify the Architect via `af send`
+5. **Request help when blocked** - Don't spin; output a clear blocker message
 6. **Deliver clean PRs** - Tests passing, code reviewed, protocol artifacts complete
 
 ## Protocol Adherence
@@ -90,11 +88,7 @@ spawning → implementing → blocked → implementing → pr-ready → complete
 
 ### Checking Status
 
-```bash
-af status
-```
-
-Status updates happen automatically based on your progress.
+Status is tracked automatically by the Architect via `af status`. You don't need to check it yourself - focus on the work and output clear messages about your progress.
 
 ## Working in a Worktree
 

@@ -10,14 +10,14 @@ import { randomUUID } from 'node:crypto';
 import type { SendOptions } from '../types.js';
 import { logger, fatal } from '../utils/logger.js';
 import { run } from '../utils/shell.js';
-import { loadState } from '../state.js';
+import { loadState, getArchitect } from '../state.js';
 
 const MAX_FILE_SIZE = 48 * 1024; // 48KB limit per spec
 
 /**
- * Format message with optional structured wrapper
+ * Format message from architect to builder
  */
-function formatMessage(message: string, fileContent?: string, raw: boolean = false): string {
+function formatArchitectMessage(message: string, fileContent?: string, raw: boolean = false): string {
   let content = message;
   if (fileContent) {
     content += '\n\nAttached content:\n```\n' + fileContent + '\n```';
@@ -30,6 +30,26 @@ function formatMessage(message: string, fileContent?: string, raw: boolean = fal
   // Structured format helps Claude identify Architect instructions
   const timestamp = new Date().toISOString();
   return `### [ARCHITECT INSTRUCTION | ${timestamp}] ###
+${content}
+###############################`;
+}
+
+/**
+ * Format message from builder to architect
+ */
+function formatBuilderMessage(builderId: string, message: string, fileContent?: string, raw: boolean = false): string {
+  let content = message;
+  if (fileContent) {
+    content += '\n\nAttached content:\n```\n' + fileContent + '\n```';
+  }
+
+  if (raw) {
+    return content;
+  }
+
+  // Structured format helps Claude identify Builder messages
+  const timestamp = new Date().toISOString();
+  return `### [BUILDER ${builderId} MESSAGE | ${timestamp}] ###
 ${content}
 ###############################`;
 }
@@ -85,7 +105,7 @@ async function sendToBuilder(
   }
 
   // Format the message
-  const formattedMessage = formatMessage(message, fileContent, options.raw);
+  const formattedMessage = formatArchitectMessage(message, fileContent, options.raw);
 
   // Write message to temp file (avoids all shell escaping issues)
   const tempFile = join(tmpdir(), `architect-msg-${randomUUID()}.txt`);
@@ -110,6 +130,85 @@ async function sendToBuilder(
     logger.debug(`Sent to ${builderId}: ${message.substring(0, 50)}...`);
   } finally {
     // Clean up temp file
+    try {
+      unlinkSync(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+}
+
+/**
+ * Send a message to the architect (from a builder)
+ */
+async function sendToArchitect(
+  fromBuilderId: string,
+  message: string,
+  options: SendOptions
+): Promise<void> {
+  const architect = getArchitect();
+
+  if (!architect) {
+    throw new Error('Architect not running. Use "af status" to check.');
+  }
+
+  if (!architect.tmuxSession) {
+    throw new Error('Architect has no tmux session recorded.');
+  }
+
+  // Verify session exists
+  try {
+    await run(`tmux has-session -t "${architect.tmuxSession}" 2>/dev/null`);
+  } catch {
+    throw new Error(
+      `tmux session "${architect.tmuxSession}" not found (architect may have exited). Use 'af status' to check.`
+    );
+  }
+
+  // Optional: Send Ctrl+C first to interrupt any running process
+  if (options.interrupt) {
+    await run(`tmux send-keys -t "${architect.tmuxSession}" C-c`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  // Load file content if specified
+  let fileContent: string | undefined;
+  if (options.file) {
+    if (!existsSync(options.file)) {
+      throw new Error(`File not found: ${options.file}`);
+    }
+    const fileBuffer = readFileSync(options.file);
+    if (fileBuffer.length > MAX_FILE_SIZE) {
+      throw new Error(
+        `File too large: ${fileBuffer.length} bytes (max ${MAX_FILE_SIZE} bytes / 48KB)`
+      );
+    }
+    fileContent = fileBuffer.toString('utf-8');
+  }
+
+  // Format the message (from builder)
+  const formattedMessage = formatBuilderMessage(fromBuilderId, message, fileContent, options.raw);
+
+  // Write message to temp file
+  const tempFile = join(tmpdir(), `builder-msg-${randomUUID()}.txt`);
+  writeFileSync(tempFile, formattedMessage);
+
+  try {
+    // Load into tmux buffer and paste
+    const bufferName = `builder-${fromBuilderId}`;
+    await run(`tmux load-buffer -b "${bufferName}" "${tempFile}"`);
+    await run(`tmux paste-buffer -b "${bufferName}" -t "${architect.tmuxSession}"`);
+
+    // Clean up tmux buffer
+    await run(`tmux delete-buffer -b "${bufferName}"`).catch(() => {});
+
+    // Send Enter to submit (unless --no-enter)
+    if (!options.noEnter) {
+      await run(`tmux send-keys -t "${architect.tmuxSession}" Enter`);
+    }
+
+    logger.debug(`Sent to architect from ${fromBuilderId}: ${message.substring(0, 50)}...`);
+  } finally {
     try {
       unlinkSync(tempFile);
     } catch {
@@ -158,6 +257,17 @@ async function readStdin(): Promise<string> {
 }
 
 /**
+ * Detect the current builder ID from worktree path
+ * Returns null if not in a builder worktree
+ */
+function detectCurrentBuilderId(): string | null {
+  const cwd = process.cwd();
+  // Builder worktrees are at .builders/<id>/
+  const match = cwd.match(/\.builders\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+/**
  * Main send command handler
  */
 export async function send(options: SendOptions): Promise<void> {
@@ -191,7 +301,23 @@ export async function send(options: SendOptions): Promise<void> {
 
   logger.header('Sending Instruction');
 
-  if (options.all) {
+  // Check if sending to architect
+  const isArchitectTarget = builder?.toLowerCase() === 'architect' || builder?.toLowerCase() === 'arch';
+
+  if (isArchitectTarget) {
+    // Sending to architect (from a builder)
+    const currentBuilderId = detectCurrentBuilderId();
+    if (!currentBuilderId) {
+      fatal('Cannot send to architect: not running from a builder worktree. Use from .builders/<id>/ directory.');
+    }
+
+    try {
+      await sendToArchitect(currentBuilderId, message, options);
+      logger.success(`Message sent to architect from builder ${currentBuilderId}`);
+    } catch (error) {
+      fatal(error instanceof Error ? error.message : String(error));
+    }
+  } else if (options.all) {
     // Broadcast to all builders
     const results = await sendToAll(message, options);
 

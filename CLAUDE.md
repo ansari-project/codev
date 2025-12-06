@@ -27,6 +27,16 @@ This repository has a dual nature that's important to understand:
 - **Modify `codev/`**: When implementing features for Codev (specs, plans, reviews, our architecture docs)
 - **Modify `codev-skeleton/`**: When updating protocols, templates, or agents that other projects will use
 
+### Release Naming Convention
+
+Codev releases are named after **great examples of architecture** from around the world. This reflects our core philosophy that software development, like architecture, requires careful planning, thoughtful design, and harmonious integration of components.
+
+| Version | Codename | Inspiration |
+|---------|----------|-------------|
+| 1.0.0 | Alhambra | Moorish palace complex in Granada, Spain - intricate detail and harmonious design |
+
+Future releases will continue this tradition, drawing from architectural wonders across cultures and eras.
+
 ## Quick Start
 
 You are working in the Codev project itself, with multiple development protocols available:
@@ -420,6 +430,18 @@ When the user requests "Consult" or "consultation" (including variations like "u
 ## Consult Tool
 
 The `consult` CLI provides a unified interface for single-agent consultation via external AI CLIs (gemini-cli, codex, and claude). Each invocation is stateless (fresh process).
+
+**⚠️ ALWAYS RUN CONSULTATIONS IN PARALLEL**: When consulting multiple models (e.g., Gemini and Codex), use **separate Bash tool calls in the same message**. Claude Code executes them in parallel, and the user sees each stream as it completes.
+
+```
+# ✅ CORRECT - Two separate Bash tool calls in one message
+[Bash tool call 1]: ./codev/bin/consult gemini "$QUERY"
+[Bash tool call 2]: ./codev/bin/consult codex "$QUERY"
+
+# ❌ WRONG - Sequential tool calls in separate messages
+[Message 1, Bash]: ./codev/bin/consult gemini "$QUERY"
+[Message 2, Bash]: ./codev/bin/consult codex "$QUERY"
+```
 
 ### Prerequisites
 

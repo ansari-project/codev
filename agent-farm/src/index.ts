@@ -24,7 +24,7 @@ program
   .option('--shell-cmd <command>', 'Override shell command (takes precedence over config.json)');
 
 // Process global options before commands
-program.hook('preAction', async (thisCommand) => {
+program.hook('preAction', (thisCommand) => {
   const opts = thisCommand.opts();
   const overrides: Record<string, string> = {};
 
@@ -37,7 +37,7 @@ program.hook('preAction', async (thisCommand) => {
   }
 
   // Initialize port allocation for this project
-  await initializePorts();
+  initializePorts();
 });
 
 // Start command
@@ -184,6 +184,20 @@ program
     }
   });
 
+// Rename command - rename a builder or utility terminal
+program
+  .command('rename <id> <name>')
+  .description('Rename a builder or utility terminal')
+  .action(async (id, name) => {
+    const { rename } = await import('./commands/rename.js');
+    try {
+      rename({ id, name });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 // Send command - send instructions to running builders
 program
   .command('send [builder] [message]')
@@ -240,7 +254,7 @@ portsCmd
   .description('Remove stale port allocations (deleted projects)')
   .action(async () => {
     const { cleanupStaleEntries } = await import('./utils/port-registry.js');
-    const result = await cleanupStaleEntries();
+    const result = cleanupStaleEntries();
 
     if (result.removed.length === 0) {
       logger.info('No stale entries found.');
@@ -301,6 +315,68 @@ towerCmd
       await towerStop({
         port: options.port ? parseInt(options.port, 10) : undefined,
       });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// Database commands - debugging and maintenance
+const dbCmd = program
+  .command('db')
+  .description('Database debugging and maintenance commands');
+
+dbCmd
+  .command('dump')
+  .description('Export all tables to JSON')
+  .option('--global', 'Dump global.db instead of local state.db')
+  .action(async (options) => {
+    const { dbDump } = await import('./commands/db.js');
+    try {
+      dbDump({ global: options.global });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+dbCmd
+  .command('query <sql>')
+  .description('Run a SELECT query against the database')
+  .option('--global', 'Query global.db instead of local state.db')
+  .action(async (sql, options) => {
+    const { dbQuery } = await import('./commands/db.js');
+    try {
+      dbQuery(sql, { global: options.global });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+dbCmd
+  .command('reset')
+  .description('Delete database and start fresh (DESTRUCTIVE)')
+  .option('--global', 'Reset global.db instead of local state.db')
+  .option('--force', 'Skip confirmation')
+  .action(async (options) => {
+    const { dbReset } = await import('./commands/db.js');
+    try {
+      dbReset({ global: options.global, force: options.force });
+    } catch (error) {
+      logger.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+dbCmd
+  .command('stats')
+  .description('Show database statistics')
+  .option('--global', 'Show stats for global.db')
+  .action(async (options) => {
+    const { dbStats } = await import('./commands/db.js');
+    try {
+      dbStats({ global: options.global });
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
       process.exit(1);

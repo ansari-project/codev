@@ -1,147 +1,294 @@
 /**
- * Tests for state management
+ * Tests for state management with SQLite
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { existsSync } from 'node:fs';
-import { rm, mkdir, writeFile, readFile } from 'node:fs/promises';
+import Database from 'better-sqlite3';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { LOCAL_SCHEMA } from '../db/schema.js';
 
-// We need to mock getConfig before importing state
-vi.mock('../utils/config.js', async () => {
-  const testDir = resolve(process.cwd(), '.test-state');
+// Test directory
+const testDir = resolve(process.cwd(), '.test-state');
+let testDb: Database.Database;
+
+// Mock the db module to use test database
+vi.mock('../db/index.js', () => {
   return {
-    getConfig: () => ({
-      projectRoot: process.cwd(),
-      codevDir: resolve(process.cwd(), 'codev'),
-      buildersDir: resolve(testDir, 'builders'),
-      stateDir: testDir,
-      templatesDir: resolve(process.cwd(), 'templates'),
-      serversDir: resolve(process.cwd(), 'dist/servers'),
-      architectPort: 7680,
-      builderPortRange: [7681, 7699] as [number, number],
-      utilPortRange: [7700, 7719] as [number, number],
-      annotatePortRange: [8080, 8099] as [number, number],
-    }),
-    ensureDirectories: async () => {
-      await mkdir(testDir, { recursive: true });
+    getDb: () => {
+      if (!testDb) {
+        testDb = new Database(resolve(testDir, 'state.db'));
+        testDb.pragma('journal_mode = WAL');
+        testDb.pragma('busy_timeout = 5000');
+        testDb.exec(LOCAL_SCHEMA);
+        testDb.prepare('INSERT OR IGNORE INTO _migrations (version) VALUES (1)').run();
+      }
+      return testDb;
+    },
+    closeDb: () => {
+      if (testDb) {
+        testDb.close();
+        testDb = null as any;
+      }
     },
   };
 });
 
 // Import after mocking
-const { loadState, saveState, setArchitect, clearState } = await import('../state.js');
+const state = await import('../state.js');
 
 describe('State Management', () => {
-  const testDir = resolve(process.cwd(), '.test-state');
-  const stateFile = resolve(testDir, 'state.json');
-
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clean up before each test
-    if (existsSync(testDir)) {
-      await rm(testDir, { recursive: true });
+    if (testDb) {
+      testDb.close();
+      testDb = null as any;
     }
-    await mkdir(testDir, { recursive: true });
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+    mkdirSync(testDir, { recursive: true });
   });
 
-  afterEach(async () => {
-    // Clean up after each test
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+      testDb = null as any;
+    }
     if (existsSync(testDir)) {
-      await rm(testDir, { recursive: true });
+      rmSync(testDir, { recursive: true });
     }
   });
 
   describe('loadState', () => {
-    it('should return default state when no file exists', async () => {
-      const state = await loadState();
+    it('should return default state when database is empty', () => {
+      const result = state.loadState();
 
-      expect(state).toEqual({
+      expect(result).toEqual({
         architect: null,
         builders: [],
         utils: [],
         annotations: [],
       });
     });
-
-    it('should load state from file', async () => {
-      const testState = {
-        architect: { port: 7680, pid: 1234, cmd: 'claude', startedAt: '2024-01-01' },
-        builders: [],
-        utils: [],
-        annotations: [],
-      };
-
-      await writeFile(stateFile, JSON.stringify(testState));
-
-      const state = await loadState();
-      expect(state.architect).toEqual(testState.architect);
-    });
-  });
-
-  describe('saveState', () => {
-    it('should save state to file', async () => {
-      const testState = {
-        architect: { port: 7680, pid: 1234, cmd: 'claude', startedAt: '2024-01-01' },
-        builders: [],
-        utils: [],
-        annotations: [],
-      };
-
-      await saveState(testState);
-
-      const content = await readFile(stateFile, 'utf-8');
-      const savedState = JSON.parse(content);
-      expect(savedState.architect).toEqual(testState.architect);
-    });
   });
 
   describe('setArchitect', () => {
-    it('should set architect state', async () => {
+    it('should set architect state', () => {
       const architect = {
-        port: 7680,
-        pid: 5678,
-        cmd: 'claude --dangerously-skip-permissions',
+        pid: 1234,
+        port: 4201,
+        cmd: 'claude',
         startedAt: new Date().toISOString(),
       };
 
-      await setArchitect(architect);
+      state.setArchitect(architect);
 
-      const state = await loadState();
-      expect(state.architect).toEqual(architect);
+      const result = state.loadState();
+      expect(result.architect).toEqual(architect);
     });
 
-    it('should clear architect when set to null', async () => {
+    it('should clear architect when set to null', () => {
       // Set architect first
-      await setArchitect({
-        port: 7680,
-        pid: 5678,
+      state.setArchitect({
+        pid: 1234,
+        port: 4201,
         cmd: 'claude',
         startedAt: new Date().toISOString(),
       });
 
       // Then clear it
-      await setArchitect(null);
+      state.setArchitect(null);
 
-      const state = await loadState();
-      expect(state.architect).toBeNull();
+      const result = state.loadState();
+      expect(result.architect).toBeNull();
+    });
+
+    it('should replace existing architect (singleton)', () => {
+      state.setArchitect({
+        pid: 1234,
+        port: 4201,
+        cmd: 'claude',
+        startedAt: new Date().toISOString(),
+      });
+
+      state.setArchitect({
+        pid: 5678,
+        port: 4201,
+        cmd: 'claude --dangerously-skip-permissions',
+        startedAt: new Date().toISOString(),
+      });
+
+      const result = state.loadState();
+      expect(result.architect?.pid).toBe(5678);
+    });
+  });
+
+  describe('upsertBuilder', () => {
+    it('should add new builder', () => {
+      const builder = {
+        id: 'B001',
+        name: 'test-builder',
+        port: 4210,
+        pid: 1234,
+        status: 'implementing' as const,
+        phase: 'init',
+        worktree: '/tmp/worktree',
+        branch: 'feature-branch',
+        type: 'spec' as const,
+      };
+
+      state.upsertBuilder(builder);
+
+      const result = state.loadState();
+      expect(result.builders).toHaveLength(1);
+      expect(result.builders[0].id).toBe('B001');
+      expect(result.builders[0].status).toBe('implementing');
+    });
+
+    it('should update existing builder', () => {
+      const builder = {
+        id: 'B001',
+        name: 'test-builder',
+        port: 4210,
+        pid: 1234,
+        status: 'implementing' as const,
+        phase: 'init',
+        worktree: '/tmp/worktree',
+        branch: 'feature-branch',
+        type: 'spec' as const,
+      };
+
+      state.upsertBuilder(builder);
+
+      // Update status
+      state.upsertBuilder({ ...builder, status: 'blocked' });
+
+      const result = state.loadState();
+      expect(result.builders).toHaveLength(1);
+      expect(result.builders[0].status).toBe('blocked');
+    });
+  });
+
+  describe('removeBuilder', () => {
+    it('should remove builder by id', () => {
+      state.upsertBuilder({
+        id: 'B001',
+        name: 'test-builder',
+        port: 4210,
+        pid: 1234,
+        status: 'implementing' as const,
+        phase: 'init',
+        worktree: '/tmp/worktree',
+        branch: 'feature-branch',
+        type: 'spec' as const,
+      });
+
+      state.removeBuilder('B001');
+
+      const result = state.loadState();
+      expect(result.builders).toHaveLength(0);
+    });
+  });
+
+  describe('getBuilder', () => {
+    it('should return builder by id', () => {
+      state.upsertBuilder({
+        id: 'B001',
+        name: 'test-builder',
+        port: 4210,
+        pid: 1234,
+        status: 'implementing' as const,
+        phase: 'init',
+        worktree: '/tmp/worktree',
+        branch: 'feature-branch',
+        type: 'spec' as const,
+      });
+
+      const builder = state.getBuilder('B001');
+      expect(builder?.id).toBe('B001');
+    });
+
+    it('should return null for non-existent builder', () => {
+      const builder = state.getBuilder('B999');
+      expect(builder).toBeNull();
+    });
+  });
+
+  describe('addUtil / removeUtil', () => {
+    it('should add and remove utility terminals', () => {
+      const util = {
+        id: 'U001',
+        name: 'test-util',
+        port: 4230,
+        pid: 1234,
+      };
+
+      state.addUtil(util);
+
+      let result = state.loadState();
+      expect(result.utils).toHaveLength(1);
+      expect(result.utils[0].id).toBe('U001');
+
+      state.removeUtil('U001');
+
+      result = state.loadState();
+      expect(result.utils).toHaveLength(0);
+    });
+  });
+
+  describe('addAnnotation / removeAnnotation', () => {
+    it('should add and remove annotations', () => {
+      const annotation = {
+        id: 'A001',
+        file: '/path/to/file.ts',
+        port: 4250,
+        pid: 1234,
+        parent: {
+          type: 'architect' as const,
+        },
+      };
+
+      state.addAnnotation(annotation);
+
+      let result = state.loadState();
+      expect(result.annotations).toHaveLength(1);
+      expect(result.annotations[0].file).toBe('/path/to/file.ts');
+
+      state.removeAnnotation('A001');
+
+      result = state.loadState();
+      expect(result.annotations).toHaveLength(0);
     });
   });
 
   describe('clearState', () => {
-    it('should reset state to defaults', async () => {
-      // Set some state
-      await saveState({
-        architect: { port: 7680, pid: 1234, cmd: 'claude', startedAt: '2024-01-01' },
-        builders: [{ id: 'B001', name: 'test', port: 7681, pid: 2345, status: 'implementing', phase: 'init', worktree: '/tmp', branch: 'test', type: 'spec' }],
-        utils: [],
-        annotations: [],
+    it('should reset all state', () => {
+      // Add some state
+      state.setArchitect({
+        pid: 1234,
+        port: 4201,
+        cmd: 'claude',
+        startedAt: new Date().toISOString(),
+      });
+
+      state.upsertBuilder({
+        id: 'B001',
+        name: 'test-builder',
+        port: 4210,
+        pid: 1234,
+        status: 'implementing' as const,
+        phase: 'init',
+        worktree: '/tmp/worktree',
+        branch: 'feature-branch',
+        type: 'spec' as const,
       });
 
       // Clear it
-      await clearState();
+      state.clearState();
 
-      const state = await loadState();
-      expect(state).toEqual({
+      const result = state.loadState();
+      expect(result).toEqual({
         architect: null,
         builders: [],
         utils: [],

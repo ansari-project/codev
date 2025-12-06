@@ -401,7 +401,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0031"
     title: "SQLite for Runtime State"
     summary: "Replace JSON files with SQLite for atomic, concurrent-safe runtime state management"
-    status: implementing
+    status: integrated
     priority: high
     release: "v1.1.0"
     files:
@@ -410,12 +410,12 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [infrastructure, database, concurrency]
-    notes: "SPIDER protocol. Fixes race conditions in state.json and ports.json. Uses better-sqlite3 with WAL mode. 3-way reviewed."
+    notes: "SPIDER protocol. Fixes race conditions in state.json and ports.json. Uses better-sqlite3 with WAL mode. 3-way reviewed. Merged 2025-12-05."
 
   - id: "0032"
     title: "Consolidate Templates"
     summary: "Move dashboard and annotate templates from codev/ to agent-farm/templates/"
-    status: planned
+    status: implementing
     priority: medium
     release: "v1.1.0"
     files:
@@ -425,6 +425,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: []
     tags: [infrastructure, cleanup, agent-farm]
     notes: "TICK protocol. Removes template duplication between codev/ and codev-skeleton/."
+
+  - id: "0033"
+    title: "Rename Command"
+    summary: "Add af rename command to rename builders and utility terminals"
+    status: integrated
+    priority: low
+    release: "v1.1.0"
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0031"]
+    tags: [cli, agent-farm]
+    notes: "Simple feature. Uses SQLite atomic UPDATE. Added getUtil(), renameBuilder(), renameUtil() to state.ts."
 ```
 
 ---

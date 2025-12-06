@@ -717,8 +717,12 @@
       }
     }
 
+    // Track known tab IDs to detect new tabs
+    let knownTabIds = new Set();
+
     // Build tabs from initial state
     function buildTabsFromState() {
+      const previousTabIds = new Set(tabs.map(t => t.id));
       tabs = [];
 
       // Add file tabs from annotations
@@ -738,7 +742,7 @@
         tabs.push({
           id: `builder-${builder.id}`,
           type: 'builder',
-          name: `Project ${builder.id}`,
+          name: builder.name || `Builder ${builder.id}`,
           projectId: builder.id,
           port: builder.port,
           status: builder.status
@@ -756,7 +760,19 @@
         });
       }
 
-      // Set active tab to first one if any exist
+      // Detect new tabs and auto-switch to them
+      for (const tab of tabs) {
+        if (!knownTabIds.has(tab.id) && previousTabIds.size > 0) {
+          // This is a new tab - switch to it
+          activeTabId = tab.id;
+          break;
+        }
+      }
+
+      // Update known tab IDs
+      knownTabIds = new Set(tabs.map(t => t.id));
+
+      // Set active tab to first one if none selected
       if (tabs.length > 0 && !activeTabId) {
         activeTabId = tabs[0].id;
       }

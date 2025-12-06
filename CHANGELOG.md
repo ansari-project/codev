@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **SQLite for Runtime State**: Replaced JSON files with SQLite databases for proper ACID transactions and concurrency handling
+  - `.agent-farm/state.db` replaces `state.json` for local dashboard state
+  - `~/.agent-farm/global.db` replaces `ports.json` for global port registry
+  - All state operations are now synchronous with proper transaction support
+  - WAL mode enabled for concurrent reads
+  - `busy_timeout` handles lock contention gracefully
+  - Migration from JSON is automatic (backups preserved as `.bak` files)
+
+### Added
+
+- **Database CLI commands** (`af db`): Tools for debugging and maintenance
+  - `af db dump`: Export all tables to JSON
+  - `af db query "<sql>"`: Run SELECT queries against the database
+  - `af db reset`: Delete database and start fresh (with `--force`)
+  - `af db stats`: Show database statistics
+
+### Dependencies
+
+- Added `better-sqlite3` for SQLite database access
+
 ## [1.0.0] - 2025-12-05 "Architect"
 
 First stable release with full architect-builder workflow.

@@ -14,6 +14,7 @@ import net from 'node:net';
 import { spawn, execSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { getGlobalDb } from '../db/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,22 +25,13 @@ const DEFAULT_PORT = 4100;
 // Parse arguments
 const port = parseInt(process.argv[2] || String(DEFAULT_PORT), 10);
 
-// Port registry location
-const REGISTRY_PATH = path.join(homedir(), '.agent-farm', 'ports.json');
-
-// Interface for port registry entries
-interface PortEntry {
-  basePort: number;
-  registered: string;
-  lastUsed?: string;
-  pid?: number;
-}
-
-interface PortRegistry {
-  version: number;
-  entries: {
-    [projectPath: string]: PortEntry;
-  };
+// Interface for port registry entries (from SQLite)
+interface PortAllocation {
+  project_path: string;
+  base_port: number;
+  pid: number | null;
+  registered_at: string;
+  last_used_at: string;
 }
 
 // Interface for instance status returned to UI
@@ -61,28 +53,16 @@ interface InstanceStatus {
 }
 
 /**
- * Load port registry from disk
+ * Load port allocations from SQLite database
  */
-function loadRegistry(): PortRegistry {
+function loadPortAllocations(): PortAllocation[] {
   try {
-    if (fs.existsSync(REGISTRY_PATH)) {
-      const content = fs.readFileSync(REGISTRY_PATH, 'utf-8');
-      const data = JSON.parse(content);
-
-      // Handle legacy format (no version field)
-      if (!data.version) {
-        return {
-          version: 1,
-          entries: data as { [key: string]: PortEntry },
-        };
-      }
-
-      return data as PortRegistry;
-    }
+    const db = getGlobalDb();
+    return db.prepare('SELECT * FROM port_allocations ORDER BY last_used_at DESC').all() as PortAllocation[];
   } catch (err) {
-    console.error('Error loading registry:', (err as Error).message);
+    console.error('Error loading port allocations:', (err as Error).message);
+    return [];
   }
-  return { version: 1, entries: {} };
 }
 
 /**
@@ -118,15 +98,15 @@ function getProjectName(projectPath: string): string {
  * Get all instances with their status
  */
 async function getInstances(): Promise<InstanceStatus[]> {
-  const registry = loadRegistry();
+  const allocations = loadPortAllocations();
   const instances: InstanceStatus[] = [];
 
-  for (const [projectPath, entry] of Object.entries(registry.entries)) {
+  for (const allocation of allocations) {
     // Skip builder worktrees - they're managed by their parent project
-    if (projectPath.includes('/.builders/')) {
+    if (allocation.project_path.includes('/.builders/')) {
       continue;
     }
-    const basePort = entry.basePort;
+    const basePort = allocation.base_port;
     const dashboardPort = basePort;
     const architectPort = basePort + 1;
 
@@ -152,13 +132,13 @@ async function getInstances(): Promise<InstanceStatus[]> {
     ];
 
     instances.push({
-      projectPath,
-      projectName: getProjectName(projectPath),
+      projectPath: allocation.project_path,
+      projectName: getProjectName(allocation.project_path),
       basePort,
       dashboardPort,
       architectPort,
-      registered: entry.registered,
-      lastUsed: entry.lastUsed,
+      registered: allocation.registered_at,
+      lastUsed: allocation.last_used_at,
       running: dashboardActive,
       ports,
     });

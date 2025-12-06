@@ -11,7 +11,7 @@ import chalk from 'chalk';
  * Display status of all agent farm processes
  */
 export async function status(): Promise<void> {
-  const state = await loadState();
+  const state = loadState();
 
   logger.header('Agent Farm Status');
 

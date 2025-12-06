@@ -44,7 +44,7 @@ export async function start(options: StartOptions = {}): Promise<void> {
   warnAboutStaleArtifacts(config.codevDir);
 
   // Check if already running
-  const state = await loadState();
+  const state = loadState();
   if (state.architect) {
     logger.warn(`Architect already running on port ${state.architect.port}`);
     logger.info(`Dashboard: http://localhost:${config.dashboardPort}`);
@@ -146,7 +146,7 @@ export async function start(options: StartOptions = {}): Promise<void> {
     tmuxSession: sessionName,
   };
 
-  await setArchitect(architectState);
+  setArchitect(architectState);
 
   // Wait a moment for ttyd to start
   await new Promise((resolve) => setTimeout(resolve, 500));

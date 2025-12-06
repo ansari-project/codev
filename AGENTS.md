@@ -538,6 +538,23 @@ The consultant role (`codev/roles/consultant.md`) defines a collaborative partne
 4. **Create atomic commits** for each phase completion
 5. **Maintain >90% test coverage** where possible
 
+## Code Metrics
+
+Use **tokei** for measuring codebase size: `brew install tokei`
+
+```bash
+# Standard usage (excludes vendored/generated code)
+tokei -e "tests/lib" -e "node_modules" -e ".git" -e ".builders" -e "dist" .
+```
+
+**Why tokei**:
+- Fastest option (Rust, parallelized) - 0.012s vs cloc's 0.18s
+- Parses embedded code in markdown separately
+- Correctly classifies prose vs actual code
+- Active development
+
+**Alternatives** (if tokei unavailable): `scc` (Go), `cloc` (Perl)
+
 ## 🚨 CRITICAL: Before Starting ANY Task
 
 ### ALWAYS Check for Existing Work First

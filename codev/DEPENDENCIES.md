@@ -247,6 +247,33 @@ python3 -c "import typer; print('typer installed')"
 
 ---
 
+## NPM Dependencies (Auto-installed)
+
+These are installed automatically via `npm install` in the `agent-farm/` directory:
+
+### better-sqlite3
+
+| Requirement | Value |
+|-------------|-------|
+| Purpose | SQLite database for runtime state (replaces JSON files) |
+| Note | Requires native compilation; pre-built binaries available |
+
+If you see errors about `better-sqlite3` failing to load:
+
+```bash
+# Rebuild native modules
+cd agent-farm && npm rebuild better-sqlite3
+
+# Or build from source
+npm install better-sqlite3 --build-from-source
+```
+
+**Note**: The native compilation requires build tools:
+- macOS: Xcode Command Line Tools (`xcode-select --install`)
+- Linux: `build-essential` package (`sudo apt install build-essential`)
+
+---
+
 ## Platform-Specific Notes
 
 ### macOS

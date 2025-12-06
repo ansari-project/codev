@@ -82,6 +82,21 @@
     }
     pre { margin: 0; font-size: 13px; line-height: 1.5; }
     pre code { font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    /* Hybrid markdown: syntax visible but muted, content styled */
+    .md-syntax { color: #555; }  /* Muted syntax markers */
+    .md-h1 { font-size: 1.4em; font-weight: bold; color: #c678dd; }
+    .md-h2 { font-size: 1.25em; font-weight: bold; color: #c678dd; }
+    .md-h3 { font-size: 1.1em; font-weight: bold; color: #c678dd; }
+    .md-h4, .md-h5, .md-h6 { font-weight: bold; color: #c678dd; }
+    .md-bold { font-weight: bold; color: #e5c07b; }
+    .md-italic { font-style: italic; color: #98c379; }
+    .md-code { color: #e06c75; background: #2c313a; padding: 1px 4px; border-radius: 3px; }
+    .md-link-text { color: #61afef; text-decoration: underline; }
+    .md-link-url { color: #555; font-size: 0.9em; }
+    .md-bullet { color: #56b6c2; }
+    .md-blockquote { color: #abb2bf; border-left: 3px solid #555; padding-left: 10px; }
+    .md-fence { color: #555; }
+    .md-codeblock { color: #98c379; background: #2c313a; display: block; }
     .code-line {
       white-space: pre-wrap;
       word-wrap: break-word;
@@ -299,14 +314,16 @@
       const codeEl = document.getElementById('codeContent');
 
       // Render code with syntax highlighting - highlight LINE BY LINE
-      // NOTE: For markdown, Prism's highlighting can insert newlines, so we use plaintext
-      const useHighlighting = lang !== 'markdown';
-      const prismLang = useHighlighting ? (Prism.languages[lang] || Prism.languages.plaintext) : Prism.languages.plaintext;
+      const isMarkdown = lang === 'markdown' || lang === 'md';
+      const prismLang = Prism.languages[lang] || Prism.languages.plaintext;
+
+      // Reset markdown state before rendering
+      if (isMarkdown) resetMarkdownState();
 
       // Wrap each line in a div so we can measure its height after word-wrap
       const highlightedLines = fileLines.map((line, i) => {
-        const escaped = escapeHtml(line);
-        const highlighted = useHighlighting ? Prism.highlight(line, prismLang, lang) : escaped;
+        // Use custom hybrid renderer for markdown
+        const highlighted = isMarkdown ? renderMarkdownLine(line) : Prism.highlight(line, prismLang, lang);
         const isReview = commentStyle.regex.test(line);
         const content = isReview ? `<span class="review-line">${highlighted}</span>` : highlighted;
         return `<div class="code-line" data-line="${i}">${content || '&nbsp;'}</div>`;
@@ -485,6 +502,61 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Hybrid markdown: syntax visible but muted, content styled
+    // State for multi-line constructs
+    let inCodeBlock = false;
+
+    function renderMarkdownLine(line) {
+      // Handle code block fences
+      const fenceMatch = line.match(/^(\s*)(```+)(\w*)$/);
+      if (fenceMatch) {
+        inCodeBlock = !inCodeBlock;
+        return `<span class="md-fence">${escapeHtml(line)}</span>`;
+      }
+
+      // Inside code block - render as code, no markdown processing
+      if (inCodeBlock) {
+        return `<span class="md-codeblock">${escapeHtml(line)}</span>`;
+      }
+
+      let html = escapeHtml(line);
+
+      // Headers: # visible but muted, content styled
+      const headerMatch = html.match(/^(#{1,6})\s+(.*)$/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const hashes = headerMatch[1];
+        const content = headerMatch[2];
+        return `<span class="md-syntax">${hashes}</span> <span class="md-h${level}">${content}</span>`;
+      }
+
+      // List items: - or * visible but styled
+      html = html.replace(/^(\s*)([-*])\s+/, '$1<span class="md-bullet">$2</span> ');
+      html = html.replace(/^(\s*)(\d+\.)\s+/, '$1<span class="md-bullet">$2</span> ');
+
+      // Bold: ** visible but muted, content bold
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<span class="md-syntax">**</span><span class="md-bold">$1</span><span class="md-syntax">**</span>');
+
+      // Italic: * visible but muted, content italic (but not inside **)
+      html = html.replace(/(?<!\*)(?<!\<span class="md-syntax"\>)\*([^*]+)\*(?!\*)/g, '<span class="md-syntax">*</span><span class="md-italic">$1</span><span class="md-syntax">*</span>');
+
+      // Inline code: ` visible but muted, content styled
+      html = html.replace(/`([^`]+)`/g, '<span class="md-syntax">`</span><span class="md-code">$1</span><span class="md-syntax">`</span>');
+
+      // Links: [text](url) - brackets muted, text styled, url muted
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="md-syntax">[</span><span class="md-link-text">$1</span><span class="md-syntax">](</span><span class="md-link-url">$2</span><span class="md-syntax">)</span>');
+
+      // Blockquote: > visible but muted
+      html = html.replace(/^(\s*)(&gt;)\s*(.*)$/, '$1<span class="md-syntax">$2</span> <span class="md-blockquote">$3</span>');
+
+      return html;
+    }
+
+    // Reset code block state when re-rendering
+    function resetMarkdownState() {
+      inCodeBlock = false;
     }
 
     async function saveFile() {

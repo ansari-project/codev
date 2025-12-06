@@ -1,8 +1,10 @@
-# Codev v1.0.0 "Architect" - Release Announcement
+# Codev v1.0.0 "Alhambra" - Release Announcement
 
 **Release Date**: December 5, 2025
 
-We're thrilled to announce **Codev v1.0.0**, codenamed **"Architect"** - our first stable release with a complete architect-builder workflow for AI-assisted parallel development.
+We're thrilled to announce **Codev v1.0.0**, codenamed **"Alhambra"** - our first stable release with a complete architect-builder workflow for AI-assisted parallel development.
+
+> *Codev releases are named after great examples of architecture. The Alhambra, a palace and fortress complex in Granada, Spain, represents the pinnacle of Moorish architecture - a masterwork of intricate detail, thoughtful planning, and harmonious integration of structure and environment.*
 
 ![Codev building itself - the Architect dashboard with a Builder writing these very release notes](codev-self-hosted.png)
 

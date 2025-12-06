@@ -373,30 +373,30 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0029"
     title: "Overview Dashboard"
     summary: "Centralized dashboard showing all running agent-farm instances with launch capability"
-    status: implementing
+    status: integrated
     priority: medium
-    release: null
+    release: "v1.1.0"
     files:
       spec: codev/specs/0029-overview-dashboard.md
       plan: codev/plans/0029-overview-dashboard.md
       review: null
     dependencies: ["0008", "0011"]
     tags: [ui, dashboard, multi-project]
-    notes: "TICK protocol. af tower command. Shows all instances, directory picker to launch new ones."
+    notes: "TICK protocol. af tower command. PR 41 merged 2025-12-05."
 
   - id: "0030"
     title: "Markdown Syntax Highlighting in Annotator"
     summary: "Enable syntax highlighting for markdown files in the annotation viewer"
-    status: conceived
+    status: implemented
     priority: low
     release: "v1.1.0"
     files:
-      spec: null
+      spec: codev/specs/0030-markdown-syntax-highlighting.md
       plan: null
       review: null
     dependencies: ["0010"]
     tags: [ui, annotation, markdown]
-    notes: "Currently markdown files render as plaintext in annotator. Add Prism markdown highlighting."
+    notes: "Hybrid approach: syntax visible but muted, content styled. Prism broke lines; custom renderer works."
 
   - id: "0031"
     title: "SQLite for Runtime State"
@@ -415,7 +415,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0032"
     title: "Consolidate Templates"
     summary: "Move dashboard and annotate templates from codev/ to agent-farm/templates/"
-    status: implementing
+    status: integrated
     priority: medium
     release: "v1.1.0"
     files:
@@ -424,7 +424,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: []
     tags: [infrastructure, cleanup, agent-farm]
-    notes: "TICK protocol. Removes template duplication between codev/ and codev-skeleton/."
+    notes: "TICK protocol. PR 46 merged 2025-12-06."
 
   - id: "0033"
     title: "Rename Command"

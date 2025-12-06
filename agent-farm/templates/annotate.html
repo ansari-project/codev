@@ -697,8 +697,12 @@
 
     // Render a table row with padded cells
     function renderTableRow(line, columnWidths, isSeparator) {
+      // Preserve original indentation for nested tables (in lists, blockquotes)
+      const indent = line.match(/^(\s*)/)[1];
+      const trimmedLine = line.trimStart();
+
       const cells = parseTableCells(line);
-      const hasLeadingPipe = line.trimStart().startsWith('|');
+      const hasLeadingPipe = trimmedLine.startsWith('|');
       const hasTrailingPipe = line.trimEnd().endsWith('|');
 
       const paddedCells = cells.map((cell, i) => {
@@ -710,8 +714,8 @@
         }
       });
 
-      // Reconstruct line with pipes
-      let result = '';
+      // Reconstruct line with pipes, preserving indentation
+      let result = indent;
       if (hasLeadingPipe) result += '| ';
       result += paddedCells.join(' | ');
       if (hasTrailingPipe) result += ' |';

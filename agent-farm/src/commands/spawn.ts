@@ -246,7 +246,7 @@ async function startBuilderSession(
 
   // Start ttyd connecting to the tmux session
   logger.info('Starting builder terminal...');
-  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  const customIndexPath = resolve(config.templatesDir, 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(port),
@@ -293,7 +293,7 @@ async function startShellSession(
 
   // Start ttyd
   logger.info('Starting shell terminal...');
-  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  const customIndexPath = resolve(config.templatesDir, 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(port),

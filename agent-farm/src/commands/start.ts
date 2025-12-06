@@ -112,8 +112,8 @@ export async function start(options: StartOptions = {}): Promise<void> {
   await run(`tmux set-option -t ${sessionName} -g mouse on`);
 
   // Start ttyd attached to the tmux session
-  // Use custom index.html for file path click-to-open functionality
-  const customIndexPath = resolve(config.codevDir, 'templates', 'ttyd-index.html');
+  // Use custom index.html for file path click-to-open functionality (optional)
+  const customIndexPath = resolve(config.templatesDir, 'ttyd-index.html');
   const ttydArgs = [
     '-W',
     '-p', String(architectPort),

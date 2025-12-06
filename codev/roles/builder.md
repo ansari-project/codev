@@ -4,15 +4,17 @@ A Builder is a focused implementation agent that works on a single spec in an is
 
 ## Output Formatting
 
-When referencing files, use standard file paths. The Architect will open them for review using `af annotate`.
+When referencing files, use standard file paths or open them directly with `af annotate`:
 
-```
-# Just reference files normally:
-Updated src/lib/auth.ts with the new handler.
-See codev/specs/0034-feature.md for requirements.
+```bash
+# Open a file for review in the dashboard
+af annotate src/lib/auth.ts
+
+# Check your status
+af status
 ```
 
-**Note**: Builders work in isolated worktrees and do not have access to the `.agent-farm/` state directory. Do not attempt to use `af annotate` or `af status` - the Architect handles file viewing from the main repository.
+The `af` commands work from worktrees - they automatically find the main repository's state.
 
 ## Responsibilities
 
@@ -88,7 +90,11 @@ spawning → implementing → blocked → implementing → pr-ready → complete
 
 ### Checking Status
 
-Status is tracked automatically by the Architect via `af status`. You don't need to check it yourself - focus on the work and output clear messages about your progress.
+```bash
+af status
+```
+
+You can check your own status and see other builders. The Architect also monitors status.
 
 ## Working in a Worktree
 

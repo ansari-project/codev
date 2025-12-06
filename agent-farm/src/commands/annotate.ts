@@ -63,12 +63,12 @@ async function tryDashboardApi(filePath: string): Promise<boolean> {
 export async function annotate(options: AnnotateOptions): Promise<void> {
   const config = getConfig();
 
-  // Resolve file path
+  // Resolve file path relative to current directory (works correctly in worktrees)
   let filePath: string;
   if (options.file.startsWith('/')) {
     filePath = options.file;
   } else {
-    filePath = resolve(config.projectRoot, options.file);
+    filePath = resolve(process.cwd(), options.file);
   }
 
   // Check file exists

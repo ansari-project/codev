@@ -439,6 +439,20 @@ Projects currently in development (conceived through committed), sorted by prior
     dependencies: ["0031"]
     tags: [cli, agent-farm]
     notes: "Simple feature. Uses SQLite atomic UPDATE. Added getUtil(), renameBuilder(), renameUtil() to state.ts."
+
+  - id: "0034"
+    title: "Table Alignment in Markdown Annotator"
+    summary: "Auto-pad markdown table cells so pipes align vertically across rows"
+    status: conceived
+    priority: low
+    release: null
+    files:
+      spec: null
+      plan: null
+      review: null
+    dependencies: ["0030"]
+    tags: [ui, annotation, markdown]
+    notes: "Two-pass rendering: detect tables, compute column widths, pad cells. Improves readability without changing line count."
 ```
 
 ---
@@ -650,7 +664,7 @@ Projects that are paused or canceled.
 
 ## Next Available Number
 
-**0033** - Reserve this number for your next project
+**0035** - Reserve this number for your next project
 
 ---
 

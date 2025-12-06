@@ -144,10 +144,10 @@ The Builder role has been clarified: "building" encompasses build, remodel, repa
 Tell your AI agent:
 
 ```
-Install Codev by following the instructions at https://github.com/ansari-project/codev/blob/main/INSTALL.md
+Install Codev by following the instructions at https://github.com/cluesmith/codev/blob/main/INSTALL.md
 ```
 
-Or follow the [Installation Guide](https://github.com/ansari-project/codev/blob/main/INSTALL.md) yourself.
+Or follow the [Installation Guide](https://github.com/cluesmith/codev/blob/main/INSTALL.md) yourself.
 
 ### Recommended Alias
 
@@ -173,20 +173,20 @@ Codev is self-hosted - we use Codev to build Codev. Every feature in this releas
 Check our `codev/specs/` directory. Read the plans. Learn from our reviews. It's not just open source code; **it's open source methodology**.
 
 The best methodologies emerge from collective practice, not ivory towers. If you try Codev:
-- Star the [GitHub repository](https://github.com/ansari-project/codev) to stay updated
-- [File issues](https://github.com/ansari-project/codev/issues) with your experiences
+- Star the [GitHub repository](https://github.com/cluesmith/codev) to stay updated
+- [File issues](https://github.com/cluesmith/codev/issues) with your experiences
 - Share your SP(IDE)R implementations - we analyze them to evolve the protocol
-- Join [GitHub Discussions](https://github.com/ansari-project/codev/discussions) to share your specs and learn from the community
+- Join [GitHub Discussions](https://github.com/cluesmith/codev/discussions) to share your specs and learn from the community
 
 ---
 
 **Resources**
 
-- [Why We Created Codev](https://github.com/ansari-project/codev/blob/main/docs/why.md) - The philosophy behind specification-driven development
-- [Installation Guide](https://github.com/ansari-project/codev/blob/main/INSTALL.md) - For humans and AI agents
-- [SPIDER Protocol Documentation](https://github.com/ansari-project/codev/blob/main/codev/protocols/spider/protocol.md)
-- [GitHub Discussions](https://github.com/ansari-project/codev/discussions)
-- [Full Changelog](https://github.com/ansari-project/codev/blob/main/CHANGELOG.md)
+- [Why We Created Codev](https://github.com/cluesmith/codev/blob/main/docs/why.md) - The philosophy behind specification-driven development
+- [Installation Guide](https://github.com/cluesmith/codev/blob/main/INSTALL.md) - For humans and AI agents
+- [SPIDER Protocol Documentation](https://github.com/cluesmith/codev/blob/main/codev/protocols/spider/protocol.md)
+- [GitHub Discussions](https://github.com/cluesmith/codev/discussions)
+- [Full Changelog](https://github.com/cluesmith/codev/blob/main/CHANGELOG.md)
 
 ---
 

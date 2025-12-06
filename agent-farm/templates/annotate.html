@@ -320,10 +320,29 @@
       // Reset markdown state before rendering
       if (isMarkdown) resetMarkdownState();
 
+      // For markdown: two-pass table rendering
+      let tableMap = new Map();
+      if (isMarkdown) {
+        const codeBlockRanges = findCodeBlockRanges(fileLines);
+        const tables = identifyTables(fileLines, codeBlockRanges);
+        tableMap = buildTableMap(tables);
+      }
+
       // Wrap each line in a div so we can measure its height after word-wrap
       const highlightedLines = fileLines.map((line, i) => {
+        let lineToRender = line;
+
+        // For markdown tables: pad cells for alignment
+        if (isMarkdown) {
+          const tableInfo = tableMap.get(i);
+          if (tableInfo) {
+            const isSep = isSeparatorRow(line);
+            lineToRender = renderTableRow(line, tableInfo.columns, isSep);
+          }
+        }
+
         // Use custom hybrid renderer for markdown
-        const highlighted = isMarkdown ? renderMarkdownLine(line) : Prism.highlight(line, prismLang, lang);
+        const highlighted = isMarkdown ? renderMarkdownLine(lineToRender) : Prism.highlight(lineToRender, prismLang, lang);
         const isReview = commentStyle.regex.test(line);
         const content = isReview ? `<span class="review-line">${highlighted}</span>` : highlighted;
         return `<div class="code-line" data-line="${i}">${content || '&nbsp;'}</div>`;
@@ -557,6 +576,151 @@
     // Reset code block state when re-rendering
     function resetMarkdownState() {
       inCodeBlock = false;
+    }
+
+    // ==================== Table Alignment Functions ====================
+
+    // Find code block ranges to exclude from table processing
+    function findCodeBlockRanges(lines) {
+      const ranges = [];
+      let start = null;
+
+      lines.forEach((line, i) => {
+        if (/^(\s*)(```+|~~~+)/.test(line)) {
+          if (start === null) {
+            start = i;
+          } else {
+            ranges.push({ start, end: i });
+            start = null;
+          }
+        }
+      });
+
+      // Handle unclosed code block (extends to end of file)
+      if (start !== null) {
+        ranges.push({ start, end: lines.length - 1 });
+      }
+
+      return ranges;
+    }
+
+    // Check if line is inside a code block
+    function isInsideCodeBlock(lineNum, ranges) {
+      return ranges.some(r => lineNum >= r.start && lineNum <= r.end);
+    }
+
+    // Check if line is a table separator row (e.g., |---|---|)
+    function isSeparatorRow(line) {
+      // Must contain at least one dash and be mostly dashes, pipes, colons, and spaces
+      return /^\|?[\s:|-]+\|?$/.test(line) && line.includes('-');
+    }
+
+    // Parse cells from a table row, handling leading/trailing pipes
+    function parseTableCells(line) {
+      // Split by | (not escaped \|)
+      const parts = line.split(/(?<!\\)\|/);
+
+      // Remove empty first/last elements from leading/trailing pipes
+      if (parts.length > 0 && parts[0].trim() === '') parts.shift();
+      if (parts.length > 0 && parts[parts.length - 1].trim() === '') parts.pop();
+
+      return parts;
+    }
+
+    // Pad a separator cell preserving alignment markers (:---:, :---, ---:)
+    function padSeparatorCell(cell, width) {
+      const trimmed = cell.trim();
+      const leftColon = trimmed.startsWith(':');
+      const rightColon = trimmed.endsWith(':');
+
+      // Calculate dash count: width minus colons
+      const dashCount = width - (leftColon ? 1 : 0) - (rightColon ? 1 : 0);
+
+      return (leftColon ? ':' : '') + '-'.repeat(Math.max(1, dashCount)) + (rightColon ? ':' : '');
+    }
+
+    // Pad a regular cell to target width
+    function padCell(cell, width) {
+      const trimmed = cell.trim();
+      return trimmed.padEnd(width);
+    }
+
+    // Identify tables in the document and compute column widths
+    function identifyTables(lines, codeBlockRanges) {
+      const tables = [];
+
+      for (let i = 0; i < lines.length - 1; i++) {
+        // Skip lines inside code blocks
+        if (isInsideCodeBlock(i, codeBlockRanges)) continue;
+
+        const line = lines[i];
+        const nextLine = lines[i + 1];
+
+        // Look for header + separator pattern
+        if (line.includes('|') && isSeparatorRow(nextLine) && !isInsideCodeBlock(i + 1, codeBlockRanges)) {
+          const table = { startLine: i, endLine: i + 1, columns: [] };
+
+          // Extend table to include all following rows with |
+          let j = i + 2;
+          while (j < lines.length && lines[j].includes('|') && !isInsideCodeBlock(j, codeBlockRanges)) {
+            table.endLine = j;
+            j++;
+          }
+
+          // Compute column widths across all rows
+          for (let row = table.startLine; row <= table.endLine; row++) {
+            const cells = parseTableCells(lines[row]);
+            cells.forEach((cell, col) => {
+              const cellWidth = cell.trim().length;
+              table.columns[col] = Math.max(table.columns[col] || 0, cellWidth);
+            });
+          }
+
+          tables.push(table);
+          i = table.endLine; // Skip past this table
+        }
+      }
+
+      return tables;
+    }
+
+    // Build a map: lineNumber -> tableInfo (or undefined)
+    function buildTableMap(tables) {
+      const map = new Map();
+      for (const table of tables) {
+        for (let i = table.startLine; i <= table.endLine; i++) {
+          map.set(i, table);
+        }
+      }
+      return map;
+    }
+
+    // Render a table row with padded cells
+    function renderTableRow(line, columnWidths, isSeparator) {
+      // Preserve original indentation for nested tables (in lists, blockquotes)
+      const indent = line.match(/^(\s*)/)[1];
+      const trimmedLine = line.trimStart();
+
+      const cells = parseTableCells(line);
+      const hasLeadingPipe = trimmedLine.startsWith('|');
+      const hasTrailingPipe = line.trimEnd().endsWith('|');
+
+      const paddedCells = cells.map((cell, i) => {
+        const targetWidth = columnWidths[i] || cell.trim().length;
+        if (isSeparator) {
+          return padSeparatorCell(cell, targetWidth);
+        } else {
+          return padCell(cell, targetWidth);
+        }
+      });
+
+      // Reconstruct line with pipes, preserving indentation
+      let result = indent;
+      if (hasLeadingPipe) result += '| ';
+      result += paddedCells.join(' | ');
+      if (hasTrailingPipe) result += ' |';
+
+      return result;
     }
 
     async function saveFile() {

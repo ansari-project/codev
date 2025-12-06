@@ -387,7 +387,7 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0030"
     title: "Markdown Syntax Highlighting in Annotator"
     summary: "Enable syntax highlighting for markdown files in the annotation viewer"
-    status: implemented
+    status: integrated
     priority: low
     release: "v1.1.0"
     files:
@@ -396,7 +396,7 @@ Projects currently in development (conceived through committed), sorted by prior
       review: null
     dependencies: ["0010"]
     tags: [ui, annotation, markdown]
-    notes: "Hybrid approach: syntax visible but muted, content styled. Prism broke lines; custom renderer works."
+    notes: "Hybrid approach: syntax visible but muted, content styled. Prism broke lines; custom renderer works. PR 49 merged 2025-12-06."
 
   - id: "0031"
     title: "SQLite for Runtime State"
@@ -443,16 +443,16 @@ Projects currently in development (conceived through committed), sorted by prior
   - id: "0034"
     title: "Table Alignment in Markdown Annotator"
     summary: "Auto-pad markdown table cells so pipes align vertically across rows"
-    status: planned
+    status: integrated
     priority: low
-    release: null
+    release: "v1.1.0"
     files:
       spec: codev/specs/0034-table-alignment.md
       plan: codev/plans/0034-table-alignment.md
-      review: null
+      review: codev/reviews/0034-table-alignment.md
     dependencies: ["0030"]
     tags: [ui, annotation, markdown]
-    notes: "Two-pass rendering with code block awareness. Preserves alignment markers (:---:). Consulted Gemini/Codex."
+    notes: "Two-pass rendering with code block awareness. Preserves alignment markers (:---:). Consulted Gemini/Codex. PR 51 merged 2025-12-06."
 ```
 
 ---
